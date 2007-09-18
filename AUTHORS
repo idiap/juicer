@@ -1,0 +1,14 @@
+Ronan Collobert
+- Parts taken from Torch
+
+Darren Moore
+- Original decoder up to version 0.5.0
+
+John Dines
+- LNA 16 bit support
+
+Octavian Cheng
+- On The Fly decoder
+
+Phil Garner
+- Maintainer since April 2007 
