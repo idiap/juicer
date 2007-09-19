@@ -38,6 +38,7 @@ real           wordInsPen=0.0 ;
 char           *unkWord=NULL ;
 bool           addSilenceArcs=false ;
 bool           phiBackoff=false ;
+bool normalise = false;
 
 // FST-related Parameters
 char           *gramTypeStr=NULL ;
@@ -77,6 +78,12 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
 			"adds silence self-loop arcs to most states (only when -gramType == ngram)" ) ;
 	cmd->addBCmdOption( "-phiBackoff" , &phiBackoff , false ,
 						"labels back-off transitions with aux. label #phi instead of <eps>" ) ;
+   cmd->addBCmdOption(
+       "-normalise" , &normalise , false ,
+       "normalise back-offs and unigrams such that the resulting transducer "
+       "is stochastic.  The default is to not normalise them, "
+       "like previous versions"
+   ) ;
 
 	// Transducer Parameters
 	cmd->addText("\nTransducer Options:") ;
@@ -158,7 +165,8 @@ int main( int argc , char *argv[] )
 
    // use grammar generator to create output FSM file (+ symbol files).
    gramGen->writeFSM(
-	   fsmFName , inSymsFName , outSymsFName, addSilenceArcs, phiBackoff
+	   fsmFName , inSymsFName , outSymsFName,
+       addSilenceArcs, phiBackoff, normalise
    ) ;
 
    if ( genTestSeqs )

@@ -91,7 +91,8 @@ public:
 
    void writeFSM(
        const char *fsmFName , const char *inSymbolsFName , 
-       const char *outSymbolsFName , bool addSil=false , bool phiBOTrans=false
+       const char *outSymbolsFName ,
+       bool addSil=false , bool phiBOTrans=false, bool normalise=false
    ) ;
    int getPhiLabel() { return phiLabel ; } ;
 
@@ -107,7 +108,9 @@ private:
 
    void writeFSMWordLoop( FILE *fsmFD ) ;
    void writeFSMSilWordLoopSil( FILE *fsmFD ) ;
-   void writeFSMARPA( FILE *fsmFD , bool addSil , bool phiBOTrans ) ;
+   void writeFSMARPA(
+       FILE *fsmFD , bool addSil , bool phiBOTrans, bool normalise
+   ) ;
    void addDefaultBackoffPath( FILE *fsmFD , WFSTNGramStateManager *stateMan , 
                                int fromSt , int toNWords , int *toWords ) ; 
    void writeFSMWordPair( FILE *fsmFD ) ;

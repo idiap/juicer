@@ -406,7 +406,8 @@ WFSTGramGen::~WFSTGramGen()
 
 void WFSTGramGen::writeFSM(
     const char *fsmFName , const char *inSymbolsFName , 
-    const char *outSymbolsFName , bool addSil , bool phiBOTrans
+    const char *outSymbolsFName ,
+    bool addSil , bool phiBOTrans, bool normalise
 )
 {
    FILE *fd ;
@@ -427,7 +428,7 @@ void WFSTGramGen::writeFSM(
    }
    else if ( type == WFST_GRAM_TYPE_NGRAM )
    {
-      writeFSMARPA( fd , addSil , phiBOTrans ) ;
+      writeFSMARPA( fd , addSil , phiBOTrans , normalise ) ;
    }
    else if ( type == WFST_GRAM_TYPE_WORDPAIR )
    {
@@ -570,7 +571,9 @@ typedef enum
 } ARPALMReadState ;
 
 
-void WFSTGramGen::writeFSMARPA( FILE *fsmFD , bool addSil , bool phiBOTrans )
+void WFSTGramGen::writeFSMARPA(
+    FILE *fsmFD , bool addSil , bool phiBOTrans, bool normalise
+)
 {
    if ( phiBOTrans )
       phiLabel = vocab->nWords + 1 ;   // epsilon is label 0
@@ -580,7 +583,8 @@ void WFSTGramGen::writeFSMARPA( FILE *fsmFD , bool addSil , bool phiBOTrans )
 
    // Read the ARPA file into memory.
    ARPALM *arpaLM = new ARPALM( arpaLMFName , vocab , unkWord ) ;
-   arpaLM->Normalise();
+   if (normalise)
+       arpaLM->Normalise();
 
    // Create the state manager we use to keep track the states we create
    WFSTNGramStateManager *stateMan = new WFSTNGramStateManager( vocab ) ;
