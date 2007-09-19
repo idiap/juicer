@@ -75,7 +75,13 @@ private:
 };
 
 
-
+/**
+ * Generates a context dependency transducer.
+ *
+ * There is a \#define AUXLOOP in the code that selects whether to
+ * handle auxiliary symbols as loops or not.  Not implies that they
+ * will be handled using delay transitions like the short pause.
+ */
 class WFSTCDGen
 {
 public:
