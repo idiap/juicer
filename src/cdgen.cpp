@@ -158,9 +158,11 @@ int main( int argc , char *argv[] )
    processCmdLine( &cmd , argc , argv ) ;
 
    // create cdGen
-   WFSTCDGen *cdGen = new WFSTCDGen( cdType , htkModelsFName , monoListFName , silMonophone ,
-                                     pauseMonophone , tiedListFName , cdSepChars , 
-                                     priorsFName , statesPerModel ) ;
+   WFSTCDGen *cdGen = new WFSTCDGen(
+       cdType , htkModelsFName , monoListFName , silMonophone ,
+       pauseMonophone , tiedListFName , cdSepChars , 
+       priorsFName , statesPerModel
+   ) ;
 
    // write lex FSM
    cdGen->writeFSM( fsmFName , inSymsFName , outSymsFName , lexInSymsFName ) ;
