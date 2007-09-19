@@ -42,6 +42,7 @@ bool           addPronunsWithEndPause=false ;
 real           pauseTeeTransProb=0.0 ;
 bool           addPhiLoop=false ;
 bool           outputAuxPhones=false ;
+bool normalise = false;
 
 void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
 {
@@ -107,6 +108,11 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
        "in the lexicon in order to disambiguate distinct words with"
        "identical pronunciations"
    ) ;
+   cmd->addBCmdOption(
+       "-normalise" , &normalise , false ,
+       "normalise pronunciation probabilities to add to 1 for each word"
+       "the default is to not normalise them, like previous versions"
+   ) ;
 
 	cmd->read( argc , argv ) ;
    
@@ -145,7 +151,8 @@ int main( int argc , char *argv[] )
    //lexInfo->outputText() ;                                       
 
    // Normalise the pronunciations for each word to add to one
-   lexInfo->normalisePronuns();
+   if (normalise)
+       lexInfo->normalisePronuns();
 
    // create lexGen
    if ( pauseTeeTransProb > 0.0 )
