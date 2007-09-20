@@ -1,0 +1,165 @@
+#!/bin/tcsh
+#
+# Copyright 2005 by IDIAP Research Institute
+#                   http://www.idiap.ch
+#
+# See the file COPYING for the licence associated with this software.
+#
+
+
+# Check that the juicer environment file has been sourced already
+if ( ! $?JUTOOLS ) then
+   echo "\nbuild-wfst: juicer environment not configured (JUTOOLS not set)\n"
+   exit 1
+endif
+
+# Process command line options
+unset OPTFINAL
+while ( $#argv > 3 ) 
+   if ( "$argv[1]" == "-of" ) then
+      set OPTFINAL
+      shift argv
+   else
+      break
+   endif
+end
+
+# Check command line arguments
+if ( $#argv != 3 ) then
+   echo "\nusage: build-wfst [options] <grammar FSM> <lexicon FSM> <CD FSM>\n"
+   echo "   options:    -of      Optimise final transducer\n"
+   exit 1
+endif
+
+set INGRAMFSM     = $argv[1]
+set PREFIX        = `echo $INGRAMFSM | sed -r 's:\.fsm$::'`
+set INGRAMINSYMS  = "${PREFIX}.insyms"
+set INGRAMOUTSYMS = "${PREFIX}.outsyms"
+set OUTGRAMBFSM   = "${PREFIX}.out.bfsm"
+
+set INLEXFSM      = $argv[2]
+set PREFIX        = `echo $INLEXFSM | sed -r 's:\.fsm$::'`
+set INLEXINSYMS   = "${PREFIX}.insyms"
+set INLEXOUTSYMS  = "${PREFIX}.outsyms"
+set OUTLEXBFSM    = "${PREFIX}.out.bfsm"
+
+set INCDFSM       = $argv[3]
+set PREFIX        = `echo $INCDFSM | sed -r 's:\.fsm$::'`
+set INCDINSYMS    = "${PREFIX}.insyms"
+set INCDOUTSYMS   = "${PREFIX}.outsyms"
+set OUTCDBFSM     = "${PREFIX}.out.bfsm"
+
+set OUTDIR        = `dirname $INGRAMFSM`
+
+# Some commonly used variables
+set SEMIRING         = log
+
+
+# Make sure all the input files exist
+if ( ! -f $INGRAMFSM ) then
+   echo "Input grammar FSM: $INGRAMFSM not found" ; exit 1
+endif
+if ( ! -f $INGRAMINSYMS ) then
+   echo "Input grammar input symbols: $INGRAMINSYMS not found" ; exit 1
+endif
+if ( ! -f $INGRAMOUTSYMS ) then
+   echo "Input grammar output symbols: $INGRAMOUTSYMS not found" ; exit 1
+endif
+if ( ! -f $INLEXFSM ) then
+   echo "Input lexicon FSM: $INLEXFSM not found" ; exit 1
+endif
+if ( ! -f $INLEXINSYMS ) then
+   echo "Input lexicon input symbols: $INLEXINSYMS not found" ; exit 1
+endif
+if ( ! -f $INLEXOUTSYMS ) then
+   echo "Input lexicon output symbols: $INLEXOUTSYMS not found" ; exit 1
+endif
+if ( ! -f $INCDFSM ) then
+   echo "Input CD phone FSM: $INCDFSM not found" ; exit 1
+endif
+if ( ! -f $INCDINSYMS ) then
+   echo "Input CD phone input symbols: $INCDINSYMS not found" ; exit 1
+endif
+if ( ! -f $INCDOUTSYMS ) then
+   echo "Input CD phone output symbols: $INCDOUTSYMS not found" ; exit 1
+endif
+
+# Remove stray keyfile if there is one
+rm -f key.bfsm
+
+# Prepare the lexicon transducer
+echo Preparing lexicon transducer ${OUTLEXBFSM}
+fsmcompile -t -s ${SEMIRING} -f const_input_indexed ${INLEXFSM} | \
+fsmclosure > ${OUTLEXBFSM}
+rm -f key.bfsm
+echo -n "${OUTLEXBFSM}: "
+echo `fsminfo -n ${OUTLEXBFSM} | grep "of arcs"`
+
+
+# Prepare the grammar transducer
+fsmcompile -t -s ${SEMIRING}  -f const_input_indexed ${INGRAMFSM} | \
+fsmdeterminize > ${OUTGRAMBFSM}
+echo -n "${OUTGRAMBFSM}: "
+echo `fsminfo -n ${OUTGRAMBFSM} | grep "of arcs"`
+
+
+# Prepare the context dependency transducer
+fsmcompile -t -s ${SEMIRING} -f const_input_indexed ${INCDFSM} | \
+fsmconnect | \
+fsminvert | \
+fsmdeterminize | \
+fsmencode -l - key.bfsm | \
+fsmminimize | \
+fsmencode -dl - key.bfsm | \
+fsminvert > ${OUTCDBFSM}
+rm -f key.bfsm
+echo -n "${OUTCDBFSM}: "
+echo `fsminfo -n ${OUTCDBFSM} | grep "of arcs"`
+
+
+# Compose LG
+echo Composing LG transducer ${OUTDIR}/lg.bfsm
+fsmcompose ${OUTLEXBFSM} ${OUTGRAMBFSM} | \
+fsmepsnormalize | \
+fsmdeterminize | \
+fsmencode -l - key.bfsm | \
+fsmminimize | \
+fsmencode -dl - key.bfsm > ${OUTDIR}/lg.bfsm.tmp
+if ( ! $?OPTFINAL ) then
+    # Remove aux symbols from LG
+    echo Removing aux symbols
+    fsmprint ${OUTDIR}/lg.bfsm.tmp > ${OUTDIR}/lg.fsm.tmp1
+    ${JUTOOLS}/aux2eps.pl ${OUTDIR}/lg.fsm.tmp1 ${INLEXINSYMS} \
+        > ${OUTDIR}/lg.fsm.tmp2
+    fsmcompile \
+        -t -s ${SEMIRING} -f const_input_indexed ${OUTDIR}/lg.fsm.tmp2 \
+        > ${OUTDIR}/lg.bfsm
+    rm ${OUTDIR}/lg.bfsm.tmp ${OUTDIR}/lg.bfsm.tmp1 ${OUTDIR}/lg.bfsm.tmp2
+else
+    mv ${OUTDIR}/lg.bfsm.tmp ${OUTDIR}/lg.bfsm
+endif
+rm -f key.bfsm
+echo -n "lg.bfsm "
+echo `fsminfo -n ${OUTDIR}/lg.bfsm | grep "of arcs"`
+
+
+# Compose CoLoG
+if ( $?OPTFINAL ) then
+    fsmcompose -s ${OUTCDBFSM} ${OUTDIR}/lg.bfsm | \
+    fsmepsnormalize | \
+    fsmdeterminize | \
+    fsmencode -l - key.bfsm | \
+    fsmminimize | \
+    fsmencode -dl - key.bfsm | \
+    fsmpush -c -i > ${OUTDIR}/clg.bfsm
+    rm -f key.bfsm
+else
+    fsmcompose -s ${OUTCDBFSM} ${OUTDIR}/lg.bfsm | \
+    fsmpush -c -i > ${OUTDIR}/clg.bfsm
+endif
+echo -n "clg.bfsm: "
+echo `fsminfo -n ${OUTDIR}/clg.bfsm | grep "of arcs"`
+
+cp ${INCDINSYMS} ${OUTDIR}/final.insyms
+cp ${INGRAMOUTSYMS} ${OUTDIR}/final.outsyms
+fsmprint ${OUTDIR}/clg.bfsm > ${OUTDIR}/final.fsm

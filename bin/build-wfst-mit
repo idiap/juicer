@@ -1,0 +1,178 @@
+#!/bin/tcsh
+#
+# Copyright 2005 by IDIAP Research Institute
+#                   http://www.idiap.ch
+#
+# See the file COPYING for the licence associated with this software.
+#
+
+
+# Check that the juicer environment file has been sourced already
+if ( ! $?JUTOOLS ) then
+   echo "\nbuild-wfst-mit: juicer environment not configured (JUTOOLS not set)\n"
+   exit 1
+endif
+
+# Process command line options
+unset OPTFINAL
+while ( $#argv > 3 ) 
+   if ( "$argv[1]" == "-of" ) then
+      set OPTFINAL
+      shift argv
+   else
+      break
+   endif
+end
+
+# Check command line arguments
+if ( $#argv != 3 ) then
+
+   echo "\nusage: build-wfst-mit [options] <grammar FSM> <lexicon FSM> <CD FSM>\n"
+   echo "   options:    -of      Optimise final transducer\n"
+   echo "Builds the integrated transducer using the (extended) MIT FST toolkit for all WFST operations.\n"
+   exit 1
+   
+endif
+
+set INGRAMFSM     = $argv[1]
+set PREFIX        = `echo $INGRAMFSM | sed -r 's:\.fsm$::'`
+set INGRAMINSYMS  = "${PREFIX}.insyms"
+set INGRAMOUTSYMS = "${PREFIX}.outsyms"
+set OUTGRAMBFSM   = "${PREFIX}.out.bfsm"
+set OUTGRAMFST    = "${PREFIX}.out.fst"
+
+set INLEXFSM      = $argv[2]
+set PREFIX        = `echo $INLEXFSM | sed -r 's:\.fsm$::'`
+set INLEXINSYMS   = "${PREFIX}.insyms"
+set INLEXOUTSYMS  = "${PREFIX}.outsyms"
+set OUTLEXBFSM    = "${PREFIX}.out.bfsm"
+set OUTLEXFST     = "${PREFIX}.out.fst"
+
+set INCDFSM       = $argv[3]
+set PREFIX        = `echo $INCDFSM | sed -r 's:\.fsm$::'`
+set INCDINSYMS    = "${PREFIX}.insyms"
+set INCDOUTSYMS   = "${PREFIX}.outsyms"
+set OUTCDBFSM     = "${PREFIX}.out.bfsm"
+set OUTCDFST      = "${PREFIX}.out.fst"
+
+set OUTDIR        = `dirname $INGRAMFSM`
+
+
+# Some commonly used variables
+set SEMIRING         = log
+
+
+# Make sure all the input files exist
+if ( ! -f $INGRAMFSM ) then
+   echo "Input grammar FSM: $INGRAMFSM not found" ; exit 1
+endif
+if ( ! -f $INGRAMINSYMS ) then
+   echo "Input grammar input symbols: $INGRAMINSYMS not found" ; exit 1
+endif
+if ( ! -f $INGRAMOUTSYMS ) then
+   echo "Input grammar output symbols: $INGRAMOUTSYMS not found" ; exit 1
+endif
+if ( ! -f $INLEXFSM ) then
+   echo "Input lexicon FSM: $INLEXFSM not found" ; exit 1
+endif
+if ( ! -f $INLEXINSYMS ) then
+   echo "Input lexicon input symbols: $INLEXINSYMS not found" ; exit 1
+endif
+if ( ! -f $INLEXOUTSYMS ) then
+   echo "Input lexicon output symbols: $INLEXOUTSYMS not found" ; exit 1
+endif
+if ( ! -f $INCDFSM ) then
+   echo "Input CD phone FSM: $INCDFSM not found" ; exit 1
+endif
+if ( ! -f $INCDINSYMS ) then
+   echo "Input CD phone input symbols: $INCDINSYMS not found" ; exit 1
+endif
+if ( ! -f $INCDOUTSYMS ) then
+   echo "Input CD phone output symbols: $INCDOUTSYMS not found" ; exit 1
+endif
+
+
+GRAM:
+
+# Prepare the grammar transducer
+if ( ! -e ${OUTGRAMFST} ) then
+    fsm_to_fst ${INGRAMFSM} ${INGRAMINSYMS} ${INGRAMOUTSYMS} - | \
+    fst_determinize - ${OUTGRAMFST}
+    echo "${OUTGRAMFST} : "`fst_info ${OUTGRAMFST} | grep -i "arcs"`
+endif
+
+LEX:
+
+if ( ! -e ${OUTLEXFST} ) then
+    # Prepare the lexicon transducer
+    fsm_to_fst ${INLEXFSM} ${INLEXINSYMS} ${INLEXOUTSYMS} - | \
+    fst_closure - ${OUTLEXFST}
+    echo "${OUTLEXFST} : "`fst_info ${OUTLEXFST} | grep -i "arcs"`
+endif
+
+CD:
+
+if ( ! -e ${OUTCDFST} ) then
+    # Prepare the context dependency transducer
+    fsm_to_fst ${INCDFSM} ${INCDINSYMS} ${INCDOUTSYMS} - | \
+    fst_invert - - | \
+    fst_determinize - - | \
+    fst_minimize - - | \
+    fst_invert - - | \
+    fst_binary - ${OUTCDFST}
+    echo "${OUTCDFST} : "`fst_info ${OUTCDFST} | grep -i "arcs"`
+endif
+
+# Build the integrated transducer
+
+LoG:
+
+if ( ! -e ${OUTDIR}/lg.fst ) then
+    #fst_composelg ${OUTLEXFST} ${OUTGRAMFST} ${OUTDIR}/lg.fst.tmp
+    fst_compose -B ${OUTLEXFST} ${OUTGRAMFST} ${OUTDIR}/lg.fst.tmp
+
+opt_LoG:
+
+    fst_remove_epsilons -a ${OUTDIR}/lg.fst.tmp - | \
+    fst_determinize - - | \
+    fst_minimize - ${OUTDIR}/lg.fst.tmp1
+    if ( ! $?OPTFINAL ) then
+        echo Removing aux symbols 
+        ${JUTOOLS}/fstRemoveAux.pl ${OUTDIR}/lg.fst.tmp1 ${OUTDIR}/lg.fst
+        rm ${OUTDIR}/lg.fst.tmp1
+    else
+        mv ${OUTDIR}/lg.fst.tmp1 ${OUTDIR}/lg.fst
+    endif
+    rm ${OUTDIR}/lg.fst.tmp 
+    echo "lg.fst : "`fst_info ${OUTDIR}/lg.fst | grep -i "arcs"`
+endif
+
+CoLoG:
+
+if ( $?OPTFINAL ) then
+   fst_compose ${OUTCDFST} ${OUTDIR}/lg.fst ${OUTDIR}/clg.fst.tmp
+   fst_trim ${OUTDIR}/clg.fst.tmp - | \
+   fst_determinize - - | \
+   fst_minimize - - | \
+   fst_push_weights - - | \
+   fst_binary - ${OUTDIR}/clg.fst
+   rm ${OUTDIR}/clg.fst.tmp
+else
+   fst_compose ${OUTCDFST} ${OUTDIR}/lg.fst - | \
+   fst_push_weights - ${OUTDIR}/clg.fst
+endif
+
+echo "clg.fst : "`fst_info ${OUTDIR}/clg.fst | grep -i "arcs"`
+
+fst_to_fsm ${OUTDIR}/clg.fst ${OUTDIR}/clg.tmpfsm ${OUTDIR}/clg.tmpsyms
+
+${JUTOOLS}/map-labels.pl ${OUTDIR}/clg.tmpfsm \
+                         ${OUTDIR}/clg.tmpsyms ${OUTDIR}/clg.tmpsyms \
+                         ${OUTDIR}/clg.fsm \
+                         ${INCDINSYMS} ${INGRAMOUTSYMS}
+
+rm ${OUTDIR}/clg.tmpfsm ${OUTDIR}/clg.tmpsyms
+
+cp ${INCDINSYMS} ${OUTDIR}/final.insyms
+cp ${INGRAMOUTSYMS} ${OUTDIR}/final.outsyms
+mv ${OUTDIR}/clg.fsm ${OUTDIR}/final.fsm
