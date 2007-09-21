@@ -55,12 +55,27 @@ OBJ = \
 	ARPALM.o \
 	string_stuff.o \
 
-DEPS = $(OBJ:.o=.d) juicer.d gramgen.d cdgen.d lexgen.d
+DEPS = $(OBJ:.o=.d) juicer.d gramgen.d cdgen.d lexgen.d genwfstseqs.d
 
-all: juicer gramgen cdgen lexgen hmmgen
+all: bin/juicer bin/gramgen bin/cdgen bin/lexgen bin/genwfstseqs
+
+bin/juicer: juicer
+	cp juicer bin
+
+bin/gramgen: gramgen
+	cp gramgen bin
+
+bin/cdgen: cdgen
+	cp cdgen bin
+
+bin/lexgen: lexgen
+	cp lexgen bin
+
+bin/genwfstseqs: genwfstseqs
+	cp genwfstseqs bin
 
 clean:
-	rm -f *.o *.d juicer gramgen cdgen lexgen hmmgen
+	rm -f *.o *.d juicer gramgen cdgen lexgen hmmgen genwfstseqs
 
 htkparse.y.cpp htkparse.y.h: htkparse.y
 	${BISON} -o htkparse.y.cpp -p htk -d -l $<
@@ -80,5 +95,7 @@ cdgen: $(OBJ) cdgen.o
 lexgen: $(OBJ) lexgen.o
 
 hmmgen: $(OBJ) hmmgen.o
+
+genwfstseqs: $(OBJ) genwfstseqs.o
 
 -include ${DEPS}
