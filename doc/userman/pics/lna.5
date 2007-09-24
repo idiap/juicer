@@ -1,0 +1,54 @@
+. $Header: /home/cvs/juicer/projects/juicer/doc/userman/pics/lna.5,v 1.1 2005-08-18 01:33:07 moore Exp $
+.TH LNA 5 "$Date: 2005-08-18 01:33:07 $" ICSI "ICSI SPEECH SOFTWARE"
+.SH NAME
+lna \- compressed format for MLP output probablility files
+
+.SH SYNOPSIS
+.B *.lna
+
+.SH DESCRIPTION
+.I lna
+is a compression format for speech developed by Tony Robinson, used by
+.BR y0 (1)
+and
+.BR noway (1).
+There are really two \fIlna\fR formats (8 bit and 16 bit)
+supported by the software, but everybody just uses 8 bit.
+
+Basically, each floating point probability is quantized to an 8 or 16
+bit integer by the following formula:
+
+.RS .2in
+\fIintval\fR = floor(-\fBLNPROB_FLOAT2INT\fR * log(\fIx\fR + \fBVERY_SMALL\fR))
+.RE
+
+where \fBLNPROB_FLOAT2INT\fR is 24 for 8 bit, and 5120 for 16 bit.  The int
+is then pinned to between 0 and 255 (or 65535).  \fBVERY_SMALL\fR prevents
+ugliness if the probability is 0.0.
+
+As for the actual file format, it is a binary stream of frames, where
+each frame consistes of a fixed number of 8 or 16 bit values.
+
+.RS.2in
+.I EOS Val0 Val1 Val2 ... Valn
+.RE
+
+\fIEOS\fR is 0x80 if the frame is the last frame in a sentence, 0
+otherwise.  \fIVal0\fR ... \fIValn\fR are the quantized integers
+corresponding to the probabilities.
+
+.SH SEE ALSO
+.BR lna2y0new (1),
+.BR rap2lna (1)
+
+.SH AUTHOR
+This man page was written by:
+
+Jonathan Segal <jsegal@ICSI.Berkeley.EDU>
+.br
+Eric Fosler <fosler@ICSI.Berkeley.EDU>.
+
+updated by:
+Alfred Hauenstein <alfredh@icsi.berkeley.edu>
+
+

@@ -1,0 +1,22 @@
+#!/bin/tcsh
+
+set CDIR = $cwd
+
+rm *.ps
+rm *.epsi
+
+pushd ../../../code/tools
+
+gramgen -h | a2ps -1 -B -f8 --borders=no -o ${CDIR}/gramgen.ps
+lexgen -h | a2ps -1 -B -f8 --borders=no -o ${CDIR}/lexgen.ps
+cdgen -h | a2ps -1 -B -f8 --borders=no -o ${CDIR}/cdgen.ps
+juicer -h | a2ps -1 -B -f7 --borders=no -o ${CDIR}/juicer.ps
+nroff -c -man ${CDIR}/lna.5 | a2ps -1 -B --borders=no -o ${CDIR}/lna.ps
+
+popd
+ps2epsi ${CDIR}/gramgen.ps
+ps2epsi ${CDIR}/lexgen.ps
+ps2epsi ${CDIR}/cdgen.ps
+ps2epsi ${CDIR}/juicer.ps
+ps2epsi ${CDIR}/lna.ps
+

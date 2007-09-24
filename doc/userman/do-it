@@ -1,0 +1,21 @@
+#!/bin/tcsh
+
+rm juicer_userman.[adlp]*
+rm juicer_userman.toc
+
+
+# create graphs for WSJ pruning experiments
+cd wsj-pruning-exp
+rm *.eps
+gnuplot graphs.gnuplot
+cd ..
+
+# build doc
+latex juicer_userman
+bibtex juicer_userman
+latex juicer_userman
+latex juicer_userman
+dvips juicer_userman
+dvipdf juicer_userman
+
+rm *.aux *.dvi *.log *.toc
