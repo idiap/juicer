@@ -5,12 +5,10 @@
 # See the file COPYING for the licence associated with this software.
 #
 
-TORCHDIR = $(HOME)/cvs/Torch3
-
 BISON = /usr/bin/bison
 FLEX = /usr/bin/flex
 
-INC = -Isrc -I$(TORCHDIR)/core -I$(TORCHDIR)/speech
+INC = -Isrc `pkg-config --cflags torch`
 OPT = -O2 -g
 DEF = -DMIRROR_SCORE0 -DLOCAL_HYPS
 # MON = -pg
@@ -20,7 +18,7 @@ CPPFLAGS = $(INC) $(OPT) $(DEF) $(MON) -MD -Wall
 CFLAGS = $(CPPFLAGS)
 
 LDFLAGS = $(MON)
-LDLIBS = -L$(TORCHDIR)/lib/Linux_OPT_FLOAT -ltorch
+LDLIBS = `pkg-config --libs torch`
 
 VPATH = ./src
 
