@@ -55,10 +55,11 @@ public:
 	DecoderSingleTest			**tests ;
 
 	// Constructors / destructor
-	DecoderBatchTest( DecVocabulary *vocab_, PhoneLookup *phoneLookup_, WFSTDecoder *wfstDecoder_ , 
-                     const char *inputFName_ , DSTDataFileFormat inputFormat_ , int inputVecSize_ ,
-							const char *outputFName_ , DBTOutputFormat outputFormat_ ,
-							const char *expResultsFName_ , bool removeSil_ , int framesPerSec_ ) ;
+	DecoderBatchTest(
+        DecVocabulary *vocab_, PhoneLookup *phoneLookup_, WFSTDecoder *wfstDecoder_ , 
+        const char *inputFName_ , DSTDataFileFormat inputFormat_ , int inputVecSize_ ,
+        const char *outputFName_ , DBTOutputFormat outputFormat_ ,
+        const char *expResultsFName_ , bool removeSil_ , int framesPerSec_ ) ;
 	~DecoderBatchTest() ;
 
 	// Public methods

@@ -56,8 +56,9 @@ struct DSTResultWord
 /** 
  * This class is used to recognise a single input data file and
  * post-process the recognition result.  The DecoderBatchTest class
- * contains of an array of these objects.  @author Darren Moore
- * (moore@idiap.ch)
+ * contains of an array of these objects.
+ *
+ * @author Darren Moore (moore@idiap.ch)
  */
 class DecoderSingleTest
 {

@@ -77,10 +77,12 @@ DecoderBatchTest::~DecoderBatchTest()
 }
 
 
-void DecoderBatchTest::init( const char *inputFName_ , DSTDataFileFormat inputFormat_ ,
-                             int inputVecSize_ , const char *outputFName_ , 
-                             DBTOutputFormat outputFormat_ , const char *expResultsFName_ , 
-                             bool removeSil_ , int framesPerSec_ )
+void DecoderBatchTest::init(
+    const char *inputFName_ , DSTDataFileFormat inputFormat_ ,
+    int inputVecSize_ , const char *outputFName_ , 
+    DBTOutputFormat outputFormat_ , const char *expResultsFName_ , 
+    bool removeSil_ , int framesPerSec_
+)
 {
 	nTests = 0 ;
 	nTestsAlloc = 0 ;
@@ -92,9 +94,9 @@ void DecoderBatchTest::init( const char *inputFName_ , DSTDataFileFormat inputFo
 	strcpy( inputFName , inputFName_ ) ;
 
 	if ( (mode < 0) || (mode >= DBT_MODE_INVALID) )
-      error("DBT::init - invalid mode") ;
-   if ( (inputFormat_ < 0) || (inputFormat_ >= DST_NOFORMAT) )
-      error("DBT::init - invalid inputFormat_") ;
+        error("DBT::init - invalid mode") ;
+    if ( (inputFormat_ < 0) || (inputFormat_ >= DST_NOFORMAT) )
+        error("DBT::init - invalid inputFormat_") ;
 	inputFormat = inputFormat_ ;
 
    if ( (inputVecSize = inputVecSize_) <= 0 )

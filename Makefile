@@ -55,7 +55,7 @@ OBJ = \
 	ARPALM.o \
 	string_stuff.o \
 
-DEPS = $(OBJ:.o=.d) juicer.d gramgen.d cdgen.d lexgen.d genwfstseqs.d
+DEP = $(OBJ:.o=.d) juicer.d gramgen.d cdgen.d lexgen.d genwfstseqs.d
 
 all: bin/juicer bin/gramgen bin/cdgen bin/lexgen bin/genwfstseqs
 
@@ -98,4 +98,4 @@ hmmgen: $(OBJ) hmmgen.o
 
 genwfstseqs: $(OBJ) genwfstseqs.o
 
--include ${DEPS}
+-include $(DEP)

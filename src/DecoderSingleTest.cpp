@@ -95,9 +95,11 @@ DecoderSingleTest::~DecoderSingleTest()
 }
 
 
-void DecoderSingleTest::configure( DBTMode mode_ , int expVecSize_ , char *dataFName_ , 
-      int nExpectedWords_ , int *expectedWords_ , DSTDataFileFormat inputFormat_ ,
-      bool removeSentMarks_ ) 
+void DecoderSingleTest::configure(
+    DBTMode mode_ , int expVecSize_ , char *dataFName_ , 
+    int nExpectedWords_ , int *expectedWords_ ,
+    DSTDataFileFormat inputFormat_ ,
+    bool removeSentMarks_ ) 
 {
    mode = mode_ ;
    if ( (expVecSize = expVecSize_) <= 0 )
@@ -179,60 +181,65 @@ void DecoderSingleTest::configure( DBTMode mode_ , int expVecSize_ , char *dataF
 }
 
 
+/**
+ * Runs the actual decoding.  Loads data into memory, passes the whole
+ * array to the decoder and gets a hypothesis back.
+ */
 void DecoderSingleTest::run( WFSTDecoder *decoder , DecVocabulary *vocab )
 {
-   clock_t startTime , endTime ;
+    clock_t startTime , endTime ;
 
 #ifdef DEBUG
-   if ( (mode != DBT_MODE_WFSTDECODE_WORDS) && (mode != DBT_MODE_WFSTDECODE_PHONES) )
-      error("DecoderSingleTest::run - incompatible mode") ;
+    if ( (mode != DBT_MODE_WFSTDECODE_WORDS) &&
+         (mode != DBT_MODE_WFSTDECODE_PHONES) )
+        error("DecoderSingleTest::run - incompatible mode") ;
 #endif
 
-   // The data file hasn't been loaded yet - load it
-   loadDataFile() ;
+    // The data file hasn't been loaded yet - load it
+    loadDataFile() ;
 
-   // See if the vecSize in the input file agreed with our expectations.
-   if ( vecSize != expVecSize )
-      error("DecoderSingleTest::run - vecSize != expVecSize") ;
+    // See if the vecSize in the input file agreed with our expectations.
+    if ( vecSize != expVecSize )
+        error("DecoderSingleTest::run - vecSize != expVecSize") ;
 
-   // invoke the decoder
-   DecHyp *hyp ;
+    // invoke the decoder
+    DecHyp *hyp ;
 
-   startTime = clock() ;
-   hyp = decoder->decode( decoderInput , nFrames ) ;
-   //decoder->decode( decoderInput , nFrames , &nActualWords , &actualWords , &actualWordsTimes ) ;
-   endTime = clock() ;
-   decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
+    startTime = clock() ;
+    hyp = decoder->decode( decoderInput , nFrames ) ;
+    //decoder->decode( decoderInput , nFrames , &nActualWords , &actualWords , &actualWordsTimes ) ;
+    endTime = clock() ;
+    decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
 
-   // post-process the decoding result
-   if ( hyp == NULL )
-   {
-      nResultLevels = 0 ;
-      nResultWords = 0 ;
-      resultWords = NULL ;
-   }
-   else
-   {
-      extractResultsFromHyp( hyp , vocab ) ;
-   }
+    // post-process the decoding result
+    if ( hyp == NULL )
+    {
+        nResultLevels = 0 ;
+        nResultWords = 0 ;
+        resultWords = NULL ;
+    }
+    else
+    {
+        extractResultsFromHyp( hyp , vocab ) ;
+    }
 
-   //if ( removeSentMarks )
-   //   removeSentMarksFromActual( vocab ) ;
+    //if ( removeSentMarks )
+    //   removeSentMarksFromActual( vocab ) ;
 
-   // Free up some memory
-   if ( inputFormat == DST_FEATS_HTK )
-   {
-      delete [] decoderInput[0] ;
-      delete [] decoderInput ;
-   }
-   else
-   {
-      for ( int i=0 ; i<nFrames ; i++ )
-         delete [] decoderInput[i] ;
-      free( decoderInput ) ;
-   }
-   decoderInput = NULL ;
-   vecSize = 0 ;
+    // Free up some memory
+    if ( inputFormat == DST_FEATS_HTK )
+    {
+        delete [] decoderInput[0] ;
+        delete [] decoderInput ;
+    }
+    else
+    {
+        for ( int i=0 ; i<nFrames ; i++ )
+            delete [] decoderInput[i] ;
+        free( decoderInput ) ;
+    }
+    decoderInput = NULL ;
+    vecSize = 0 ;
 }
 
 
@@ -293,18 +300,18 @@ void DecoderSingleTest::loadDataFile()
 
    switch ( inputFormat )
    {
-      case DST_FEATS_HTK:
-      {
-         loadHTK( dataFName ) ;
-         inputsAreFeatures = true ;
-         break ;
-      }
-      case DST_FEATS_ONLINE_FTRS:
-      {
-         loadOnlineFtrs( dataFName ) ;
-         inputsAreFeatures = true ;
-         break ;
-      }
+   case DST_FEATS_HTK:
+   {
+       loadHTK( dataFName ) ;
+       inputsAreFeatures = true ;
+       break ;
+   }
+   case DST_FEATS_ONLINE_FTRS:
+   {
+       loadOnlineFtrs( dataFName ) ;
+       inputsAreFeatures = true ;
+       break ;
+   }
       case DST_PROBS_LNA8BIT:
       {
          loadLNA8bit( dataFName ) ;
