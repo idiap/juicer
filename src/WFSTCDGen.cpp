@@ -448,8 +448,9 @@ void WFSTCDGen::writeFSM(
 
 void WFSTCDGen::writeFSMMonophone( FILE *fsmFD )
 {
-   // A single state with a self loop for each (output) monophone index (from monoLookup)
-   //   with its corresponding (input) monophone model index (from phoneLookup)
+   // A single state with a self loop for each (output) monophone
+   // index (from monoLookup) with its corresponding (input) monophone
+   // model index (from phoneLookup)
 
    int lab ;
    for ( int i=0 ; i<monoLookup->getNumMonophones() ; i++ )
@@ -736,7 +737,7 @@ void WFSTCDGen::writeFSMXWordTriphoneDetInv( FILE *fsmFD, bool ciPause )
       error("WFSTCDGen::writeFSMXWordTriphone - maxCD != 3");
    
    // Allocate memory
-   int **monoInds = new int*[nPhones] , i, j, k;
+   int **monoInds = new int*[nPhones] , i, j; // PNG: k deleted
    monoInds[0] = new int[nPhones*maxCD];
    for ( i=1 ; i<nPhones ; i++ )
       monoInds[i] = monoInds[0] + (i * maxCD);

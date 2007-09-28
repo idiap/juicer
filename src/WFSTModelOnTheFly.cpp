@@ -363,10 +363,10 @@ NodeToDecHypOnTheFly *WFSTModelOnTheFly::getNextEmitStateHyps( bool isPushed, in
    // Changes Octavian 20060627
    // DecHypOnTheFly *minHyp = NULL ;
    
-   int minGState ;
+   int minGState = -1;
    // Changes Octavian 20060531
-   int minMatchedOutLabel ;
-   int minLocation ;
+   int minMatchedOutLabel = -1;
+   int minLocation = -1;
 
    // Changes Octavian 20060627
    NodeToDecHypOnTheFly *minNode = NULL ;

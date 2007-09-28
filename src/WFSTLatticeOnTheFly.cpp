@@ -104,7 +104,7 @@ int WFSTLatticeOnTheFly::addEntry( int lattFromState , int netToState , int gSta
       
       // Changes
       DecNetStateToLattStateMapOnTheFly::iterator netToStateMapIter ; 
-      _InnerMap *gStateMap ;
+      _InnerMap *gStateMap = 0;
       _InnerMap::iterator gStateMapIter ;
 
       netToStateMapIter = decNetStateToLattStateMapOnTheFly.find( netToState ) ;
@@ -153,7 +153,7 @@ int WFSTLatticeOnTheFly::addEntry( int lattFromState , int netToState , int gSta
       }
       else  {
 	 int tmpLattFromState = lattFromState ;
-	 int tmpLattToState ;
+	 int tmpLattToState = -1;
 	 
 	 // If the final lattToState has not yet existed
 	 for ( int i = 0 ; i < nOutLabel ; i++ )  {
