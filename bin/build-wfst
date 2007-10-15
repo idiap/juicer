@@ -134,7 +134,7 @@ if ( ! $?OPTFINAL ) then
     fsmcompile \
         -t -s ${SEMIRING} -f const_input_indexed ${OUTDIR}/lg.fsm.tmp2 \
         > ${OUTDIR}/lg.bfsm
-    rm ${OUTDIR}/lg.bfsm.tmp ${OUTDIR}/lg.bfsm.tmp1 ${OUTDIR}/lg.bfsm.tmp2
+    rm ${OUTDIR}/lg.bfsm.tmp ${OUTDIR}/lg.fsm.tmp1 ${OUTDIR}/lg.fsm.tmp2
 else
     mv ${OUTDIR}/lg.bfsm.tmp ${OUTDIR}/lg.bfsm
 endif
