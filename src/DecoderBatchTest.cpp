@@ -5,6 +5,8 @@
  * See the file COPYING for the licence associated with this software.
  */
 
+#include <assert.h>
+
 #include "DecoderBatchTest.h"
 #include "DiskXFile.h" // For EditDistance
 #include "EditDistance.h"
@@ -26,7 +28,7 @@ namespace Juicer {
 
 
 DecoderBatchTest::DecoderBatchTest(
-	DecVocabulary *vocab_ , PhoneLookup *phoneLookup_ , 
+	DecVocabulary *vocab_ , PhoneLookup *phoneLookup_ , FrontEnd *frontend_ ,
 	WFSTDecoder *wfstDecoder_ , const char *inputFName_ ,
 	DSTDataFileFormat inputFormat_ , 
 	int inputVecSize_ , const char *outputFName_ ,
@@ -37,6 +39,9 @@ DecoderBatchTest::DecoderBatchTest(
 
 	if ( (wfstDecoder = wfstDecoder_) == NULL )
 		error("DBT::DBT - wfstDecoder_ is NULL") ;
+
+    assert(frontend_);
+    frontend = frontend_;
 
    if ( wfstDecoder->modelLevelOutput() )
    {
@@ -684,7 +689,7 @@ void DecoderBatchTest::run()
 
 		// run the test
       if ( (mode == DBT_MODE_WFSTDECODE_WORDS) || (mode == DBT_MODE_WFSTDECODE_PHONES) )
-         tests[i]->run( wfstDecoder , vocab ) ;
+          tests[i]->run( wfstDecoder , frontend, vocab ) ;
 		else
 			error("DecoderBatchTest::run - mode invalid") ;
 

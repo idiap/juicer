@@ -214,6 +214,7 @@ WFSTOnTheFlyDecoder::~WFSTOnTheFlyDecoder()
 }
 
 
+/* PNG
 DecHyp *WFSTOnTheFlyDecoder::decode( real **inputData , int nFrames_ )
 {
    // Bascially it's the same as WFSTDecoder::decode() at the moment 
@@ -228,25 +229,13 @@ DecHyp *WFSTOnTheFlyDecoder::decode( real **inputData , int nFrames_ )
    for ( int t=0 ; t<nFrames ; t++ )
    {
       currFrame = t ;
-      processFrame( inputData[t] ) ;
+      processFrame( inputData[t], t ) ;
    }
 
-   avgActiveEmitHyps = (real)totalActiveEmitHyps / (real)nFrames ;
-   avgActiveEndHyps = (real)totalActiveEndHyps / (real)nFrames ;
-   avgActiveModels = (real)totalActiveModels / (real)nFrames ;
-   avgProcEmitHyps = (real)totalProcEmitHyps / (real)nFrames ;
-   avgProcEndHyps = (real)totalProcEndHyps / (real)nFrames ;
-
-   LogFile::printf( "\nStatistics:\n  nFrames=%d\n  avgActiveEmitHyps=%.2f\n"
-                    "  avgActiveEndHyps=%.2f\n  avgActiveModels=%.2f\n"
-                    "  avgProcessedEmitHyps=%.2f\n  avgProcessedEndHyps=%.2f\n" ,
-                    nFrames , avgActiveEmitHyps , avgActiveEndHyps , avgActiveModels , 
-                    avgProcEmitHyps , avgProcEndHyps ) ;
-   
    // Return the best final state hypothesis
    return finish() ;
 }
-
+*/
 
 void WFSTOnTheFlyDecoder::init()
 {
@@ -261,7 +250,7 @@ void WFSTOnTheFlyDecoder::init()
 	 dynamic_cast<DecHypOnTheFly* >(bestFinalHyp) , -1 , -1 ) ;
    
    reset() ;
-	
+   
    // Reset the time
    currFrame = 0 ;
 	

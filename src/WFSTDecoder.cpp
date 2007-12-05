@@ -78,7 +78,6 @@ WFSTDecoder::WFSTDecoder()
    emitHypsHistogram = NULL ;
 
    models = NULL ;
-//PNG   phoneModels = NULL ;
    newActiveModelsList = NULL ;
    newActiveModelsListLastElem = NULL ;
   
@@ -190,7 +189,6 @@ WFSTDecoder::WFSTDecoder(
            emitHypsHistogram = new Histogram( 1 , -1000.0 , 200.0 ) ;
    }
 
-//PNG   phoneModels = NULL ;
    newActiveModelsList = NULL ;
    newActiveModelsListLastElem = NULL ;
 
@@ -243,6 +241,7 @@ WFSTDecoder::~WFSTDecoder()
 }
 
 
+/* PNG
 DecHyp *WFSTDecoder::decode( real **inputData , int nFrames_ )
 {
    nFrames = nFrames_ ;
@@ -253,30 +252,13 @@ DecHyp *WFSTDecoder::decode( real **inputData , int nFrames_ )
    // process the inputs
    for ( int t=0 ; t<nFrames ; t++ )
    {
-//printf("\r                  \rFrame %d" , t );fflush(stdout) ;
-      currFrame = t ;
-      processFrame( inputData[t] ) ;
+      processFrame( inputData[t], t ) ;
    }
-   //printf("\r                  \r");fflush(stdout);
    
-   avgActiveEmitHyps = (real)totalActiveEmitHyps / (real)nFrames ;
-   avgActiveEndHyps = (real)totalActiveEndHyps / (real)nFrames ;
-   avgActiveModels = (real)totalActiveModels / (real)nFrames ;
-   avgProcEmitHyps = (real)totalProcEmitHyps / (real)nFrames ;
-   avgProcEndHyps = (real)totalProcEndHyps / (real)nFrames ;
-
-   LogFile::printf(
-       "\nStatistics:\n  nFrames=%d\n  avgActiveEmitHyps=%.2f\n"
-       "  avgActiveEndHyps=%.2f\n  avgActiveModels=%.2f\n"
-       "  avgProcessedEmitHyps=%.2f\n  avgProcessedEndHyps=%.2f\n" ,
-       nFrames , avgActiveEmitHyps , avgActiveEndHyps , avgActiveModels , 
-       avgProcEmitHyps , avgProcEndHyps
-   ) ;
-   
-    // Return the best final state hypothesis
+   // Return the best final state hypothesis
    return finish() ;
 }
-
+*/
 
 void WFSTDecoder::init()
 {
@@ -313,8 +295,14 @@ void WFSTDecoder::init()
 }
 
 
-void WFSTDecoder::processFrame( real *inputVec )
+void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
 {
+    // PNG - This could be maintained by the decoder alone rather than
+    // the calling routine, but for now this is OK as it eases the
+    // translation to real-time.
+    currFrame = currFrame_;
+    nFrames++;
+
    // Reset the bestFinalHyp
    // Changes
    //decHypHistPool->resetDecHyp( bestFinalHyp ) ;
@@ -327,10 +315,7 @@ void WFSTDecoder::processFrame( real *inputVec )
     //   process the new frame.
 
     // Inform the phoneModels/models of the new input vector
-//PNG   if ( phoneModels == NULL )
-      models->newFrame( currFrame , inputVec ) ;
-//PNG   else
-//PNG      phoneModels->setInputVector( inputVec , currFrame ) ;
+   models->newFrame( currFrame , inputVec ) ;
 
    if ( doLatticeGeneration )
    {
@@ -549,18 +534,9 @@ void WFSTDecoder::processActiveModelsEmitStates()
 
 #ifdef DEBUG
     // Make sure 'frame' is in sync with phoneModels/models
-   if ( phoneModels == NULL )
-   {
-      if ( currFrame != models->getCurrFrame() )
-         error("WFSTDecoder::procActModEmitSts - "
-               "currFrame != models->getCurrFrame()") ;
-   }
-   else
-   {
-    if ( currFrame != phoneModels->curr_t )
+    if ( currFrame != models->getCurrFrame() )
         error("WFSTDecoder::procActModEmitSts - "
-              "currFrame != phoneModels->curr_t") ;
-   }
+              "currFrame != models->getCurrFrame()") ;
 #endif  
 
    WFSTModel *model = activeModelsList ;
@@ -664,10 +640,7 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
 
                 // 1. Calculate its emission probability.
                 real emisProb ;
-//PNG            if ( phoneModels == NULL )
                 emisProb = models->calcOutput( st->emis_prob_index ) ;
-//PNG            else
-//PNG                  emisProb = phoneModels->calcEmissionProb( st->emis_prob_index ) ;
 
                 // 2. Evaluate transitions to successor states.
                 for ( int j=0 ; j<st->n_sucs ; j++ )
@@ -1106,6 +1079,21 @@ void WFSTDecoder::extendModelEndState(
 
 DecHyp *WFSTDecoder::finish()
 {
+    // Statistics
+    avgActiveEmitHyps = (real)totalActiveEmitHyps / (real)nFrames ;
+    avgActiveEndHyps = (real)totalActiveEndHyps / (real)nFrames ;
+    avgActiveModels = (real)totalActiveModels / (real)nFrames ;
+    avgProcEmitHyps = (real)totalProcEmitHyps / (real)nFrames ;
+    avgProcEndHyps = (real)totalProcEndHyps / (real)nFrames ;
+
+    LogFile::printf(
+        "\nStatistics:\n  nFrames=%d\n  avgActiveEmitHyps=%.2f\n"
+        "  avgActiveEndHyps=%.2f\n  avgActiveModels=%.2f\n"
+        "  avgProcessedEmitHyps=%.2f\n  avgProcessedEndHyps=%.2f\n" ,
+        nFrames , avgActiveEmitHyps , avgActiveEndHyps , avgActiveModels , 
+        avgProcEmitHyps , avgProcEndHyps
+    ) ;
+
     // Deactivate all active hypotheses (except bestFinalHyp of course)
     resetActiveHyps() ;
 
@@ -1241,6 +1229,7 @@ void WFSTDecoder::reset()
    resetActiveHyps() ;
   
    // Reset statistics
+   nFrames = 0 ;
    totalActiveModels = 0 ;
    totalActiveEmitHyps = 0 ;
    totalActiveEndHyps = 0 ;

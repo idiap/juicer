@@ -9,7 +9,7 @@
 #define DECODERSINGLETEST_INC
 
 #include "general.h"
-//PNG #include "PhoneModels.h"
+#include "FrontEnd.h"
 #include "DecVocabulary.h"
 #include "WFSTDecoder.h"
 
@@ -88,7 +88,7 @@ public:
 		  int *expectedWords_ , DSTDataFileFormat inputFormat_ , 
 		  bool removeSentMarks_ ) ;
 
-  void run( WFSTDecoder *decoder , DecVocabulary *vocab ) ;
+  void run( WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab );
   const char *getTestFName() { return testFName ; } ;
   int getNumFrames() { return nFrames ; } ;
   real getDecodeTime() { return decodeTime ; } ;

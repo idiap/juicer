@@ -185,7 +185,9 @@ void DecoderSingleTest::configure(
  * Runs the actual decoding.  Loads data into memory, passes the whole
  * array to the decoder and gets a hypothesis back.
  */
-void DecoderSingleTest::run( WFSTDecoder *decoder , DecVocabulary *vocab )
+void DecoderSingleTest::run(
+    WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
+)
 {
     clock_t startTime , endTime ;
 
@@ -196,18 +198,28 @@ void DecoderSingleTest::run( WFSTDecoder *decoder , DecVocabulary *vocab )
 #endif
 
     // The data file hasn't been loaded yet - load it
-    loadDataFile() ;
+    //loadDataFile() ;
+    assert(dataFName);
+    frontend->SetSource(dataFName);
 
     // See if the vecSize in the input file agreed with our expectations.
-    if ( vecSize != expVecSize )
-        error("DecoderSingleTest::run - vecSize != expVecSize") ;
+    //if ( vecSize != expVecSize )
+    //    error("DecoderSingleTest::run - vecSize != expVecSize") ;
 
-    // invoke the decoder
-    DecHyp *hyp ;
-
+    // Timer for the decoding
     startTime = clock() ;
-    hyp = decoder->decode( decoderInput , nFrames ) ;
-    //decoder->decode( decoderInput , nFrames , &nActualWords , &actualWords , &actualWordsTimes ) ;
+
+    // Run the decoder over the whole available input
+    decoder->init() ;
+    //for ( int t=0 ; t<nFrames ; t++ )
+    //{
+    //    decoder->processFrame( decoderInput[t], t ) ;
+    //}
+    nFrames = 0;
+    float* array;
+    while(frontend->GetArray(array, nFrames))
+        decoder->processFrame(array, nFrames++);
+    DecHyp* hyp = decoder->finish() ;
     endTime = clock() ;
     decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
 
@@ -226,6 +238,7 @@ void DecoderSingleTest::run( WFSTDecoder *decoder , DecVocabulary *vocab )
     //if ( removeSentMarks )
     //   removeSentMarksFromActual( vocab ) ;
 
+#if 0
     // Free up some memory
     if ( inputFormat == DST_FEATS_HTK )
     {
@@ -238,6 +251,7 @@ void DecoderSingleTest::run( WFSTDecoder *decoder , DecVocabulary *vocab )
             delete [] decoderInput[i] ;
         free( decoderInput ) ;
     }
+#endif
     decoderInput = NULL ;
     vecSize = 0 ;
 }
@@ -281,6 +295,8 @@ void DecoderSingleTest::removeSentMarksFromActual( DecVocabulary *vocab )
    }
 }
 
+// Remove all data loading crap
+#if 0
 
 void DecoderSingleTest::loadDataFile()
 {
@@ -606,6 +622,8 @@ void DecoderSingleTest::loadOnlineFtrs( char *onlineFtrsFName )
    delete [] buf ;
 }
 
+#endif
+// Above is data loading crap
 
 void DecoderSingleTest::extractResultsFromHyp( DecHyp *hyp , DecVocabulary *vocab )
 {

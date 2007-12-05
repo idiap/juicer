@@ -9,7 +9,8 @@
 #define DECODERBATCHTEST_INC
 
 #include "general.h"
-//PNG #include "PhoneModels.h"
+
+#include "FrontEnd.h"
 #include "DecLexInfo.h"
 #include "DecVocabulary.h"
 #include "DecoderSingleTest.h"
@@ -32,7 +33,7 @@ typedef enum
 	DBT_OUTPUT_TRANS ,
 	DBT_OUTPUT_REF ,
 	DBT_OUTPUT_MLF ,
-   DBT_OUTPUT_XMLF ,
+    DBT_OUTPUT_XMLF ,
 	DBT_OUTPUT_INVALID
 } DBTOutputFormat ;
 
@@ -56,7 +57,8 @@ public:
 
 	// Constructors / destructor
 	DecoderBatchTest(
-        DecVocabulary *vocab_, PhoneLookup *phoneLookup_, WFSTDecoder *wfstDecoder_ , 
+        DecVocabulary *vocab_, PhoneLookup *phoneLookup_,
+        FrontEnd *frontend_ , WFSTDecoder *wfstDecoder_ ,
         const char *inputFName_ , DSTDataFileFormat inputFormat_ , int inputVecSize_ ,
         const char *outputFName_ , DBTOutputFormat outputFormat_ ,
         const char *expResultsFName_ , bool removeSil_ , int framesPerSec_ ) ;
@@ -70,8 +72,9 @@ public:
 private:
 	// Private member variables
 	DBTMode						mode ;
-   WFSTDecoder             *wfstDecoder ;
-   PhoneLookup             *phoneLookup ;
+    WFSTDecoder             *wfstDecoder ;
+    FrontEnd    *frontend;
+    PhoneLookup             *phoneLookup ;
 	
 	char							*inputFName ;
 	DSTDataFileFormat			inputFormat ;

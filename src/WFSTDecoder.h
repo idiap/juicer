@@ -13,7 +13,6 @@
 #include "WFSTModel.h"
 #include "WFSTLattice.h"
 #include "Histogram.h"
-//PNG #include "PhoneModels.h"
 #include "DecHypHistPool.h"
 
 /*
@@ -84,12 +83,10 @@ public:
    real              normaliseScore ;
    Histogram         *emitHypsHistogram ;
 
-   // Constructors / destructor
-   WFSTDecoder() ;
+    // Constructors / destructor
+    WFSTDecoder() ;
    
-   // Changes Octavian
-//PNG   WFSTDecoder( WFSTNetwork *network_ , PhoneModels *phoneModels_ , real emitPruneWin_ ,
-//PNG                real phoneEndPruneWin_ , int maxEmitHyps_ , bool isStaticComposition_ = true ) ;
+    // Changes Octavian
     WFSTDecoder(
         WFSTNetwork *network_ , Models *models_ ,
         real phoneStartPruneWin_, real emitPruneWin_, real phoneEndPruneWin_,
@@ -101,10 +98,11 @@ public:
 
    // Public Methods
    // Changes Octavian - Change to virtual functions
-   virtual DecHyp *decode( real **inputData , int nFrames_ ) ;
+    //PNG virtual DecHyp *decode( real **inputData , int nFrames_ ) ;
    // Changes Octavian - Change to virtual functions
    virtual void init() ;
-   void processFrame( real *inputVec ) ;
+   void processFrame( real *inputVec, int currFrame_ ) ;
+   DecHyp *finish() ;
 
    bool modelLevelOutput() { return doModelLevelOutput ; } ;
    bool latticeGeneration() { return doLatticeGeneration ; } ;
@@ -119,7 +117,6 @@ public:
 //private:
 protected:
    // Private Member Variables
-//PNG   PhoneModels       *phoneModels ;
    Models            *models ;
    
    // Changes by Octavian - move to private
@@ -174,7 +171,6 @@ protected:
    void extendModelEndState( DecHyp *endHyp , WFSTTransition *trans , 
                              WFSTTransition **nextTransBuf ) ;
 			     */
-   DecHyp *finish() ;
    
    // Changes
    virtual void joinNewActiveModelsList() ;

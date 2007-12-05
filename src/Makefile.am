@@ -8,6 +8,7 @@
 ## Process this file with automake to produce Makefile.in
 
 CPPFLAGS += -DMIRROR_SCORE0 -DLOCAL_HYPS
+CPPFLAGS += -I$(HOME)/tracter/src
 
 lib_LIBRARIES = libjuicer.a
 
@@ -49,7 +50,7 @@ LEX_OUTPUT_ROOT = lex.htk
 
 bin_PROGRAMS = juicer gramgen cdgen lexgen genwfstseqs
 
-LDADD = libjuicer.a
+LDADD = libjuicer.a $(HOME)/tracter/build/src/libtracter.a
 
 juicer_SOURCES = juicer.cpp
 gramgen_SOURCES = gramgen.cpp

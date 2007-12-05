@@ -85,7 +85,7 @@ public:
    
    // Public Methods
    // Changes
-   virtual DecHyp *decode( real **inputData , int nFrames_ ) ;
+    //PNG virtual DecHyp *decode( real **inputData , int nFrames_ ) ;
    // Changes
    virtual void init() ;
 
