@@ -1,0 +1,29 @@
+0.6.1
+	This release is just cosmetic changes to the build environment:
+	o Move src/index.h to doc/index.doc
+	o Doxygen installs to top level, not in doc/
+	o README, INSTALL etc are there.
+
+0.6.0
+	gramgen now puts auxiliary symbols (#phi) into backoff loops
+	lexgen puts the #phi onto a loop at the initial state (with
+	-addPhiLoop) cdgen passes through #phi symbols.
+
+	Juicer can now take both language model match factor and insertion
+	penalty at the decoder level (-lmScaleFactor and -insPenalty).
+
+	The short pause transition is now handled in the decoder meaning
+	that the FST does not need to handle it (i.e. do not use
+	-pauseTeeTransProb).
+
+	lexgen can now normalise pronunciations such that the FST is
+	stochastic (with -normalise).
+
+	Build scripts are now sensitive to auxiliary symbols.  Not using
+	these symbols will produce an FST that is non-determinisable, and
+	the tools may run out of memory before realising that it is
+	non-determinisable.
+
+	gramgen now has a -normalise option to make the resulting (ngram)
+	FST stochastic.  It is not implemented efficiently, and doesn't
+	seem to have a noticeable effect.

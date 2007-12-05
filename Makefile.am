@@ -8,3 +8,5 @@
 ## Process this file with automake to produce Makefile.in
 
 SUBDIRS = bin src
+DIST_SUBDIRS = bin src doc
+EXTRA_DIST = Doxyfile

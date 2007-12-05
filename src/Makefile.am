@@ -7,7 +7,7 @@
 
 ## Process this file with automake to produce Makefile.in
 
-CPPFLAGS += -DMIRROR_SCORE0 -DLOCAL_HYPS
+AM_CPPFLAGS = -DMIRROR_SCORE0 -DLOCAL_HYPS
 
 lib_LIBRARIES = libjuicer.a
 

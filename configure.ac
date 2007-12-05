@@ -2,8 +2,8 @@
 # ...and manually buggered up by Phil Garner
 
 AC_PREREQ(2.60)
-AC_INIT([Juicer], [0.6.0])
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AC_INIT([Juicer], [0.6.1])
+AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_SRCDIR([src/juicer.cpp])
 AC_CONFIG_HEADERS([config.h])
 
@@ -85,6 +85,7 @@ AC_CONFIG_FILES([
 	Makefile
 	bin/Makefile
 	src/Makefile
+	doc/Makefile
 ])
 AC_OUTPUT
 
