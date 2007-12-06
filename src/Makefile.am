@@ -42,6 +42,10 @@ libjuicer_a_SOURCES = \
 	ARPALM.cpp \
 	string_stuff.cpp
 
+include_HEADERS = $(libjuicer_a_SOURCES:.cpp=.h) \
+	htkparse.h \
+	WFSTGeneral.h
+
 BUILT_SOURCES = htkparse.y.h
 AM_YFLAGS = -d -p htk
 AM_LFLAGS = -Phtk -L

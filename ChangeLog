@@ -2,7 +2,9 @@
 	This release is just cosmetic changes to the build environment:
 	o Move src/index.h to doc/index.doc
 	o Doxygen installs to top level, not in doc/
-	o README, INSTALL etc are there.
+	o README, INSTALL etc are there
+	o config.h.in is gone - build it with autoheader
+	o Header files added to the distrubution
 
 0.6.0
 	gramgen now puts auxiliary symbols (#phi) into backoff loops
