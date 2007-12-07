@@ -1,0 +1,32 @@
+If you got juicer as a tarball then it includes a standard gnu build
+environment.  Just follow the instructions in INSTALL, although you
+might wish to use a VPATH build described below.
+
+If you got juicer from git, you need autoconf and automake.  The
+following commands are necessary to boot up the gnu build environment:
+
+ autoheader
+ aclocal
+ autoconf
+ automake -a
+
+Then, assuming you want to use this as a working repository, I suggest
+you use a VPATH style build.  This builds in a separate tree allowing
+several parallel builds that don't mess up the source directory:
+
+ mkdir build
+ cd build
+ CFLAGS=-Wall ../configure
+ make
+
+The executables will appear in build/src
+
+Documentation is provided in doxygen form.  Go to the installation
+root (the directory containing Doxyfile) and type
+
+ doxygen
+
+You can then point a browser at html/index.html
+
+Phil Garner
+December 2007

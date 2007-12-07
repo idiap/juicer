@@ -7,8 +7,8 @@
 
 ## Process this file with automake to produce Makefile.in
 
-CPPFLAGS += -DMIRROR_SCORE0 -DLOCAL_HYPS
-CPPFLAGS += -I$(HOME)/tracter/src
+AM_CPPFLAGS = -DMIRROR_SCORE0 -DLOCAL_HYPS
+AM_CPPFLAGS += -I$(HOME)/tracter/src
 
 lib_LIBRARIES = libjuicer.a
 
@@ -42,6 +42,10 @@ libjuicer_a_SOURCES = \
 	WordPairLM.cpp \
 	ARPALM.cpp \
 	string_stuff.cpp
+
+include_HEADERS = $(libjuicer_a_SOURCES:.cpp=.h) \
+	htkparse.h \
+	WFSTGeneral.h
 
 BUILT_SOURCES = htkparse.y.h
 AM_YFLAGS = -d -p htk
