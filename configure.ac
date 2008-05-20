@@ -7,24 +7,32 @@ AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_SRCDIR([src/juicer.cpp])
 AC_CONFIG_HEADERS([config.h])
 
+# Check for Tracter
+PKG_CHECK_MODULES(
+    TRACTER, tracter >= 0.1.0, ac_cv_tracter=1, ac_cv_tracter=0
+)
+AC_SUBST(TRACTER_CFLAGS)
+AC_SUBST(TRACTER_LIBS)
+
+
 # Check for Torch3
-AC_ARG_WITH([torch-includes],
-	[AS_HELP_STRING([--with-torch-includes=</path/to/torch/includes>],
+AC_ARG_WITH([torch-cflags],
+	[AS_HELP_STRING([--with-torch-cflags=</path/to/torch/cflags>],
 			[Mandatory Torch3 library])],
-	[torch_includes=$withval])
+	[torch_cflags=$withval])
 AC_ARG_WITH([torch-libs],
 	[AS_HELP_STRING([--with-torch-libs=</path/to/torch/libs>],
 			[Mandatory Torch3 library])],
 	[torch_libs=$withval])
 
-if test x"$torch_includes" = "x"
+if test x"$torch_cflags" = "x"
 then
-  TORCH_INCLUDES=`pkg-config --cflags torch`
+  TORCH_CFLAGS=`pkg-config --cflags torch`
 else
-  TORCH_INCLUDES=$torch_includes
+  TORCH_CFLAGS=$torch_cflags
 fi
 
-if test x"$TORCH_INCLUDES" = "x"
+if test x"$TORCH_CFLAGS" = "x"
 then
   echo Torch not found
   exit 1
@@ -43,8 +51,9 @@ then
   exit 1
 fi
 
-CPPFLAGS+=$TORCH_INCLUDES
-LIBS+=$TORCH_LIBS
+AC_SUBST(TORCH_CFLAGS)
+AC_SUBST(TORCH_LIBS)
+
 
 # Checks for programs.
 AC_PROG_CXX
@@ -91,7 +100,9 @@ AC_OUTPUT
 
 AC_MSG_RESULT([
  Juicer Configured
- TORCH_INCLUDES = $TORCH_INCLUDES
+ TORCH_CFLAGS   = $TORCH_CFLAGS
  TORCH_LIBS     = $TORCH_LIBS
+ TRACTER_CFLAGS = $TRACTER_CFLAGS
+ TRACTER_LIBS   = $TRACTER_LIBS
  CXXFLAGS       = $CXXFLAGS
 ])

@@ -8,9 +8,10 @@
 ## Process this file with automake to produce Makefile.in
 
 AM_CPPFLAGS = -DMIRROR_SCORE0 -DLOCAL_HYPS
-AM_CPPFLAGS += -I$(HOME)/tracter/src
 
 lib_LIBRARIES = libjuicer.a
+
+libjuicer_a_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@
 
 libjuicer_a_SOURCES = \
 	htkparse.y.ypp \
@@ -54,10 +55,20 @@ LEX_OUTPUT_ROOT = lex.htk
 
 bin_PROGRAMS = juicer gramgen cdgen lexgen genwfstseqs
 
-LDADD = libjuicer.a $(HOME)/tracter/build/src/libtracter.a
+LDADD = libjuicer.a @TORCH_LIBS@
 
 juicer_SOURCES = juicer.cpp
+juicer_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@
+juicer_LDADD = libjuicer.a @TORCH_LIBS@ @TRACTER_LIBS@
+
 gramgen_SOURCES = gramgen.cpp
+gramgen_CPPFLAGS = @TORCH_CFLAGS@
+
 cdgen_SOURCES = cdgen.cpp
+cdgen_CPPFLAGS = @TORCH_CFLAGS@
+
 lexgen_SOURCES = lexgen.cpp
+lexgen_CPPFLAGS = @TORCH_CFLAGS@
+
 genwfstseqs_SOURCES = genwfstseqs.cpp
+genwfstseqs_CPPFLAGS = @TORCH_CFLAGS@
