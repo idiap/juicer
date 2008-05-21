@@ -9,9 +9,11 @@
 
 AM_CPPFLAGS = -DMIRROR_SCORE0 -DLOCAL_HYPS
 
-lib_LIBRARIES = libjuicer.a
+lib_LIBRARIES = libjuicer.a libjjuicer.a
 
 libjuicer_a_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@
+
+libjjuicer_a_CPPFLAGS = $(libjuicer_a_CPPFLAGS)
 
 libjuicer_a_SOURCES = \
 	htkparse.y.ypp \
@@ -43,6 +45,8 @@ libjuicer_a_SOURCES = \
 	WordPairLM.cpp \
 	ARPALM.cpp \
 	string_stuff.cpp
+
+libjjuicer_a_SOURCES = $(libjuicer_a_SOURCES) juicer_wrap.cxx
 
 include_HEADERS = $(libjuicer_a_SOURCES:.cpp=.h) \
 	htkparse.h \

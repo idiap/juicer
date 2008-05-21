@@ -31,7 +31,14 @@ namespace Juicer {
  * list of hypotheses in each emitting state and the last state of the
  * HMM. Because now each state will have more than 1 hypotheses. Each
  * hypothesis has a different gState number.
+ *
+ * Changes Danil - modified for compatibility with SWIG.
  */
+union NodeToDecHypOnTheFly_ptr {
+   struct NodeToDecHypOnTheFly *next ;
+   struct NodeToDecHypOnTheFly *left ;
+} ;
+
 struct NodeToDecHypOnTheFly
 {
    int gState ;
@@ -42,10 +49,7 @@ struct NodeToDecHypOnTheFly
    // Changes Octavian 20060630
    // If it is used as a linked list, use ptr.next
    // It it is used as a binary search tree, use ptr.left
-   union {
-      struct NodeToDecHypOnTheFly *next ;
-      struct NodeToDecHypOnTheFly *left ;
-   } ptr ;
+   union NodeToDecHypOnTheFly_ptr ptr ;
    // Changes Octavian 20060630
    struct NodeToDecHypOnTheFly *right ;
 } ;

@@ -35,10 +35,10 @@ struct WFSTModel
     WFSTTransition    *trans ;
     DecodingHMM		  *hmm ;	  // Pointer to the HMM definition.
     DecHyp			  *hyps1 ;
-#ifndef LOCAL_HYPS
+// HARDCODE #ifndef LOCAL_HYPS // Commented because of SWIG compatibility issue
     DecHyp			  *hyps2 ;	
     DecHyp			  *prevHyps ; // Current and previous hypotheses for each
-#endif
+// HARDCODE #endif // Commented because of SWIG compatibility issue
     DecHyp			  *currHyps ; //   state in the phone model.
     int				  nActiveHyps ;
 #ifdef MIRROR_SCORE0

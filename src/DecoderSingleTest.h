@@ -83,6 +83,11 @@ public:
   DecoderSingleTest() ;
   ~DecoderSingleTest() ;
 
+  // Public array access
+  inline int getActualWord(int i) { return actualWords[i]; }
+  inline int getActualWordTime(int i) { return actualWordsTimes[i]; }
+  inline DSTResultWord * getResultWord(int i, int j) { return &(resultWords[i][j]); }
+
   // Public methods
   void configure( DBTMode mode_ , int expVecSize_ , char *testFName_ , int nExpectedWords_ , 
 		  int *expectedWords_ , DSTDataFileFormat inputFormat_ , 

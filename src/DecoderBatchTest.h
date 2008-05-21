@@ -34,6 +34,7 @@ typedef enum
 	DBT_OUTPUT_REF ,
 	DBT_OUTPUT_MLF ,
     DBT_OUTPUT_XMLF ,
+    DBT_OUTPUT_HUB ,
 	DBT_OUTPUT_INVALID
 } DBTOutputFormat ;
 
