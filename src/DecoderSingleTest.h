@@ -30,6 +30,7 @@ typedef enum
   DST_FEATS_ONLINE_FTRS ,
   DST_PROBS_LNA8BIT ,
   DST_PROBS_LNA16BIT , // modification John Dines
+  DST_FEATS_FACTORY ,
   DST_NOFORMAT
 } DSTDataFileFormat ;
 

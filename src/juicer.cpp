@@ -191,7 +191,9 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
 	cmd->read( argc , argv ) ;
    
 	// First interpret the inputFormat
-	if ( strcmp( inputFormat_s , "htk" ) == 0 )
+	if ( strcmp( inputFormat_s , "factory" ) == 0 )
+		inputFormat = DST_FEATS_FACTORY ;
+    else if ( strcmp( inputFormat_s , "htk" ) == 0 )
 		inputFormat = DST_FEATS_HTK ;
 	else if ( strcmp( inputFormat_s , "lna" ) == 0 )
 		inputFormat = DST_PROBS_LNA8BIT ;
@@ -223,7 +225,8 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
     if ( (htkModelsFName != NULL) && (htkModelsFName[0] != '\0') )
     {
         // HMM/GMM system
-        if ( inputFormat != DST_FEATS_HTK )
+        if ( (inputFormat != DST_FEATS_HTK) &&
+             (inputFormat != DST_FEATS_FACTORY) )
             error("juicer: invalid inputFormat for HMM/GMM decoding") ;
     }
     else if ( (priorsFName != NULL) && (priorsFName[0] != '\0') )
@@ -456,6 +459,9 @@ int main( int argc , char *argv[] )
     SourceFormat source;
     switch (inputFormat)
     {
+    case DST_FEATS_FACTORY:
+        source = SOURCE_FACTORY;
+        break;
     case DST_FEATS_HTK:
         source = SOURCE_HTK;
         break;
@@ -542,7 +548,8 @@ void setupModels( Models **models )
     if ( (htkModelsFName != NULL) && (htkModelsFName[0] != '\0') )
     {
         // Check for correct input format
-        if ( inputFormat != DST_FEATS_HTK )
+        if ( (inputFormat != DST_FEATS_HTK) &&
+             (inputFormat != DST_FEATS_FACTORY) )
             error("juicer: setupModels - "
                   "htkModelsFName defined but inputFormat not htk") ;
          
