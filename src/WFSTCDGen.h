@@ -91,7 +91,7 @@ public:
               const char *priorsFName=NULL , int statesPerModel=0 ) ;
    virtual ~WFSTCDGen() ;
 
-   void outputText() ;
+   void outputText() {}
    void writeFSM( const char *fsmFName , const char *inSymbolsFName , 
                   const char *outSymbolsFName , const char *lexInSymbolsFName ) ;
 
