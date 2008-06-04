@@ -487,10 +487,16 @@ WFSTNetwork::WFSTNetwork(
       // new transition.
       if ( maxState >= nStatesAlloc )
       {
-         states = (WFSTState *)realloc( states , (maxState+1000)*sizeof(WFSTState) ) ;
-         for ( i=nStatesAlloc ; i<(maxState+1000) ; i++ )
-            initWFSTState( states + i ) ;
-         nStatesAlloc = maxState + 1000 ;
+          // Was running out of memory for large transducers...
+          //int nAlloc = maxState + 1000;
+          int nAlloc = maxState * 2;
+          states = (WFSTState *)realloc(
+              states, nAlloc * sizeof(WFSTState)
+          );
+          assert(states);
+          for ( i=nStatesAlloc ; i<nAlloc ; i++ )
+              initWFSTState( states + i ) ;
+          nStatesAlloc = nAlloc ;
       }
 
       // Initialise the from and to state labels if not already done.
