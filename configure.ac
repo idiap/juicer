@@ -60,7 +60,7 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_YACC
 AC_PROG_LEX
-AC_PROG_RANLIB
+AC_PROG_LIBTOOL
 
 #
 # Many of these were added by autoscan, then removed by me (Phil).

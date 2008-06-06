@@ -9,13 +9,9 @@
 
 AM_CPPFLAGS = -DMIRROR_SCORE0 -DLOCAL_HYPS
 
-lib_LIBRARIES = libjuicer.a libjjuicer.a
+lib_LTLIBRARIES = libjuicer.la
 
-libjuicer_a_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@
-
-libjjuicer_a_CPPFLAGS = $(libjuicer_a_CPPFLAGS)
-
-libjuicer_a_SOURCES = \
+libjuicer_la_SOURCES = \
 	htkparse.y.ypp \
 	htkparse.l.lpp \
 	WFSTDecoder.cpp \
@@ -46,9 +42,10 @@ libjuicer_a_SOURCES = \
 	ARPALM.cpp \
 	string_stuff.cpp
 
-libjjuicer_a_SOURCES = $(libjuicer_a_SOURCES) juicer_wrap.cxx
+# For SWIG
+libjuicer_la_SOURCES += juicer_wrap.cxx
 
-include_HEADERS = $(libjuicer_a_SOURCES:.cpp=.h) \
+include_HEADERS = $(libjuicer_la_SOURCES:.cpp=.h) \
 	htkparse.h \
 	WFSTGeneral.h
 
@@ -59,11 +56,13 @@ LEX_OUTPUT_ROOT = lex.htk
 
 bin_PROGRAMS = juicer gramgen cdgen lexgen genwfstseqs
 
-LDADD = libjuicer.a @TORCH_LIBS@
+libjuicer_la_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@
+libjuicer_la_LIBADD = @TRACTER_LIBS@
+
+LDADD = libjuicer.la @TORCH_LIBS@
 
 juicer_SOURCES = juicer.cpp
 juicer_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@
-juicer_LDADD = libjuicer.a @TORCH_LIBS@ @TRACTER_LIBS@
 
 gramgen_SOURCES = gramgen.cpp
 gramgen_CPPFLAGS = @TORCH_CFLAGS@
