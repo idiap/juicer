@@ -624,9 +624,9 @@ WFSTNetwork::~WFSTNetwork()
    if ( finalStates != NULL )
    {
       if ( fromBinFile )
-         delete finalStates ;
+          delete [] finalStates ;
       else
-         free( finalStates ) ;
+          free( finalStates ) ;
    }
 
    delete inputAlphabet ;
