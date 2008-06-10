@@ -7,6 +7,7 @@ following commands are necessary to boot up the gnu build environment:
 
  autoheader
  aclocal
+ libtoolize
  autoconf
  automake -a
 
@@ -16,13 +17,13 @@ several parallel builds that don't mess up the source directory:
 
  mkdir build
  cd build
- CFLAGS=-Wall ../configure
+ ../configure CXXFLAGS='-Wall -Os -g'
  make
 
 The executables will appear in build/src
 
-Documentation is provided in doxygen form.  Go to the installation
-root (the directory containing Doxyfile) and type
+Documentation is provided in doxygen form.  From the build directory,
+type
 
  doxygen
 

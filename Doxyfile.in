@@ -1,10 +1,11 @@
 # Doxyfile 1.5.1
+# @configure_input@
 
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
 PROJECT_NAME           = Juicer
-PROJECT_NUMBER         = 0.7.0
+PROJECT_NUMBER         = @VERSION@
 OUTPUT_DIRECTORY       = .
 CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = English
@@ -72,7 +73,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = src doc
+INPUT                  = @srcdir@/src @srcdir@/doc
 FILE_PATTERNS          = *.h *.cpp *.doc
 RECURSIVE              = NO
 EXCLUDE                = 

@@ -11,9 +11,7 @@ AM_CPPFLAGS = -DMIRROR_SCORE0 -DLOCAL_HYPS
 
 lib_LTLIBRARIES = libjuicer.la
 
-libjuicer_la_SOURCES = \
-	htkparse.y.ypp \
-	htkparse.l.lpp \
+JUICER_SOURCES = \
 	WFSTDecoder.cpp \
 	WFSTOnTheFlyDecoder.cpp \
 	WFSTNetwork.cpp \
@@ -42,10 +40,13 @@ libjuicer_la_SOURCES = \
 	ARPALM.cpp \
 	string_stuff.cpp
 
-# For SWIG
-libjuicer_la_SOURCES += juicer_wrap.cxx
+# These sources hove no corresponding header file
+libjuicer_la_SOURCES = $(JUICER_SOURCES) \
+	htkparse.y.ypp \
+	htkparse.l.lpp \
+	juicer_wrap.cxx
 
-include_HEADERS = $(libjuicer_la_SOURCES:.cpp=.h) \
+pkginclude_HEADERS = $(JUICER_SOURCES:.cpp=.h) \
 	htkparse.h \
 	WFSTGeneral.h
 

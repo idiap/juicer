@@ -257,6 +257,62 @@ void DecoderSingleTest::run(
 }
 
 
+/**
+ * Opens the file for decoding.  No need to call if this is actually a
+ * sound device.
+ */
+void DecoderSingleTest::openSource(FrontEnd *frontend)
+{
+    assert(dataFName);
+    frontend->SetSource(dataFName);
+}
+
+
+/**
+ * Runs the actual decoding.
+ */
+void DecoderSingleTest::decodeUtterance(
+    WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
+)
+{
+    clock_t startTime , endTime ;
+
+#ifdef DEBUG
+    if ( (mode != DBT_MODE_WFSTDECODE_WORDS) &&
+         (mode != DBT_MODE_WFSTDECODE_PHONES) )
+        error("DecoderSingleTest::decodeUtterance - incompatible mode") ;
+#endif
+
+    // Timer for the decoding
+    startTime = clock() ;
+
+    // Run the decoder over the whole available input
+    decoder->init() ;
+    nFrames = 0;
+    float* array;
+    while(frontend->GetArray(array, nFrames))
+        decoder->processFrame(array, nFrames++);
+    DecHyp* hyp = decoder->finish() ;
+    endTime = clock() ;
+    decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
+
+    // post-process the decoding result
+    if ( hyp == NULL )
+    {
+        nResultLevels = 0 ;
+        nResultWords = 0 ;
+        resultWords = NULL ;
+    }
+    else
+    {
+        extractResultsFromHyp( hyp , vocab ) ;
+    }
+
+    decoderInput = NULL ;
+    vecSize = 0 ;
+}
+
+
 void DecoderSingleTest::removeSentMarksFromActual( DecVocabulary *vocab )
 {
    if ( (nActualWords == 0) || (vocab == NULL) )

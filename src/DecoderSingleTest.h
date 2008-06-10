@@ -95,6 +95,13 @@ public:
 		  bool removeSentMarks_ ) ;
 
   void run( WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab );
+
+    // Like run(), but split in two
+    void openSource(FrontEnd *frontend);
+    void decodeUtterance(
+        WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
+    );
+
   const char *getTestFName() { return testFName ; } ;
   int getNumFrames() { return nFrames ; } ;
   real getDecodeTime() { return decodeTime ; } ;

@@ -9,4 +9,7 @@
 
 SUBDIRS = bin src
 DIST_SUBDIRS = bin src doc
-EXTRA_DIST = Doxyfile
+EXTRA_DIST = Doxyfile.in juicer.pc.in
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = juicer.pc
