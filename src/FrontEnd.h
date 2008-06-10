@@ -63,6 +63,8 @@ public:
 
     bool GetArray(float*& ioData, int iIndex)
     {
+        if (iIndex == 0)
+            mSink->Reset();
         return mSink->GetArray(ioData, iIndex);
     }
 
