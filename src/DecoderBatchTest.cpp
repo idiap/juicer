@@ -683,6 +683,44 @@ void DecoderBatchTest::run()
 	// open the output file and output format-specific header info
 	openOutputFile() ;
 
+    // Not a great test, but it'll do for the moment
+    if ((nTests == 1) && (inputFormat == DST_FEATS_FACTORY))
+    {
+        LogFile::printf( "Single test file with factory: looping\n" ) ;
+        LogFile::printf( "File: %s\n" , tests[0]->getTestFName() ) ;
+
+        tests[0]->openSource(frontend);
+        while (1)
+        {
+            // run the test
+            if ( (mode == DBT_MODE_WFSTDECODE_WORDS) ||
+                 (mode == DBT_MODE_WFSTDECODE_PHONES) )
+                tests[0]->decodeUtterance( wfstDecoder , frontend, vocab ) ;
+            else
+                error("DecoderBatchTest::run - mode invalid") ;
+
+            // output the result
+            if ( mode != DBT_MODE_WFSTDECODE_PHONES )
+                outputResult( tests[0] ) ;
+            else
+                outputResultPhones( tests[0] ) ;
+            if ( doLatticeGeneration &&
+                 ((mode == DBT_MODE_WFSTDECODE_WORDS) ||
+                  (mode == DBT_MODE_WFSTDECODE_PHONES)) )
+                outputWFSTLattice( tests[0] ) ;
+
+            real uttTime = (real)(tests[0]->getNumFrames()) /
+                (real)framesPerSec ;
+            real decTime = tests[0]->getDecodeTime() ;
+            decodeTime += decTime ;
+            speechTime += uttTime ;
+
+            LogFile::printf( "CPU time %.3f  speech time %.3f  RT factor %.3f\n" ,
+                             decTime , uttTime , decTime / uttTime ) ;
+        }
+    }
+
+
 	for ( int i=0 ; i<nTests ; i++ )
 	{
       LogFile::printf( "File: %s\n" , tests[i]->getTestFName() ) ;
