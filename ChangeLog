@@ -1,3 +1,6 @@
+0.8.0
+	Feature mechanism changed to use tracter.
+	SWIG interface to Java
 0.6.1
 	This release is just cosmetic changes to the build environment:
 	o Move src/index.h to doc/index.doc

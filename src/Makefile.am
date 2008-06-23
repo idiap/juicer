@@ -40,8 +40,9 @@ JUICER_SOURCES = \
 	ARPALM.cpp \
 	string_stuff.cpp
 
-# These sources hove no corresponding header file
+# These sources have no corresponding header file
 libjuicer_la_SOURCES = $(JUICER_SOURCES) \
+	Frontend.h \
 	htkparse.y.ypp \
 	htkparse.l.lpp \
 	juicer_wrap.cxx
