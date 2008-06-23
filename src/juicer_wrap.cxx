@@ -14466,6 +14466,34 @@ JNIEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_DecoderSingle
 }
 
 
+JNIEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_DecoderSingleTest_1openSource(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
+  Juicer::DecoderSingleTest *arg1 = (Juicer::DecoderSingleTest *) 0 ;
+  FrontEnd *arg2 = (FrontEnd *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(Juicer::DecoderSingleTest **)&jarg1; 
+  arg2 = *(FrontEnd **)&jarg2; 
+  (arg1)->openSource(arg2);
+}
+
+
+JNIEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_DecoderSingleTest_1decodeUtterance(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jlong jarg3, jlong jarg4) {
+  Juicer::DecoderSingleTest *arg1 = (Juicer::DecoderSingleTest *) 0 ;
+  Juicer::WFSTDecoder *arg2 = (Juicer::WFSTDecoder *) 0 ;
+  FrontEnd *arg3 = (FrontEnd *) 0 ;
+  Juicer::DecVocabulary *arg4 = (Juicer::DecVocabulary *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(Juicer::DecoderSingleTest **)&jarg1; 
+  arg2 = *(Juicer::WFSTDecoder **)&jarg2; 
+  arg3 = *(FrontEnd **)&jarg3; 
+  arg4 = *(Juicer::DecVocabulary **)&jarg4; 
+  (arg1)->decodeUtterance(arg2,arg3,arg4);
+}
+
+
 JNIEXPORT jstring JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_DecoderSingleTest_1getTestFName(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   Juicer::DecoderSingleTest *arg1 = (Juicer::DecoderSingleTest *) 0 ;
