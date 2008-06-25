@@ -42,7 +42,7 @@ JUICER_SOURCES = \
 
 # These sources have no corresponding header file
 libjuicer_la_SOURCES = $(JUICER_SOURCES) \
-	Frontend.h \
+	FrontEnd.h \
 	htkparse.y.ypp \
 	htkparse.l.lpp \
 	juicer_wrap.cxx
