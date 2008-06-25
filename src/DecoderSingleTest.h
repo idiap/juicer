@@ -129,11 +129,11 @@ private:
 
   // Private methods
   void removeSentMarksFromActual( DecVocabulary *vocab ) ;
-  void loadDataFile() ;
-  void loadHTK( const char *htkFName ) ;
-  void loadLNA8bit( char *lnaFName ) ;
-  void loadLNA16bit( char *lnaFName ) ;
-  void loadOnlineFtrs( char *onlineFtrsFName ) ;
+    //void loadDataFile() ;
+    //void loadHTK( const char *htkFName ) ;
+    //void loadLNA8bit( char *lnaFName ) ;
+    //void loadLNA16bit( char *lnaFName ) ;
+    //void loadOnlineFtrs( char *onlineFtrsFName ) ;
   void extractResultsFromHyp( DecHyp *hyp , DecVocabulary *vocab ) ;
   void extractResultsFromHypWordMode( DecHyp *hyp , DecVocabulary *vocab ) ;
   void extractResultsFromHypPhoneMode( DecHyp *hyp , DecVocabulary *vocab ) ;

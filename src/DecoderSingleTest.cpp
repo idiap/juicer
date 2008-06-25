@@ -217,8 +217,13 @@ void DecoderSingleTest::run(
     //}
     nFrames = 0;
     float* array;
-    while(frontend->GetArray(array, nFrames))
+    int offset = extStartFrame < 0 ? 0 : extStartFrame;
+    while(frontend->GetArray(array, nFrames+offset))
+    {
         decoder->processFrame(array, nFrames++);
+        if ((extEndFrame >= 0) && (nFrames+offset >= extEndFrame))
+            break;
+    }
     DecHyp* hyp = decoder->finish() ;
     endTime = clock() ;
     decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
