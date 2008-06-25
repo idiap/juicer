@@ -221,7 +221,7 @@ void DecoderSingleTest::run(
     while(frontend->GetArray(array, nFrames+offset))
     {
         decoder->processFrame(array, nFrames++);
-        if ((extEndFrame >= 0) && (nFrames+offset >= extEndFrame))
+        if ((extEndFrame >= 0) && (nFrames+offset > extEndFrame))
             break;
     }
     DecHyp* hyp = decoder->finish() ;
