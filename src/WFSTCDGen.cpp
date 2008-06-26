@@ -272,12 +272,11 @@ WFSTCDGen::WFSTCDGen( WFSTCDType type_ , const char *htkModelsFName ,
       models->Load( monophoneListFName , priorsFName , statesPerModel ) ;
 
       // Add the model indices to the PhoneLookup
-      HMM *hmm ;
-      int i ;   
+      int i ;
       for ( i=0 ; i<models->getNumHMMs() ; i++ )
       {
-         hmm = models->getHMM( i ) ;
-         phoneLookup->addModelInd( hmm->name , i ) ;
+          const char* hmmName = models->getHMMName( i ) ;
+          phoneLookup->addModelInd( hmmName , i ) ;
       }
       phoneLookup->verifyAllModels() ;
    }
@@ -303,12 +302,11 @@ WFSTCDGen::WFSTCDGen( WFSTCDType type_ , const char *htkModelsFName ,
       //models->outputText("modelout.txt") ;
 
       // Add the model indices to the PhoneLookup
-      HMM *hmm ;
       int i ;
       for ( i=0 ; i<models->getNumHMMs() ; i++ )
       {
-         hmm = models->getHMM( i ) ;
-         phoneLookup->addModelInd( hmm->name , i ) ;
+          const char* hmmName = models->getHMMName( i ) ;
+          phoneLookup->addModelInd( hmmName , i ) ;
       }
       phoneLookup->verifyAllModels() ;
    }
@@ -383,12 +381,11 @@ void WFSTCDGen::writeFSM(
 
    // Write all input symbols (ie. models) + auxiliary symbols
    int i ;
-   HMM *hmm ;
    writeFSMSymbol( fd , WFST_EPSILON_STR , 0 ) ;
    for ( i=0 ; i<models->getNumHMMs() ; i++ )
    {
-      hmm = models->getHMM( i ) ;
-      writeFSMSymbol( fd , hmm->name , i+1 ) ;
+       const char* hmmName = models->getHMMName( i ) ;
+       writeFSMSymbol( fd , hmmName , i+1 ) ;
    }
 
 #if 0

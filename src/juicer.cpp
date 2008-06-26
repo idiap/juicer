@@ -498,12 +498,11 @@ int main( int argc , char *argv[] )
             tiedListFName , cdSepChars ) ;
       
         // Add the model indices to the PhoneLookup
-        HMM *hmm ;
         int i ;   
         for ( i=0 ; i<models->getNumHMMs() ; i++ )
         {
-            hmm = models->getHMM( i ) ;
-            phoneLookup->addModelInd( hmm->name , i ) ;
+            const char* hmmName = models->getHMMName( i ) ;
+            phoneLookup->addModelInd( hmmName , i ) ;
         }
         phoneLookup->verifyAllModels() ;
     }
