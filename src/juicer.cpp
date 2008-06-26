@@ -559,13 +559,14 @@ void setupModels( Models **models )
         if ( fileExists( modelsBinFName ) )
         {
             LogFile::puts( "from pre-existing binary file .... " ) ;
-            *models = new Models() ;
+            *models = new HTKModels() ;
             (*models)->readBinary( modelsBinFName ) ;
         }
         else
         {
             LogFile::puts( "from ascii HTK MMF file .... " ) ;
-            *models = new Models( htkModelsFName , false /*fixTeeModels*/ ) ;
+            *models = new HTKModels();
+            (*models)->Load( htkModelsFName , false /*fixTeeModels*/ ) ;
             LogFile::puts( "writing new binary file .... " ) ;
             (*models)->output( modelsBinFName , true ) ;
         }
@@ -589,7 +590,8 @@ void setupModels( Models **models )
             error("juicer: setupModels - "
                   "aNNPriorsFName defined but statesPerModel <= 2") ;
 
-        *models = new Models( monoListFName , priorsFName , statesPerModel ) ;
+        *models = new HTKModels();
+        (*models)->Load( monoListFName , priorsFName , statesPerModel ) ;
     }
 }
 

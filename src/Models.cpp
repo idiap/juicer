@@ -48,7 +48,7 @@ real* poolAlloc(int iSize, int iIndex, int iOffset)
 }
 #endif
 
-Models::Models()
+HTKModels::HTKModels()
 {
    currFrame = -1 ;
    currInput = NULL ;
@@ -90,14 +90,16 @@ Models::Models()
 }
 
 
-Models::Models( const char *phonesListFName , const char *priorsFName , int statesPerModel )
+void HTKModels::Load(
+    const char *phonesListFName , const char *priorsFName , int statesPerModel
+)
 {
    if ( (phonesListFName == NULL) || (phonesListFName[0] == '\0') )
-      error("Models::Models(3) - phonesListFName not defined") ;
+      error("HTKModels::Models(3) - phonesListFName not defined") ;
    if ( (priorsFName == NULL) || (priorsFName[0] == '\0') )
-      error("Models::Models(3) - priorsFName not defined") ;
+      error("HTKModels::Models(3) - priorsFName not defined") ;
    if ( statesPerModel <= 2 )
-      error("Models::Models(3) - statesPerModel <= 2 (ie. no emitting states)") ;
+      error("HTKModels::Models(3) - statesPerModel <= 2 (ie. no emitting states)") ;
   
    // Initialise member variables
    currFrame = -1 ;
@@ -141,9 +143,9 @@ Models::Models( const char *phonesListFName , const char *priorsFName , int stat
    // open files
    FILE *phonesFD , *priorsFD ;
    if ( (phonesFD = fopen( phonesListFName , "rb" )) == NULL )
-      error("Models::Models(3) - error opening phonesListFName") ;
+      error("HTKModels::Models(3) - error opening phonesListFName") ;
    if ( (priorsFD = fopen( priorsFName , "rb" )) == NULL )
-      error("Models::Models(3) - error opening priorsFName") ;
+      error("HTKModels::Models(3) - error opening priorsFName") ;
 
    char *phone = new char[10000] ;
    char *priorStr = new char[10000] ;
@@ -163,14 +165,14 @@ Models::Models( const char *phonesListFName , const char *priorsFName , int stat
          if ( (ptr2 = strtok( priorStr , "\r\n\t " )) == NULL )
             continue ;
          if ( sscanf( ptr2 , "%f" , &prior ) != 1 )
-            error("Models::Models(3) - non-real %s detected in priors file" , ptr2 ) ;
+            error("HTKModels::Models(3) - non-real %s detected in priors file" , ptr2 ) ;
 
          // We got a prior - break
          break ;
       }
 
       if ( ptr2 == NULL )
-         error("Models::Models(3) - EOF while reading prior for phone %s" , ptr ) ;
+         error("HTKModels::Models(3) - EOF while reading prior for phone %s" , ptr ) ;
 
       // Create a HMM for this phone.
       if ( nHMMs == nHMMsAlloc )
@@ -242,12 +244,12 @@ Models::Models( const char *phonesListFName , const char *priorsFName , int stat
 }
 
 
-Models::Models(
+void HTKModels::Load(
     const char *htkModelsFName , bool removeInitialToFinalTransitions_
 )
 {
    if ( (htkModelsFName == NULL) || (htkModelsFName[0] == '\0') )
-      error("Models::Models(2) - htkModelsFName undefined") ;
+      error("HTKModels::Models(2) - htkModelsFName undefined") ;
    
    currFrame = -1 ;
    currInput = NULL ;
@@ -290,11 +292,11 @@ Models::Models(
    // Open HTK models file
    FILE *fd ;
    if ( (fd = fopen( htkModelsFName , "rb" )) == NULL )
-      error("Models::Models(2) - error opening htkModelsFName") ;
+      error("HTKModels::Models(2) - error opening htkModelsFName") ;
 
 	// Use our HTK (bison) parser to read the file.
 	if ( htkparse( (void *)fd ) != 0 )
-		error("Models::Models(2) - htkparse failed") ;
+		error("HTKModels::Models(2) - htkparse failed") ;
 
    // Initialise our data structures using result of parse
    initFromHTKParseResult() ;
@@ -305,7 +307,7 @@ Models::Models(
 }
 
 
-Models::~Models()
+HTKModels::~HTKModels()
 {
    int i ;
 
@@ -422,7 +424,7 @@ Models::~Models()
 }
 
 
-void Models::initFromHTKParseResult()
+void HTKModels::initFromHTKParseResult()
 {
 	// Results of htkparse are in the global variable "htk_def"
 
@@ -433,7 +435,7 @@ void Models::initFromHTKParseResult()
    for ( i=0 ; i<htk_def.n_mix_pools ; i++ )
    {
       if ( htk_def.mix_pools[i]->name == NULL )
-         error("Models::initFromHTKParseResult - htk_def.mix_pools[i]->name undefined") ;
+         error("HTKModels::initFromHTKParseResult - htk_def.mix_pools[i]->name undefined") ;
       addMixture( htk_def.mix_pools[i] ) ;
    }
    
@@ -441,7 +443,7 @@ void Models::initFromHTKParseResult()
    for ( i=0 ; i<htk_def.n_sh_transmats ; i++ )
    {
       if ( htk_def.sh_transmats[i]->sh_name == NULL )
-         error("Models::initFromHTKParseResult - htk_def.sh_transmats[i]->sh_name undefined") ;
+         error("HTKModels::initFromHTKParseResult - htk_def.sh_transmats[i]->sh_name undefined") ;
       addTransMatrix( htk_def.sh_transmats[i]->sh_name , htk_def.sh_transmats[i]->n_states ,
                       htk_def.sh_transmats[i]->transp ) ;
    }
@@ -450,7 +452,7 @@ void Models::initFromHTKParseResult()
    for ( i=0 ; i<htk_def.n_sh_states ; i++ )
    {
       if ( htk_def.sh_states[i]->sh_name == NULL )
-         error("Models::initFromHTKParseResult - htk_def.sh_states[i]->sh_name undefined") ;
+         error("HTKModels::initFromHTKParseResult - htk_def.sh_states[i]->sh_name undefined") ;
       addGMM( htk_def.sh_states[i] ) ;
    }
    
@@ -458,7 +460,7 @@ void Models::initFromHTKParseResult()
    for ( i=0 ; i<htk_def.n_hmms ; i++ )
    {
       if ( htk_def.hmms[i]->name == NULL )
-         error("Models::initFromHTKParseResult - htk_def.hmms[i]->name undefined") ;
+         error("HTKModels::initFromHTKParseResult - htk_def.hmms[i]->name undefined") ;
          
       addHMM( htk_def.hmms[i] ) ;      
    }
@@ -482,10 +484,10 @@ void Models::initFromHTKParseResult()
 }
 
 
-void Models::newFrame( int frame , const real *input )
+void HTKModels::newFrame( int frame , const real *input )
 {
    if ( (frame > 0) && (frame != (currFrame+1)) )
-      error("Models::newFrame - invalid frame") ;
+      error("HTKModels::newFrame - invalid frame") ;
 
    if ( (hybridMode == false) && (currFrame >= 0) )
    {
@@ -502,22 +504,22 @@ void Models::newFrame( int frame , const real *input )
 }
 
 
-real Models::calcOutput( int hmmInd , int stateInd )
+real HTKModels::calcOutput( int hmmInd , int stateInd )
 {
 #ifdef DEBUG
    if ( (hmmInd < 0) || (hmmInd >= nHMMs) )
-      error("Models::calcOutput - hmmInd out of range") ;
+      error("HTKModels::calcOutput - hmmInd out of range") ;
    if ( (stateInd < 0) || (stateInd >= hMMs[hmmInd].nStates) )
-      error("Models::calcOutput - stateInd out of range") ;
+      error("HTKModels::calcOutput - stateInd out of range") ;
    if ( hMMs[hmmInd].gmmInds[stateInd] < 0 )
-      error("Models::calcOutput - no gmm associated with stateInd") ;
+      error("HTKModels::calcOutput - no gmm associated with stateInd") ;
 #endif
 
    if ( hybridMode )
    {
 #ifdef DEBUG
       if ( hmmInd != hMMs[hmmInd].gmmInds[stateInd] )
-         error("Models::calcOutput - unexpected gmmInds value") ;
+         error("HTKModels::calcOutput - unexpected gmmInds value") ;
 #endif
       return ( currInput[hmmInd] - logPriors[hmmInd] ) ;
    }
@@ -526,18 +528,18 @@ real Models::calcOutput( int hmmInd , int stateInd )
 }
 
 
-real Models::calcOutput( int gmmInd )
+real HTKModels::calcOutput( int gmmInd )
 {
 #ifdef DEBUG
    if ( hybridMode )
    {
       if ( (gmmInd < 0) || (gmmInd >= nHMMs) )
-         error("Models::calcOutput(2) - gmmInd out of range") ;
+         error("HTKModels::calcOutput(2) - gmmInd out of range") ;
    }
    else
    {
       if ( (gmmInd < 0) || (gmmInd >= nGMMs) )
-         error("Models::calcOutput(2) - gmmInd out of range") ;
+         error("HTKModels::calcOutput(2) - gmmInd out of range") ;
    }
 #endif
 
@@ -551,7 +553,7 @@ real Models::calcOutput( int gmmInd )
 }
 
 
-int Models::addHMM( HTKHMM *hmm )
+int HTKModels::addHMM( HTKHMM *hmm )
 {
    if ( nHMMs == nHMMsAlloc )
    {
@@ -569,7 +571,7 @@ int Models::addHMM( HTKHMM *hmm )
       strcpy( curr->name , hmm->name ) ;
    }
    else
-      error("Models::addHMM - hmm does not have a name") ;
+      error("HTKModels::addHMM - hmm does not have a name") ;
 
    // Configure the number of states in the HMM
    curr->nStates = hmm->n_states ;
@@ -588,7 +590,7 @@ int Models::addHMM( HTKHMM *hmm )
          // This state uses a shared state definition
          curr->gmmInds[i] = getGMM( hmm->emit_states[i-1]->sh_name ) ;
          if ( curr->gmmInds[i] < 0 )
-            error("Models::addHMM - shared state not found") ;
+            error("HTKModels::addHMM - shared state not found") ;
       }
       else
       {
@@ -602,13 +604,13 @@ int Models::addHMM( HTKHMM *hmm )
    {
       curr->transMatrixInd = getTransMatrix( hmm->transmat->sh_name ) ;
       if ( curr->transMatrixInd < 0 )
-         error("Models::addHMM - shared transition matrix not found %s",hmm->transmat->sh_name) ;
+         error("HTKModels::addHMM - shared transition matrix not found %s",hmm->transmat->sh_name) ;
    }
    else
    {
       // The transition matrix is not shared.
       if ( curr->nStates != hmm->transmat->n_states )
-         error("Models::addHMM - curr->nStates != hmm->transmat->n_states") ;
+         error("HTKModels::addHMM - curr->nStates != hmm->transmat->n_states") ;
       curr->transMatrixInd = addTransMatrix( NULL , curr->nStates , hmm->transmat->transp ) ;
    }
 
@@ -617,7 +619,7 @@ int Models::addHMM( HTKHMM *hmm )
 }
 
 
-int Models::addGMM( HTKHMMState *st )
+int HTKModels::addGMM( HTKHMMState *st )
 {
    if ( nGMMs == nGMMsAlloc )
    {
@@ -638,18 +640,18 @@ int Models::addGMM( HTKHMMState *st )
    {
       // This GMM uses a shared mixture definition.
       if ( (st->pool_ind < 0) || (st->pool_ind >= htk_def.n_mix_pools) )
-         error("Models::addGMM - st had invalid pool_ind") ;
+         error("HTKModels::addGMM - st had invalid pool_ind") ;
 
       // Find the shared mixture in our 'mixtures' array that has the same name
       //   as the one referenced by 'st->pool_ind'.
       // Configure mixtureInd of new GMM accordingly.
       curr->mixtureInd = getMixture( htk_def.mix_pools[st->pool_ind]->name ) ;
       if ( curr->mixtureInd < 0 )
-         error("Models::addGMM - shared mixture not found") ;
+         error("HTKModels::addGMM - shared mixture not found") ;
 
       int nComps = mixtures[curr->mixtureInd].nComps ;
       if ( st->n_mixes != nComps )
-         error("Models::addGMM - st->n_mixes != nComps") ;
+         error("HTKModels::addGMM - st->n_mixes != nComps") ;
       
       // Mixture component weights
       curr->compWeights = new real[nComps * 2] ;
@@ -665,7 +667,7 @@ int Models::addGMM( HTKHMMState *st )
             curr->logCompWeights[i] = LOG_ZERO ;
       }
       if ( (nComps == 1) && (curr->compWeights[0] != 1.0) )
-         error("Models::addGMM - (nComps == 1) && (curr->compWeights[0] != 1.0)") ;
+         error("HTKModels::addGMM - (nComps == 1) && (curr->compWeights[0] != 1.0)") ;
    }
    else
    {
@@ -688,7 +690,7 @@ int Models::addGMM( HTKHMMState *st )
       }
       
       if ( (st->n_mixes == 1) && (curr->compWeights[0] != 1.0) )
-         error("Models::addGMM - (st->n_mixes == 1) && (curr->compWeights[0] != 1.0)") ;
+         error("HTKModels::addGMM - (st->n_mixes == 1) && (curr->compWeights[0] != 1.0)") ;
    }
 
    nGMMs++ ;
@@ -696,7 +698,7 @@ int Models::addGMM( HTKHMMState *st )
 }
 
 
-int Models::getGMM( const char *name )
+int HTKModels::getGMM( const char *name )
 {
    for ( int i=0 ; i<nGMMs ; i++ )
    {
@@ -711,7 +713,7 @@ int Models::getGMM( const char *name )
 }
 
 
-int Models::addMixture( HTKMixturePool *mix )
+int HTKModels::addMixture( HTKMixturePool *mix )
 {
    if ( nMixtures == nMixturesAlloc )
    {
@@ -745,12 +747,12 @@ int Models::addMixture( HTKMixturePool *mix )
    {
       // Means - N.B. assuming no shared mean vecs
       if ( mix->mixes[i]->n_means != vecSize )
-         error("Models::addMixture - n_means != vecSize") ;
+         error("HTKModels::addMixture - n_means != vecSize") ;
       curr->meanVecInds[i] = addMeanVec( NULL , mix->mixes[i]->means ) ;
 
       // Vars - N.B. assuming no shared var vecs
       if ( mix->mixes[i]->n_vars != vecSize )
-         error("Models::addMixture - n_vars != vecSize") ;
+         error("HTKModels::addMixture - n_vars != vecSize") ;
       curr->varVecInds[i] = addVarVec( NULL , mix->mixes[i]->vars ) ;
    }
 
@@ -765,7 +767,7 @@ int Models::addMixture( HTKMixturePool *mix )
 }
 
 
-int Models::addMixture( int nComps , HTKMixture **comps )
+int HTKModels::addMixture( int nComps , HTKMixture **comps )
 {
    if ( nMixtures == nMixturesAlloc )
    {
@@ -790,12 +792,12 @@ int Models::addMixture( int nComps , HTKMixture **comps )
    {
       // Means - N.B. assuming no shared mean vecs
       if ( comps[i]->n_means != vecSize )
-         error("Models::addMixture(2) - n_means != vecSize") ;
+         error("HTKModels::addMixture(2) - n_means != vecSize") ;
       curr->meanVecInds[i] = addMeanVec( NULL , comps[i]->means ) ;
 
       // Vars - N.B. assuming no shared var vecs
       if ( comps[i]->n_vars != vecSize )
-         error("Models::addMixture(2) - n_vars != vecSize") ;
+         error("HTKModels::addMixture(2) - n_vars != vecSize") ;
       curr->varVecInds[i] = addVarVec( NULL , comps[i]->vars ) ;
    }
 
@@ -810,7 +812,7 @@ int Models::addMixture( int nComps , HTKMixture **comps )
 }
 
 
-int Models::getMixture( const char *name )
+int HTKModels::getMixture( const char *name )
 {
    for ( int i=0 ; i<nMixtures ; i++ )
    {
@@ -825,10 +827,10 @@ int Models::getMixture( const char *name )
 }
 
 
-int Models::addMeanVec( const char *name , real *means )
+int HTKModels::addMeanVec( const char *name , real *means )
 {
    if ( means == NULL )
-      error("Models::addMeanVec - means is NULL") ;
+      error("HTKModels::addMeanVec - means is NULL") ;
 
    if ( nMeanVecs == nMeanVecsAlloc )
    {
@@ -852,10 +854,10 @@ int Models::addMeanVec( const char *name , real *means )
 }
 
 
-int Models::addVarVec( const char *name , real *vars )
+int HTKModels::addVarVec( const char *name , real *vars )
 {
    if ( vars == NULL )
-      error("Models::addVarVec - vars is NULL") ;
+      error("HTKModels::addVarVec - vars is NULL") ;
 
    if ( nVarVecs == nVarVecsAlloc )
    {
@@ -890,12 +892,12 @@ int Models::addVarVec( const char *name , real *vars )
 }
 
 
-int Models::addTransMatrix( const char *name , int nStates , real **trans )
+int HTKModels::addTransMatrix( const char *name , int nStates , real **trans )
 {
    if ( nStates < 0 )
-      error("Models::addTransMatrix - nStates < 0") ;
+      error("HTKModels::addTransMatrix - nStates < 0") ;
    if ( trans == NULL )
-      error("Models::addTransMatrix - trans is NULL") ;
+      error("HTKModels::addTransMatrix - trans is NULL") ;
    
    if ( nTransMats == nTransMatsAlloc )
    {
@@ -958,7 +960,7 @@ int Models::addTransMatrix( const char *name , int nStates , real **trans )
                  removeInitialToFinalTransitions )
             {
                 if ( (teeProb = trans[i][j]) >= 1.0 )               
-                    error("Models::addTransMatrix"
+                    error("HTKModels::addTransMatrix"
                           " - initial-final transition had prob. >= 1.0") ;
                 continue ;
             }
@@ -994,7 +996,7 @@ int Models::addTransMatrix( const char *name , int nStates , real **trans )
 }  
             
 
-int Models::getTransMatrix( const char *name )
+int HTKModels::getTransMatrix( const char *name )
 {
    for ( int i=0 ; i<nTransMats ; i++ )
    {
@@ -1010,10 +1012,10 @@ int Models::getTransMatrix( const char *name )
 }
 
 
-void Models::output( const char *fName , bool outputBinary )
+void HTKModels::output( const char *fName , bool outputBinary )
 {
    if ( (outFD = fopen( fName , "wb" )) == NULL )
-      error("Models::output - error opening file") ;
+      error("HTKModels::output - error opening file") ;
 
    int i ;
 
@@ -1129,37 +1131,37 @@ void Models::output( const char *fName , bool outputBinary )
 }
 
 
-void Models::readBinary( const char *fName )
+void HTKModels::readBinary( const char *fName )
 {
    if ( (inFD = fopen( fName , "rb" )) == NULL )
-      error("Models::readBinary - error opening file") ;
+      error("HTKModels::readBinary - error opening file") ;
 
    char id[5] ;
 
    // Read and check the ID
    if ( fread( id , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinary - error reading ID") ;
+      error("HTKModels::readBinary - error reading ID") ;
    id[4] = '\0' ;
    if ( strcmp( id , "JMBI" ) != 0 )
-      error("Models::readBinary - invalid ID = %s" , id ) ;
+      error("HTKModels::readBinary - invalid ID = %s" , id ) ;
 
    // Read the global options
    if ( fread( &vecSize , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinary - error reading vecSize") ;
+      error("HTKModels::readBinary - error reading vecSize") ;
 
    // Read the numbers of everything
    if ( fread( &nMeanVecsAlloc , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinary - error reading nMeanVecs") ;
+      error("HTKModels::readBinary - error reading nMeanVecs") ;
    if ( fread( &nVarVecsAlloc , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinary - error reading nVarVecs") ;
+      error("HTKModels::readBinary - error reading nVarVecs") ;
    if ( fread( &nMixturesAlloc , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinary - error reading nMixtures") ;
+      error("HTKModels::readBinary - error reading nMixtures") ;
    if ( fread( &nGMMsAlloc , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinary - error reading nGMMs") ;
+      error("HTKModels::readBinary - error reading nGMMs") ;
    if ( fread( &nTransMatsAlloc , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinary - error reading nTransMats") ;
+      error("HTKModels::readBinary - error reading nTransMats") ;
    if ( fread( &nHMMsAlloc , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinary - error reading nHMMs") ;
+      error("HTKModels::readBinary - error reading nHMMs") ;
 
    // Allocate arrays
    if ( nMeanVecsAlloc > 0 )
@@ -1233,14 +1235,14 @@ void Models::readBinary( const char *fName )
 
    // Read the hybrid mode flag
    if ( fread( &hybridMode , sizeof(bool) , 1 , inFD ) != 1 )
-      error("Models::readBinary - error reading hybridMode") ;
+      error("HTKModels::readBinary - error reading hybridMode") ;
 
    // If hybridMode is true, read logPriors
    if ( hybridMode && (nHMMs > 0) )
    {
       logPriors = new real[nHMMs] ;
       if ( (int)fread( logPriors , sizeof(real) , nHMMs , inFD ) != nHMMs )
-         error("Models::readBinary - error reading logPriors") ;
+         error("HTKModels::readBinary - error reading logPriors") ;
    }
    else
       logPriors = NULL ;
@@ -1273,10 +1275,10 @@ void Models::readBinary( const char *fName )
 }
 
 
-void Models::outputHMM( int ind , bool outputBinary )
+void HTKModels::outputHMM( int ind , bool outputBinary )
 {
    if ( (ind < 0) || (ind >= nHMMs) )
-      error("Models::outputHMM - ind out of range") ;
+      error("HTKModels::outputHMM - ind out of range") ;
 
    HMM *curr = hMMs + ind ;
 
@@ -1330,34 +1332,34 @@ void Models::outputHMM( int ind , bool outputBinary )
 }
 
 
-void Models::readBinaryHMM()
+void HTKModels::readBinaryHMM()
 {
    char id[5] ;
 
    // Read and check the ID
    if ( fread( id , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryHMM - error reading ID") ;
+      error("HTKModels::readBinaryHMM - error reading ID") ;
    id[4] = '\0' ;
    if ( strcmp( id , "JMHM" ) != 0 )
-      error("Models::readBinaryHMM - invalid ID = %s" , id ) ;
+      error("HTKModels::readBinaryHMM - invalid ID = %s" , id ) ;
 
    // Make sure we are not about to exceed the pre-allocated memory
    if ( nHMMs == nHMMsAlloc )
-      error("Models::readBinaryHMM - nHMMs == nHMMsAlloc") ;
+      error("HTKModels::readBinaryHMM - nHMMs == nHMMsAlloc") ;
 
    HMM *curr = hMMs + nHMMs ;
 
    // Read the length of the name
    int len ;
    if ( fread( &len , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryHMM - error reading name length") ;
+      error("HTKModels::readBinaryHMM - error reading name length") ;
 
    // Allocate space for the name if required and read name from file
    if ( len > 0 )
    {
       curr->name = new char[len] ;
       if ( (int)fread( curr->name , sizeof(char) , len , inFD ) != len )
-         error("Models::readBinaryHMM - error reading name") ;
+         error("HTKModels::readBinaryHMM - error reading name") ;
    }
    else
    {
@@ -1366,27 +1368,27 @@ void Models::readBinaryHMM()
 
    // Read the number of states
    if ( fread( &(curr->nStates) , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryHMM - error reading nStates") ;
+      error("HTKModels::readBinaryHMM - error reading nStates") ;
 
    // Allocate memory for the gmmInds array
    curr->gmmInds = new int[curr->nStates] ;
 
    // Read the gmmInds array
    if ( (int)fread( curr->gmmInds , sizeof(int) , curr->nStates , inFD ) != curr->nStates )
-      error("Models::readBinaryHMM - error reading gmmInds") ;
+      error("HTKModels::readBinaryHMM - error reading gmmInds") ;
 
    // Read the transMatrixInd
    if ( fread( &(curr->transMatrixInd) , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryHMM - error reading transMatrixInd") ;
+      error("HTKModels::readBinaryHMM - error reading transMatrixInd") ;
 
    nHMMs++ ;
 }
 
 
-void Models::outputGMM( int ind , bool isRef , bool outputBinary )
+void HTKModels::outputGMM( int ind , bool isRef , bool outputBinary )
 {
    if ( (ind < 0) || (ind >= nGMMs) )
-      error("Models::outputGMM - ind %d out of range" , ind ) ;
+      error("HTKModels::outputGMM - ind %d out of range" , ind ) ;
 
    GMM *curr = gMMs + ind ;
 
@@ -1408,7 +1410,7 @@ void Models::outputGMM( int ind , bool isRef , bool outputBinary )
       else
       {
          if ( curr->name == NULL )
-            error("Models::outputGMM - curr->name is NULL") ;
+            error("HTKModels::outputGMM - curr->name is NULL") ;
          fprintf( outFD , "~s \"%s\"\n" , curr->name ) ;
          outputMixture( curr->mixtureInd , curr->compWeights , true , false ) ;
       }
@@ -1448,34 +1450,34 @@ void Models::outputGMM( int ind , bool isRef , bool outputBinary )
 }
 
 
-void Models::readBinaryGMM()
+void HTKModels::readBinaryGMM()
 {
    char id[5] ;
 
    // Read and check the ID
    if ( fread( id , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryGMM - error reading ID") ;
+      error("HTKModels::readBinaryGMM - error reading ID") ;
    id[4] = '\0' ;
    if ( strcmp( id , "JMGM" ) != 0 )
-      error("Models::readBinaryGMM - invalid ID = %s" , id ) ;
+      error("HTKModels::readBinaryGMM - invalid ID = %s" , id ) ;
 
    // Make sure we are not about to exceed the pre-allocated memory
    if ( nGMMs == nGMMsAlloc )
-      error("Models::readBinaryGMM - nGMMs == nGMMsAlloc") ;
+      error("HTKModels::readBinaryGMM - nGMMs == nGMMsAlloc") ;
    
    GMM *curr = gMMs + nGMMs ;
 
    // Read the length of the name
    int len ;
    if ( fread( &len , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryGMM - error reading name length") ;
+      error("HTKModels::readBinaryGMM - error reading name length") ;
 
    // Allocate space for the name if required and read name from file
    if ( len > 0 )
    {
       curr->name = new char[len] ;
       if ( (int)fread( curr->name , sizeof(char) , len , inFD ) != len )
-         error("Models::readBinaryGMM - error reading name") ;
+         error("HTKModels::readBinaryGMM - error reading name") ;
    }
    else
    {
@@ -1484,12 +1486,12 @@ void Models::readBinaryGMM()
 
    // Read the mixture index
    if ( fread( &(curr->mixtureInd) , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryGMM - error reading mixtureInd") ;
+      error("HTKModels::readBinaryGMM - error reading mixtureInd") ;
 
    // Read the number of components
    int tmpNComps ;
    if ( fread( &tmpNComps , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryGMM - error reading num components") ;
+      error("HTKModels::readBinaryGMM - error reading num components") ;
 
    // Allocate memory for the component weights and log component weights
    curr->compWeights = new real[tmpNComps * 2] ;
@@ -1497,16 +1499,16 @@ void Models::readBinaryGMM()
 
    // Read the compWeights + logCompWeights
    if ( (int)fread( curr->compWeights , sizeof(real) , tmpNComps*2 , inFD ) != (tmpNComps*2) )
-      error("Models::readBinaryGMM - error reading compWeights+nCompWeights") ;
+      error("HTKModels::readBinaryGMM - error reading compWeights+nCompWeights") ;
 
    nGMMs++ ;
 }
 
 
-void Models::outputMixture( int mixInd , real *compWeights , bool isRef , bool outputBinary )
+void HTKModels::outputMixture( int mixInd , real *compWeights , bool isRef , bool outputBinary )
 {
    if ( (mixInd < 0) || (mixInd >= nMixtures) )
-      error("Models::outputMixture - mixInd out of range") ;
+      error("HTKModels::outputMixture - mixInd out of range") ;
    
    Mixture *mix = mixtures + mixInd ;
 
@@ -1546,7 +1548,7 @@ void Models::outputMixture( int mixInd , real *compWeights , bool isRef , bool o
       else
       {
          if ( mix->name == NULL )
-            error("Models::outputMixture - mix->name == NULL") ;
+            error("HTKModels::outputMixture - mix->name == NULL") ;
 
          for ( int i=0 ; i<mix->nComps ; i++ )
          {
@@ -1588,34 +1590,34 @@ void Models::outputMixture( int mixInd , real *compWeights , bool isRef , bool o
 }
 
 
-void Models::readBinaryMixture()
+void HTKModels::readBinaryMixture()
 {
    char id[5] ;
 
    // Read and check the ID
    if ( fread( id , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryMixture - error reading ID") ;
+      error("HTKModels::readBinaryMixture - error reading ID") ;
    id[4] = '\0' ;
    if ( strcmp( id , "JMMX" ) != 0 )
-      error("Models::readBinaryMixture - invalid ID = %s" , id ) ;
+      error("HTKModels::readBinaryMixture - invalid ID = %s" , id ) ;
 
    // Make sure we are not about to exceed the pre-allocated memory
    if ( nMixtures == nMixturesAlloc )
-      error("Models::readBinaryMixture - nMixtures == nMixturesAlloc") ;
+      error("HTKModels::readBinaryMixture - nMixtures == nMixturesAlloc") ;
 
    Mixture *curr = mixtures + nMixtures ;
 
    // Read the length of the name
    int len ;
    if ( fread( &len , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryMixture - error reading name length") ;
+      error("HTKModels::readBinaryMixture - error reading name length") ;
 
    // Allocate space for the name if required and read name from file
    if ( len > 0 )
    {
       curr->name = new char[len] ;
       if ( (int)fread( curr->name , sizeof(char) , len , inFD ) != len )
-         error("Models::readBinaryMixture - error reading name") ;
+         error("HTKModels::readBinaryMixture - error reading name") ;
    }
    else
    {
@@ -1624,7 +1626,7 @@ void Models::readBinaryMixture()
 
    // Read the number of components
    if ( fread( &(curr->nComps) , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryMixture - error reading nComps") ;
+      error("HTKModels::readBinaryMixture - error reading nComps") ;
 
    // Allocate memory for meanVecInds and varVecInds
    curr->meanVecInds = new int[curr->nComps * 2] ;
@@ -1632,7 +1634,7 @@ void Models::readBinaryMixture()
 
    // Read meanVecInds and varVecInds
    if ( (int)fread( curr->meanVecInds , sizeof(int) , curr->nComps*2 , inFD ) != (curr->nComps*2) )
-      error("Models::readBinaryMixture - error reading meanVecInds+varVecInds") ;
+      error("HTKModels::readBinaryMixture - error reading meanVecInds+varVecInds") ;
 
    // Initialise the currCompOutputs stuff
    curr->currCompOutputsValid = false ;
@@ -1644,10 +1646,10 @@ void Models::readBinaryMixture()
 }
 
 
-void Models::outputMeanVec( int ind , bool isRef , bool outputBinary )
+void HTKModels::outputMeanVec( int ind , bool isRef , bool outputBinary )
 {
    if ( (ind < 0) || (ind >= nMeanVecs) )
-      error("Models::outputMeanVec - ind out of range") ;
+      error("HTKModels::outputMeanVec - ind out of range") ;
 
    MeanVec *mvec = meanVecs + ind ;
 
@@ -1668,7 +1670,7 @@ void Models::outputMeanVec( int ind , bool isRef , bool outputBinary )
       else
       {
          if ( mvec->name == NULL )
-            error("Models::outputMeanVec - mvec->name is NULL") ;
+            error("HTKModels::outputMeanVec - mvec->name is NULL") ;
 
          fprintf( outFD , "~u \"%s\"\n" , mvec->name ) ;
          fprintf( outFD , "  <Mean> %d\n   " , vecSize ) ;
@@ -1705,34 +1707,34 @@ void Models::outputMeanVec( int ind , bool isRef , bool outputBinary )
 }
 
 
-void Models::readBinaryMeanVec()
+void HTKModels::readBinaryMeanVec()
 {
    char id[5] ;
 
    // Read and check the ID
    if ( fread( id , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryMeanVec - error reading ID") ;
+      error("HTKModels::readBinaryMeanVec - error reading ID") ;
    id[4] = '\0' ;
    if ( strcmp( id , "JMMN" ) != 0 )
-      error("Models::readBinaryMeanVec - invalid ID = %s" , id ) ;
+      error("HTKModels::readBinaryMeanVec - invalid ID = %s" , id ) ;
 
    // Make sure we are not about to exceed the pre-allocated memory
    if ( nMeanVecs == nMeanVecsAlloc )
-      error("Models::readBinaryMeanVec - nMeanVecs == nMeanVecsAlloc") ;
+      error("HTKModels::readBinaryMeanVec - nMeanVecs == nMeanVecsAlloc") ;
       
    MeanVec *curr = meanVecs + nMeanVecs ;
 
    // Read the length of the name
    int len ;
    if ( fread( &len , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryMeanVec - error reading name length") ;
+      error("HTKModels::readBinaryMeanVec - error reading name length") ;
 
    // Allocate space for the name if required and read name from file
    if ( len > 0 )
    {
       curr->name = new char[len] ;
       if ( (int)fread( curr->name , sizeof(char) , len , inFD ) != len )
-         error("Models::readBinaryMeanVec - error reading name") ;
+         error("HTKModels::readBinaryMeanVec - error reading name") ;
    }
    else
    {
@@ -1744,16 +1746,16 @@ void Models::readBinaryMeanVec()
 
    // Read the variance values and derivations
    if ( (int)fread( curr->means , sizeof(real) , vecSize , inFD ) != vecSize )
-      error("Models::readBinaryMeanVec - error reading means") ;
+      error("HTKModels::readBinaryMeanVec - error reading means") ;
 
    nMeanVecs++ ;
 }
 
 
-void Models::outputVarVec( int ind , bool isRef , bool outputBinary )
+void HTKModels::outputVarVec( int ind , bool isRef , bool outputBinary )
 {
    if ( (ind < 0) || (ind >= nVarVecs) )
-      error("Models::outputVarVec - ind out of range") ;
+      error("HTKModels::outputVarVec - ind out of range") ;
 
    VarVec *vvec = varVecs + ind ;
 
@@ -1774,7 +1776,7 @@ void Models::outputVarVec( int ind , bool isRef , bool outputBinary )
       else
       {
          if ( vvec->name == NULL )
-            error("Models::outputVarVec - mvec->name is NULL") ;
+            error("HTKModels::outputVarVec - mvec->name is NULL") ;
 
          fprintf( outFD , "~v \"%s\"\n" , vvec->name ) ;
          fprintf( outFD , "  <Variance> %d\n   " , vecSize ) ;
@@ -1813,34 +1815,34 @@ void Models::outputVarVec( int ind , bool isRef , bool outputBinary )
 }
 
 
-void Models::readBinaryVarVec()
+void HTKModels::readBinaryVarVec()
 {
    char id[5] ;
 
    // Read and check the ID
    if ( fread( id , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryVarVec - error reading ID") ;
+      error("HTKModels::readBinaryVarVec - error reading ID") ;
    id[4] = '\0' ;
    if ( strcmp( id , "JMVR" ) != 0 )
-      error("Models::readBinaryVarVec - invalid ID = %s" , id ) ;
+      error("HTKModels::readBinaryVarVec - invalid ID = %s" , id ) ;
 
    // Make sure we are not about to exceed the pre-allocated memory
    if ( nVarVecs == nVarVecsAlloc )
-      error("Models::readBinaryVarVec - nVarVecs == nVarVecsAlloc") ;
+      error("HTKModels::readBinaryVarVec - nVarVecs == nVarVecsAlloc") ;
 
    VarVec *curr = varVecs + nVarVecs ;
 
    // Read the length of the name
    int len ;
    if ( fread( &len , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryVarVec - error reading name length") ;
+      error("HTKModels::readBinaryVarVec - error reading name length") ;
 
    // Allocate space for the name if required and read name from file
    if ( len > 0 )
    {
       curr->name = new char[len] ;
       if ( (int)fread( curr->name , sizeof(char) , len , inFD ) != len )
-         error("Models::readBinaryVarVec - error reading name") ;
+         error("HTKModels::readBinaryVarVec - error reading name") ;
    }
    else
    {
@@ -1853,19 +1855,19 @@ void Models::readBinaryVarVec()
 
    // Read the variance values and derivations
    if ( (int)fread( curr->vars , sizeof(real) , vecSize*2 , inFD ) != (vecSize*2))
-       error("Models::readBinaryVarVec - error reading vars+minusHalfOverVars") ;
+       error("HTKModels::readBinaryVarVec - error reading vars+minusHalfOverVars") ;
 
    if ( fread( &(curr->sumLogVarPlusNObsLog2Pi) , sizeof(real) , 1 , inFD ) != 1 )
-       error("Models::readBinaryVarVec - error reading sumLogVarPlusNObsLog2Pi") ;
+       error("HTKModels::readBinaryVarVec - error reading sumLogVarPlusNObsLog2Pi") ;
    
    nVarVecs++ ;
 }
 
 
-void Models::outputTransMat( int ind , bool isRef , bool outputBinary )
+void HTKModels::outputTransMat( int ind , bool isRef , bool outputBinary )
 {
    if ( (ind < 0) || (ind >= nTransMats) )
-      error("Models::outputTransMat - ind out of range") ;
+      error("HTKModels::outputTransMat - ind out of range") ;
 
    TransMatrix *mat = transMats + ind ;
 
@@ -1906,7 +1908,7 @@ void Models::outputTransMat( int ind , bool isRef , bool outputBinary )
       else
       {
          if ( mat->name == NULL )
-            error("Models::outputTransMat - mat->name is NULL") ;
+            error("HTKModels::outputTransMat - mat->name is NULL") ;
 
          fprintf( outFD , "~t \"%s\"\n" , mat->name ) ;
          fprintf( outFD , "<TransP> %d\n" , mat->nStates ) ;
@@ -1992,34 +1994,34 @@ void Models::outputTransMat( int ind , bool isRef , bool outputBinary )
 }
 
 
-void Models::readBinaryTransMat()
+void HTKModels::readBinaryTransMat()
 {
    char id[5] ;
 
    // Read and check the ID
    if ( fread( id , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryTransMat - error reading ID") ;
+      error("HTKModels::readBinaryTransMat - error reading ID") ;
    id[4] = '\0' ;
    if ( strcmp( id , "JMTM" ) != 0 )
-      error("Models::readBinaryTransMat - invalid ID = %s" , id ) ;
+      error("HTKModels::readBinaryTransMat - invalid ID = %s" , id ) ;
 
    // Make sure we are not about to exceed the pre-allocated memory
    if ( nTransMats == nTransMatsAlloc )
-      error("Models::readBinaryTransMat - nTransMats == nTransMatsAlloc") ;
+      error("HTKModels::readBinaryTransMat - nTransMats == nTransMatsAlloc") ;
 
    TransMatrix *curr = transMats + nTransMats ;
 
    // Read the length of the name
    int len ;
    if ( fread( &len , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryTransMat - error reading name length") ;
+      error("HTKModels::readBinaryTransMat - error reading name length") ;
 
    // Allocate space for the name if required and read name from file
    if ( len > 0 )
    {
       curr->name = new char[len] ;
       if ( (int)fread( curr->name , sizeof(char) , len , inFD ) != len )
-         error("Models::readBinaryTransMat - error reading name") ;
+         error("HTKModels::readBinaryTransMat - error reading name") ;
    }
    else
    {
@@ -2028,7 +2030,7 @@ void Models::readBinaryTransMat()
    
    // Read the number of states
    if ( fread( &(curr->nStates) , sizeof(int) , 1 , inFD ) != 1 )
-      error("Models::readBinaryTransMat - error reading nStates") ;
+      error("HTKModels::readBinaryTransMat - error reading nStates") ;
    
    // Allocate memory for suc info for all states
    curr->nSucs = new int[curr->nStates] ;
@@ -2038,7 +2040,7 @@ void Models::readBinaryTransMat()
 
    // Read the nSucs array
    if ( (int)fread( curr->nSucs , sizeof(int) , curr->nStates , inFD ) != curr->nStates )
-      error("Models::readBinaryTransMat - error reading nSucs array") ;
+      error("HTKModels::readBinaryTransMat - error reading nSucs array") ;
 
    // Determine the total number of transitions
    int i , totalTrans=0 ;
@@ -2072,18 +2074,18 @@ void Models::readBinaryTransMat()
    
    // Read all sucs for all states at once
    if ( (int)fread( curr->sucs[0] , sizeof(int) , totalTrans , inFD ) != totalTrans )
-      error("Models::readBinaryTransMat - error reading sucs") ;
+      error("HTKModels::readBinaryTransMat - error reading sucs") ;
       
    // Read all probs and logProbs for all states at once
    if ( (int)fread( curr->probs[0] , sizeof(real) , totalTrans*2 , inFD ) != (totalTrans*2) )
-      error("Models::readBinaryTransMat - error reading probs+logProbs") ;
+      error("HTKModels::readBinaryTransMat - error reading probs+logProbs") ;
 
    nTransMats++ ;
 }
 
 
 //PNG inline
-real Models::calcGMMOutput( int gmmInd )
+real HTKModels::calcGMMOutput( int gmmInd )
 {
    if ( currGMMOutputs[gmmInd] <= LOG_ZERO )
    {
@@ -2095,13 +2097,13 @@ real Models::calcGMMOutput( int gmmInd )
 
 
 //PNG inline
-real Models::calcMixtureOutput( int mixInd , const real *logCompWeights )
+real HTKModels::calcMixtureOutput( int mixInd , const real *logCompWeights )
 {
 #ifdef DEBUG
    if ( (mixInd < 0) || (mixInd >= nMixtures) )
-      error("Models::calcMixtureOutput - mixInd out of range") ;
+      error("HTKModels::calcMixtureOutput - mixInd out of range") ;
    if ( logCompWeights == NULL )
-      error("Models::calcMixtureOutput - logCompWeights is NULL") ;
+      error("HTKModels::calcMixtureOutput - logCompWeights is NULL") ;
 #endif
 
    Mixture *mix = mixtures + mixInd ;
@@ -2143,7 +2145,7 @@ real Models::calcMixtureOutput( int mixInd , const real *logCompWeights )
 }
 
 
-void Models::outputStats( FILE *fd )
+void HTKModels::outputStats( FILE *fd )
 {
    fprintf( fd , "vecSize=%d " , vecSize ) ;
    fprintf( fd , "nMeanVecs=%d nVarVecs=%d nTransMats=%d nMixtures=%d nGMMs=%d nHMMs=%d\n" ,
@@ -2243,24 +2245,25 @@ void testModelsIO( const char *htkModelsFName , const char *phonesListFName ,
    
    if ( hybrid )
    {
-      Models *m1 = new Models( phonesListFName , priorsFName , statesPerModel ) ;
+      HTKModels *m1 = new HTKModels();
+      m1->Load( phonesListFName , priorsFName , statesPerModel ) ;
       printf("m1: ") ; m1->outputStats() ;
       m1->output( "m1.bin" , true ) ;
       delete m1 ;
       
-      Models *m2 = new Models() ;
+      HTKModels *m2 = new HTKModels() ;
       m2->readBinary( "m1.bin" ) ;
       printf("m2: ") ; m2->outputStats() ;
       m2->output( "m2.bin" , true ) ;
       delete m2 ;
       
-      Models *m3 = new Models() ;
+      HTKModels *m3 = new HTKModels() ;
       m3->readBinary( "m2.bin" ) ;
       printf("m3: ") ; m3->outputStats() ;
       m3->output( "m3.bin" , true ) ;
       delete m3 ;
       
-      Models *m4 = new Models() ;
+      HTKModels *m4 = new HTKModels() ;
       m4->readBinary( "m3.bin" ) ;
       printf("m4: ") ; m4->outputStats() ;
       m4->output( "m4.bin" , true ) ;
@@ -2268,45 +2271,49 @@ void testModelsIO( const char *htkModelsFName , const char *phonesListFName ,
    }
    else
    {
-      Models *m1 = new Models( htkModelsFName , true ) ;
+      HTKModels *m1 = new HTKModels();
+      m1->Load( htkModelsFName , true ) ;
    
       printf("m1: ") ; m1->outputStats() ;
       m1->output( "m1.txt" , false ) ;
       m1->output( "m1.bin" , true ) ;
       delete m1 ;
 
-      Models *m2txt = new Models( "m1.txt" , true ) ;
+      HTKModels *m2txt = new HTKModels();
+      m2txt->Load( "m1.txt" , true ) ;
       printf("m2txt: ") ; m2txt->outputStats() ;
       m2txt->output( "m2txt.txt" , false ) ;
       m2txt->output( "m2txt.bin" , true ) ;
       delete m2txt ;
 
-      Models *m2bin = new Models() ;
+      HTKModels *m2bin = new HTKModels() ;
       m2bin->readBinary( "m1.bin" ) ;
       printf("m2bin: ") ; m2bin->outputStats() ;
       m2bin->output( "m2bin.txt" , false ) ;
       m2bin->output( "m2bin.bin" , true ) ;
       delete m2bin ;
 
-      Models *m3txttxt = new Models( "m2txt.txt" , true ) ;
+      HTKModels *m3txttxt = new HTKModels();
+      m3txttxt->Load( "m2txt.txt" , true ) ;
       printf("m3txttxt: ") ; m3txttxt->outputStats() ;
       m3txttxt->output( "m3txttxt.txt" , false ) ;
       m3txttxt->output( "m3txttxt.bin" , true ) ;
       delete m3txttxt ;
-      Models *m3bintxt = new Models( "m2bin.txt" , true ) ;
+      HTKModels *m3bintxt = new HTKModels();
+      m3bintxt->Load( "m2bin.txt" , true ) ;
       printf("m3bintxt: ") ; m3bintxt->outputStats() ;
       m3bintxt->output( "m3bintxt.txt" , false ) ;
       m3bintxt->output( "m3bintxt.bin" , true ) ;
       delete m3bintxt ;
 
-      Models *m3txtbin = new Models() ;
+      HTKModels *m3txtbin = new HTKModels() ;
       m3txtbin->readBinary( "m2txt.bin" ) ;
       printf("m3txtbin: ") ; m3txtbin->outputStats() ;
       m3txtbin->output( "m3txtbin.txt" , false ) ;
       m3txtbin->output( "m3txtbin.bin" , true ) ;
       delete m3txtbin ;
 
-      Models *m3binbin = new Models() ;
+      HTKModels *m3binbin = new HTKModels() ;
       m3binbin->readBinary( "m2bin.bin" ) ;
       printf("m3binbin: ") ; m3binbin->outputStats() ;
       m3binbin->output( "m3binbin.txt" , false ) ;

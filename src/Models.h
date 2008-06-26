@@ -13,169 +13,213 @@
 #include "DecodingHMM.h"
 
 /*
-	Author:	Darren Moore (moore@idiap.ch)
-	Date:		15 Nov 2004
-	$Id: Models.h,v 1.9 2005/08/26 01:16:34 moore Exp $
+  Author:	Darren Moore (moore@idiap.ch)
+  Date:		15 Nov 2004
+  $Id: Models.h,v 1.9 2005/08/26 01:16:34 moore Exp $
 */
 
-namespace Juicer {
-
-struct MeanVec
+namespace Juicer
 {
-   char  *name ;
-   real  *means ;
-};
 
-struct VarVec
-{
-   char  *name ;
-   real  *vars ;
-   real  *minusHalfOverVars ;
-   real  sumLogVarPlusNObsLog2Pi ;
-};
+    struct MeanVec
+    {
+        char  *name ;
+        real  *means ;
+    };
 
-struct TransMatrix
-{
-   char  *name ;
-   int   nStates ;
-   int   *nSucs ;
-   int   **sucs ;
-   real  **probs ;
-   real  **logProbs ;
-};
+    struct VarVec
+    {
+        char  *name ;
+        real  *vars ;
+        real  *minusHalfOverVars ;
+        real  sumLogVarPlusNObsLog2Pi ;
+    };
 
-struct Mixture
-{
-   char  *name ;
-   int   nComps ;
-   int   *meanVecInds ;
-   int   *varVecInds ;
-   real  *currCompOutputs ;
-   bool  currCompOutputsValid ;
-};
+    struct TransMatrix
+    {
+        char  *name ;
+        int   nStates ;
+        int   *nSucs ;
+        int   **sucs ;
+        real  **probs ;
+        real  **logProbs ;
+    };
 
-struct GMM
-{
-   char  *name ;
-   int   mixtureInd ;
-   real  *compWeights ;
-   real  *logCompWeights ;
-};
+    struct Mixture
+    {
+        char  *name ;
+        int   nComps ;
+        int   *meanVecInds ;
+        int   *varVecInds ;
+        real  *currCompOutputs ;
+        bool  currCompOutputsValid ;
+    };
 
-/**
- * HMM representation
- */
-struct HMM
-{
-   char  *name ;
-   int   nStates ;
-   int   *gmmInds ;
-   int   transMatrixInd ;   
-};
+    struct GMM
+    {
+        char  *name ;
+        int   mixtureInd ;
+        real  *compWeights ;
+        real  *logCompWeights ;
+    };
 
-
-class DecodingHMM ;
-
-/**
- * HTK models
- */
-class Models
-{
-public:
-   Models() ;
-   Models( const char *phonesListFName , const char *priorsFName , int statesPerModel ) ;
-   Models( const char *htkModelsFName , bool removeInitialToFinalTransitions_=false ) ;
-   virtual ~Models() ;
-
-   void initFromHTKParseResult() ;
-   void readBinary( const char *fName ) ;
-   void output( const char *fName , bool outputBinary ) ;
-   void outputStats( FILE *fd=stdout ) ;
-   void newFrame( int frame , const real *input ) ;
-   real calcOutput( int hmmInd , int stateInd ) ;
-   real calcOutput( int gmmInd ) ;
-
-   int getNumHMMs() { return nHMMs ; } ;
-   int getCurrFrame() { return currFrame ; } ;
-   DecodingHMM *getDecHMM( int hmmInd ) { return decHMMs[hmmInd] ; } ;
-   HMM *getHMM( int hmmInd ) { return hMMs + hmmInd ; } ;
-   int getInputVecSize() { return vecSize ; } ;
-
-private:
-   int            currFrame ;
-   const real     *currInput ;
-   int            vecSize ;
-
-   int            nMeanVecs ;
-   int            nMeanVecsAlloc ;
-   MeanVec        *meanVecs ;
-
-   int            nVarVecs ;
-   int            nVarVecsAlloc ;
-   VarVec         *varVecs ;
-
-   bool           removeInitialToFinalTransitions ;
-   int            nTransMats ;
-   int            nTransMatsAlloc ;
-   TransMatrix    *transMats ;
-
-   int            nMixtures ;
-   int            nMixturesAlloc ;
-   Mixture        *mixtures ;
-
-   int            nGMMs ;
-   int            nGMMsAlloc ;
-   GMM            *gMMs ;
-   real           *currGMMOutputs ;
-
-   int            nHMMs ;
-   int            nHMMsAlloc ;
-   HMM            *hMMs ;
-   DecodingHMM    **decHMMs ;
-
-   FILE           *inFD ;
-   FILE           *outFD ;
-   bool           fromBinFile ;
-
-   bool           hybridMode ;
-   real           *logPriors ;
-
-   int addHMM( HTKHMM *hmm ) ;
-   int addGMM( HTKHMMState *st ) ;
-   int getGMM( const char *name ) ;
-   int addMixture( HTKMixturePool *mix ) ;
-   int addMixture( int nComps , HTKMixture **comps ) ;
-   int getMixture( const char *name ) ;
-   int addMeanVec( const char *name , real *means ) ;
-   int addVarVec( const char *name , real *vars ) ;
-   int addTransMatrix( const char *name , int nStates , real **trans ) ;
-   int getTransMatrix( const char *name ) ;
-
-   void outputHMM( int ind , bool outputBinary ) ;
-   void outputGMM( int ind , bool isRef , bool outputBinary ) ;
-   void outputMixture( int mixInd , real *compWeights , bool isRef , bool outputBinary ) ;
-   void outputMeanVec( int ind , bool isRef , bool outputBinary ) ;
-   void outputVarVec( int ind , bool isRef , bool outputBinary ) ;
-   void outputTransMat( int ind , bool isRef , bool outputBinary ) ;
-
-   void readBinaryHMM() ;
-   void readBinaryGMM() ;
-   void readBinaryMixture() ;
-   void readBinaryMeanVec() ;
-   void readBinaryVarVec() ;
-   void readBinaryTransMat() ;
-
-   inline real calcGMMOutput( int gmmInd ) ;
-   inline real calcMixtureOutput( int mixInd , const real *logCompWeights ) ;
-};
+    /**
+     * HMM representation
+     */
+    struct HMM
+    {
+        char  *name ;
+        int   nStates ;
+        int   *gmmInds ;
+        int   transMatrixInd ;
+    };
 
 
-void testModelsIO( const char *htkModelsFName , const char *phonesListFName , 
-                   const char *priorsFName , int statesPerModel ) ;
+    class DecodingHMM ;
+
+    /**
+     * Models interface.
+     * Models such as HTK MMFs should implement this interface.
+     */
+    class Models
+    {
+    public:
+        virtual ~Models() {}
+        virtual void Load(
+            const char *phonesListFName,
+            const char *priorsFName,
+            int statesPerModel
+        ) = 0;
+        virtual void Load(
+            const char *htkModelsFName,
+            bool removeInitialToFinalTransitions_ = false
+        ) = 0;
+
+        virtual void readBinary( const char *fName ) = 0 ;
+        virtual void output( const char *fName, bool outputBinary ) = 0 ;
+        virtual void newFrame( int frame , const real *input ) = 0 ;
+
+        virtual real calcOutput( int hmmInd , int stateInd ) = 0 ;
+        virtual real calcOutput( int gmmInd ) = 0 ;
+
+        virtual int getNumHMMs() = 0 ;
+        virtual int getCurrFrame() = 0 ;
+        virtual DecodingHMM *getDecHMM( int hmmInd ) = 0 ;
+        virtual HMM *getHMM( int hmmInd ) = 0 ;
+        virtual int getInputVecSize() = 0 ;
+    };
+
+
+    /**
+     * HTK models
+     */
+    class HTKModels : public Models
+    {
+    public:
+        HTKModels() ;
+        virtual ~HTKModels() ;
+
+        void Load( const char *phonesListFName , const char *priorsFName ,
+                int statesPerModel ) ;
+        void Load( const char *htkModelsFName ,
+                bool removeInitialToFinalTransitions_=false ) ;
+
+        void readBinary( const char *fName ) ;
+        void output( const char *fName , bool outputBinary ) ;
+        void outputStats( FILE *fd=stdout ) ;
+        void newFrame( int frame , const real *input ) ;
+        real calcOutput( int hmmInd , int stateInd ) ;
+        real calcOutput( int gmmInd ) ;
+
+        int getNumHMMs() { return nHMMs ; } ;
+        int getCurrFrame() { return currFrame ; } ;
+        DecodingHMM *getDecHMM( int hmmInd ) { return decHMMs[hmmInd] ; } ;
+        HMM *getHMM( int hmmInd ) { return hMMs + hmmInd ; } ;
+        int getInputVecSize() { return vecSize ; } ;
+
+    private:
+        int            currFrame ;
+        const real     *currInput ;
+        int            vecSize ;
+
+        int            nMeanVecs ;
+        int            nMeanVecsAlloc ;
+        MeanVec        *meanVecs ;
+
+        int            nVarVecs ;
+        int            nVarVecsAlloc ;
+        VarVec         *varVecs ;
+
+        bool           removeInitialToFinalTransitions ;
+        int            nTransMats ;
+        int            nTransMatsAlloc ;
+        TransMatrix    *transMats ;
+
+        int            nMixtures ;
+        int            nMixturesAlloc ;
+        Mixture        *mixtures ;
+
+        int            nGMMs ;
+        int            nGMMsAlloc ;
+        GMM            *gMMs ;
+        real           *currGMMOutputs ;
+
+        int            nHMMs ;
+        int            nHMMsAlloc ;
+        HMM            *hMMs ;
+        DecodingHMM    **decHMMs ;
+
+        FILE           *inFD ;
+        FILE           *outFD ;
+        bool           fromBinFile ;
+
+        bool           hybridMode ;
+        real           *logPriors ;
+
+        void initFromHTKParseResult() ;
+
+        int addHMM( HTKHMM *hmm ) ;
+        int addGMM( HTKHMMState *st ) ;
+        int getGMM( const char *name ) ;
+        int addMixture( HTKMixturePool *mix ) ;
+        int addMixture( int nComps , HTKMixture **comps ) ;
+        int getMixture( const char *name ) ;
+        int addMeanVec( const char *name , real *means ) ;
+        int addVarVec( const char *name , real *vars ) ;
+        int addTransMatrix( const char *name , int nStates , real **trans ) ;
+        int getTransMatrix( const char *name ) ;
+
+        void outputHMM( int ind , bool outputBinary ) ;
+        void outputGMM( int ind , bool isRef , bool outputBinary ) ;
+        void outputMixture(
+            int mixInd , real *compWeights , bool isRef , bool outputBinary
+        ) ;
+        void outputMeanVec( int ind , bool isRef , bool outputBinary ) ;
+        void outputVarVec( int ind , bool isRef , bool outputBinary ) ;
+        void outputTransMat( int ind , bool isRef , bool outputBinary ) ;
+
+        void readBinaryHMM() ;
+        void readBinaryGMM() ;
+        void readBinaryMixture() ;
+        void readBinaryMeanVec() ;
+        void readBinaryVarVec() ;
+        void readBinaryTransMat() ;
+
+        inline real calcGMMOutput( int gmmInd ) ;
+        inline real calcMixtureOutput(
+            int mixInd , const real *logCompWeights
+        ) ;
+    };
+
+
+    void testModelsIO(
+        const char *htkModelsFName , const char *phonesListFName ,
+        const char *priorsFName , int statesPerModel
+    ) ;
 
 }
 
 
 #endif
-    
-    
+
+

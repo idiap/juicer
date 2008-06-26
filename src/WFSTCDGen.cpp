@@ -268,7 +268,8 @@ WFSTCDGen::WFSTCDGen( WFSTCDType type_ , const char *htkModelsFName ,
       phoneLookup = new PhoneLookup( monoLookup , monophoneListFName , "" ) ;
 
       // Load the models.
-      models = new Models( monophoneListFName , priorsFName , statesPerModel ) ;
+      models = new HTKModels();
+      models->Load( monophoneListFName , priorsFName , statesPerModel ) ;
 
       // Add the model indices to the PhoneLookup
       HMM *hmm ;
@@ -296,12 +297,14 @@ WFSTCDGen::WFSTCDGen( WFSTCDType type_ , const char *htkModelsFName ,
       phoneLookup = new PhoneLookup( monoLookup , tiedListFName , sepChars ) ;
 
       // Load the models.
-      models = new Models( htkModelsFName ) ;
+      models = new HTKModels();
+      models->Load( htkModelsFName ) ;
+
       //models->outputText("modelout.txt") ;
 
       // Add the model indices to the PhoneLookup
       HMM *hmm ;
-      int i ;   
+      int i ;
       for ( i=0 ; i<models->getNumHMMs() ; i++ )
       {
          hmm = models->getHMM( i ) ;

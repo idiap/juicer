@@ -44,8 +44,10 @@ JUICER_SOURCES = \
 libjuicer_la_SOURCES = $(JUICER_SOURCES) \
 	FrontEnd.h \
 	htkparse.y.ypp \
-	htkparse.l.lpp \
-	juicer_wrap.cxx
+	htkparse.l.lpp
+
+# Whilst the interface is in flux
+#	juicer_wrap.cxx
 
 pkginclude_HEADERS = $(JUICER_SOURCES:.cpp=.h) \
 	htkparse.h \
