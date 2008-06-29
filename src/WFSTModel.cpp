@@ -14,7 +14,6 @@
 /*
 	Author:		Darren Moore (moore@idiap.ch)
 	Date:			14 October 2004
-	$Id: WFSTModel.cpp,v 1.5.4.2 2006/09/06 18:47:12 juicer Exp $
 */
 
 /*
@@ -64,29 +63,33 @@ WFSTModelPool::WFSTModelPool( PhoneModels *phoneModels_ , DecHypHistPool *decHyp
 }
 #endif
 
-WFSTModelPool::WFSTModelPool( Models *models_ , DecHypHistPool *decHypHistPool_ )
+WFSTModelPool::WFSTModelPool(
+    Models *models_ , DecHypHistPool *decHypHistPool_
+)
 {
-	if ( (models = models_) == NULL )
-		error("WFSTModelPool::WFSTModelPool(2) - models_ is NULL") ;
-//PNG   phoneModels = NULL ;
-	if ( (decHypHistPool = decHypHistPool_) == NULL )
-		error("WFSTModelPool::WFSTModelPool(2) - decHypHistPool_ is NULL") ;
+    if ( (models = models_) == NULL )
+        error("WFSTModelPool::WFSTModelPool(2) - models_ is NULL") ;
+    if ( (decHypHistPool = decHypHistPool_) == NULL )
+        error("WFSTModelPool::WFSTModelPool(2) - decHypHistPool_ is NULL") ;
 
-	// Determine the maximum number of states over all models in phoneModels.
-	maxNStates = 0 ;
-   nUsed = 0 ;
-   DecodingHMM *dh ;
-   int i ;
-	for ( i=0 ; i<models->getNumHMMs() ; i++ )
-	{
-      dh = models->getDecHMM( i ) ;
-		if ( dh->n_states > maxNStates )
-			maxNStates = dh->n_states ;
-	}
-	
-	pools = new WFSTModelFNSPool[maxNStates] ;
-	for ( i=0 ; i<maxNStates ; i++ )
-		initFNSPool( i , i+1 , 100 ) ;
+    // Determine the maximum number of states over all models in phoneModels.
+    maxNStates = 0 ;
+    nUsed = 0 ;
+    //DecodingHMM *dh ;
+    int i ;
+    for ( i=0 ; i<models->getNumHMMs() ; i++ )
+    {
+        //dh = models->getDecHMM( i ) ;
+        //if ( dh->n_states > maxNStates )
+        //    maxNStates = dh->n_states ;
+        int n = models->getNumStates(i);
+        if (n > maxNStates)
+            maxNStates = n;
+    }
+
+    pools = new WFSTModelFNSPool[maxNStates] ;
+    for ( i=0 ; i<maxNStates ; i++ )
+        initFNSPool( i , i+1 , 100 ) ;
 }
 
 
@@ -227,7 +230,8 @@ WFSTModel *WFSTModelPool::getElem( WFSTTransition *trans )
 
 	// Configure the new element.
 	tmp->trans = trans ;
-	tmp->hmm = hmm ;
+    //tmp->hmm = hmm ;
+    tmp->hmmIndex = index;
 	tmp->nActiveHyps = 0 ;
 	tmp->next = NULL ;
 
@@ -243,7 +247,8 @@ void WFSTModelPool::returnElem( WFSTModel *elem )
 	WFSTModelFNSPool *pool ;
 	int nStates ;
 
-	nStates = elem->hmm->n_states ;
+    nStates = elem->hmm->n_states ;
+    //nStates = models->getNumStates(elem->hmmIndex);
 
     // Phil - This is a big cache miss during decoding as all but the
     // last hyp will be out of cache.  If DecHyps need to be reset, do

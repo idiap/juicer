@@ -15,7 +15,6 @@
 /*
   Author:	Darren Moore (moore@idiap.ch)
   Date:		15 Nov 2004
-  $Id: Models.h,v 1.9 2005/08/26 01:16:34 moore Exp $
 */
 
 namespace Juicer
@@ -107,6 +106,12 @@ namespace Juicer
         virtual DecodingHMM *getDecHMM( int hmmInd ) = 0 ;
         virtual const char* getHMMName( int hmmInd ) = 0 ;
         virtual int getInputVecSize() = 0 ;
+
+        // To replace DecodingHMM
+        virtual int getNumStates(int hmmInd) = 0;
+        virtual int getNumSuccessors(int hmmInd, int stateInd) = 0;
+        virtual int getSuccessor(int hmmInd, int stateInd, int sucInd) = 0;
+        virtual real getSuccessorLogProb(int hmmInd, int stateInd, int sucInd) = 0;
     };
 
 
@@ -134,9 +139,25 @@ namespace Juicer
         int getNumHMMs() { return nHMMs ; } ;
         int getCurrFrame() { return currFrame ; } ;
         DecodingHMM *getDecHMM( int hmmInd ) { return decHMMs[hmmInd] ; } ;
-        //HMM *getHMM( int hmmInd ) { return hMMs + hmmInd ; } ;
         const char* getHMMName( int hmmInd ) { return hMMs[hmmInd].name ; } ;
         int getInputVecSize() { return vecSize ; } ;
+
+        int getNumStates(int hmmInd) { return hMMs[hmmInd].nStates; }
+        int getNumSuccessors(int hmmInd, int stateInd)
+        {
+            int transMatrixInd = hMMs[hmmInd].transMatrixInd;
+            return transMats[transMatrixInd].nSucs[stateInd];
+        }
+        int getSuccessor(int hmmInd, int stateInd, int sucInd)
+        {
+            int transMatrixInd = hMMs[hmmInd].transMatrixInd;
+            return transMats[transMatrixInd].sucs[stateInd][sucInd];
+        }
+        real getSuccessorLogProb(int hmmInd, int stateInd, int sucInd)
+        {
+            int transMatrixInd = hMMs[hmmInd].transMatrixInd;
+            return transMats[transMatrixInd].logProbs[stateInd][sucInd];
+        }
 
     private:
         int            currFrame ;

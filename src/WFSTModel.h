@@ -1,6 +1,6 @@
 /*
- * Copyright 2004 by IDIAP Research Institute
- *                   http://www.idiap.ch
+ * Copyright 2004,2008 by IDIAP Research Institute
+ *                        http://www.idiap.ch
  *
  * See the file COPYING for the licence associated with this software.
  */
@@ -11,18 +11,16 @@
 #include "general.h"
 #include "DecodingHMM.h"
 #include "DecHypHistPool.h"
-//PNG #include "PhoneModels.h"
 #include "WFSTNetwork.h"
 
 /*
 	Author:		Darren Moore (moore@idiap.ch)
 	Date:			14 October 2004
-	$Id: WFSTModel.h,v 1.4.4.2 2006/09/06 18:47:12 juicer Exp $
 */
 
 /*
- 	Author: Octavian Cheng (ocheng@idiap.ch)
-	Date: 		6 June 2006
+    Author: Octavian Cheng (ocheng@idiap.ch)
+    Date: 		6 June 2006
 */
 
 namespace Juicer {
@@ -33,7 +31,8 @@ namespace Juicer {
 struct WFSTModel
 {
     WFSTTransition    *trans ;
-    DecodingHMM		  *hmm ;	  // Pointer to the HMM definition.
+//    DecodingHMM		  *hmm ;	  // Pointer to the HMM definition.
+    int hmmIndex;  // to replace hmm
     DecHyp			  *hyps1 ;
 // HARDCODE #ifndef LOCAL_HYPS // Commented because of SWIG compatibility issue
     DecHyp			  *hyps2 ;	

@@ -48,73 +48,75 @@ DecodingHMM::DecodingHMM(
     int n_states_ , real **log_trans_probs_ , int *emis_prob_indices
 )
 {
-	real *suc_log_trans , *pred_log_trans ;
-	int *suc_states , n_suc_states=0 , *pred_states , n_pred_states=0 ;
+    real *suc_log_trans , *pred_log_trans ;
+    int *suc_states , n_suc_states=0 , *pred_states , n_pred_states=0 ;
 
-	n_states = n_states_ ;
-	states = NULL ;
-	init_state = 0 ;
-	fin_state = n_states-1 ;
+    n_states = n_states_ ;
+    states = NULL ;
+    init_state = 0 ;
+    fin_state = n_states-1 ;
 
-	n_emit_states = 0 ;
-	n_nonemit_states = 0 ;
-	emit_states = NULL ;
-	nonemit_states = NULL ;
+    n_emit_states = 0 ;
+    n_nonemit_states = 0 ;
+    emit_states = NULL ;
+    nonemit_states = NULL ;
 
-	from_bin_file = false ;
-	dataHeap = 0;
+    from_bin_file = false ;
+    dataHeap = 0;
 
-	suc_log_trans = new real[10000] ;
-	pred_log_trans = new real[10000] ;
-	suc_states = new int[10000] ;
-	pred_states = new int[10000] ;
+    suc_log_trans = new real[10000] ;
+    pred_log_trans = new real[10000] ;
+    suc_states = new int[10000] ;
+    pred_states = new int[10000] ;
 
     teeProb = LOG_ZERO;
 
-	// Allocate memory to hold the states
-	states = (DecodingHMMState *)malloc( n_states * sizeof(DecodingHMMState) ) ;
+    // Allocate memory to hold the states
+    states = (DecodingHMMState *)malloc( n_states * sizeof(DecodingHMMState) ) ;
 
-	// Create each state in turn
-	for ( int i=0 ; i<n_states ; i++ )
-	{
-		if ( (i == 0) || (i == (n_states-1)) )
-			initState( states+i , DHS_NONEMITTING ) ;
-		else
-			initState( states+i , DHS_EMITTING , -1 , -1 , emis_prob_indices[i-1] ) ;
-	}
+    printf("DecHMM: nstates=%d\n", n_states);
 
-	// Now go through the log_transitions array in the HMM instance
-	//   and extract the non-zero transitions FROM and TO this state.
-	for ( int from=0 ; from<n_states ; from++ )
-	{
-		n_suc_states = 0 ; n_pred_states = 0 ;
-		for ( int to=0 ; to<n_states ; to++ )
-		{
-			if ( log_trans_probs_[from][to] > LOG_ZERO )
-			{
-				suc_log_trans[n_suc_states] = log_trans_probs_[from][to] ;
-				suc_states[n_suc_states] = to ;
-				n_suc_states++ ;
-			}
+    // Create each state in turn
+    for ( int i=0 ; i<n_states ; i++ )
+    {
+        if ( (i == 0) || (i == (n_states-1)) )
+            initState( states+i , DHS_NONEMITTING ) ;
+        else
+            initState( states+i , DHS_EMITTING , -1 , -1 , emis_prob_indices[i-1] ) ;
+    }
 
-			// 'from' now is really 'to' and vice-versa in order to extract
-			//   predecessor states
-			if ( log_trans_probs_[to][from] > LOG_ZERO )
-			{
-				pred_log_trans[n_pred_states] = log_trans_probs_[to][from] ;
-				pred_states[n_pred_states] = to ;
-				n_pred_states++ ;
-			}
+    // Now go through the log_transitions array in the HMM instance
+    //   and extract the non-zero transitions FROM and TO this state.
+    for ( int from=0 ; from<n_states ; from++ )
+    {
+        n_suc_states = 0 ; n_pred_states = 0 ;
+        for ( int to=0 ; to<n_states ; to++ )
+        {
+            if ( log_trans_probs_[from][to] > LOG_ZERO )
+            {
+                suc_log_trans[n_suc_states] = log_trans_probs_[from][to] ;
+                suc_states[n_suc_states] = to ;
+                n_suc_states++ ;
+            }
 
-		}
-		setupSucStates( states+from , n_suc_states , suc_states , suc_log_trans ) ;
-		setupPredStates( states+from , n_pred_states , pred_states , pred_log_trans ) ;
-	}
+            // 'from' now is really 'to' and vice-versa in order to extract
+            //   predecessor states
+            if ( log_trans_probs_[to][from] > LOG_ZERO )
+            {
+                pred_log_trans[n_pred_states] = log_trans_probs_[to][from] ;
+                pred_states[n_pred_states] = to ;
+                n_pred_states++ ;
+            }
 
-	delete [] suc_log_trans ;
-	delete [] pred_log_trans ;
-	delete [] suc_states ;
-	delete [] pred_states ;
+        }
+        setupSucStates( states+from , n_suc_states , suc_states , suc_log_trans ) ;
+        setupPredStates( states+from , n_pred_states , pred_states , pred_log_trans ) ;
+    }
+
+    delete [] suc_log_trans ;
+    delete [] pred_log_trans ;
+    delete [] suc_states ;
+    delete [] pred_states ;
 }
 
 /**
