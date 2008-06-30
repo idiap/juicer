@@ -6,7 +6,6 @@
  */
 
 #include "DecoderSingleTest.h"
-#include "DiskFile.h"
 #include "time.h"
 #include "sys/types.h"
 #include "sys/stat.h"
@@ -16,7 +15,6 @@
    Author:		Darren Moore (moore@idiap.ch)
                         Modified by John Dines to support LNA16bit
    Date:		2004
-   $Id: DecoderSingleTest.cpp,v 1.23 2006/06/08 15:25:07 juicer Exp $
 */
 
 
@@ -197,24 +195,15 @@ void DecoderSingleTest::run(
         error("DecoderSingleTest::run - incompatible mode") ;
 #endif
 
-    // The data file hasn't been loaded yet - load it
-    //loadDataFile() ;
+    // Connect to the source
     assert(dataFName);
     frontend->SetSource(dataFName);
-
-    // See if the vecSize in the input file agreed with our expectations.
-    //if ( vecSize != expVecSize )
-    //    error("DecoderSingleTest::run - vecSize != expVecSize") ;
 
     // Timer for the decoding
     startTime = clock() ;
 
     // Run the decoder over the whole available input
     decoder->init() ;
-    //for ( int t=0 ; t<nFrames ; t++ )
-    //{
-    //    decoder->processFrame( decoderInput[t], t ) ;
-    //}
     nFrames = 0;
     float* array;
     int offset = extStartFrame < 0 ? 0 : extStartFrame;
@@ -243,20 +232,6 @@ void DecoderSingleTest::run(
     //if ( removeSentMarks )
     //   removeSentMarksFromActual( vocab ) ;
 
-#if 0
-    // Free up some memory
-    if ( inputFormat == DST_FEATS_HTK )
-    {
-        delete [] decoderInput[0] ;
-        delete [] decoderInput ;
-    }
-    else
-    {
-        for ( int i=0 ; i<nFrames ; i++ )
-            delete [] decoderInput[i] ;
-        free( decoderInput ) ;
-    }
-#endif
     decoderInput = NULL ;
     vecSize = 0 ;
 }
@@ -356,335 +331,6 @@ void DecoderSingleTest::removeSentMarksFromActual( DecVocabulary *vocab )
    }
 }
 
-// Remove all data loading crap
-#if 0
-
-void DecoderSingleTest::loadDataFile()
-{
-   // Make sure that the test_filename and data_format member variables
-   //   have been configured.
-   if ( dataFName == NULL )
-      error("DecoderSingleTest::loadDataFile - dataFName is NULL") ;
-   if ( (inputFormat < 0) || (inputFormat >= DST_NOFORMAT) )
-      error("DecoderSingleTest::loadDataFile - invalid inputFormat") ;
-
-   // Free any existing data and reset the size-related member variables
-   if ( decoderInput != NULL )
-      error("DecoderSingleTest::loadDataFile - decoderInput is not NULL") ;
-
-   nFrames=0 ;
-   vecSize = 0 ;
-
-   switch ( inputFormat )
-   {
-   case DST_FEATS_HTK:
-   {
-       loadHTK( dataFName ) ;
-       inputsAreFeatures = true ;
-       break ;
-   }
-   case DST_FEATS_ONLINE_FTRS:
-   {
-       loadOnlineFtrs( dataFName ) ;
-       inputsAreFeatures = true ;
-       break ;
-   }
-      case DST_PROBS_LNA8BIT:
-      {
-         loadLNA8bit( dataFName ) ;
-         inputsAreFeatures = false ;
-         break ;
-      }
-      case DST_PROBS_LNA16BIT:
-      {
-	loadLNA16bit( dataFName ) ;
-	inputsAreFeatures = false ;
-	break;
-      }
-      default:
-         error("DecoderSingleTest::loadDataFile - data_format not recognised") ;
-   }
-
-   if ( (nFrames <= 0) || (vecSize <= 0) )
-      error("DST::loadDataFile - no data loaded") ;
-}
-
-
-void DecoderSingleTest::loadHTK( const char *htkFName )
-{
-   DiskFile *file ;
-
-#ifdef DEBUG
-   if ( (htkFName == NULL) || (htkFName[0] == '\0') )
-      error("DecoderSingleTest::loadHTK - invalid filename") ;
-#endif
-
-   // Open the input file in big endian mode
-   file = new DiskFile( htkFName , "rb" , true ) ;
-
-   // Read the 12-byte header
-   // 1. Number of samples in file (4-byte integer)
-   int totalNFrames ;
-   if ( file->read( &totalNFrames , sizeof(int) , 1 ) != 1 )
-      error("DecoderSingleTest::loadHTK - error reading num samples") ;
-   if ( totalNFrames <= 0 )
-      error("DecoderSingleTest::loadHTK - nFrames <= 0") ;
-   if ( (extEndFrame > 0) && (extEndFrame >= totalNFrames) )
-      error("DecoderSingleTest::loadHTK - extEndFrame >= nFrames") ;
-
-   if ( extStartFrame >= 0 )
-   {
-      // We only want to read a chunk of this file
-      nFrames = extEndFrame - extStartFrame + 1 ;
-   }
-   else
-   {
-      nFrames = totalNFrames ;
-   }
-
-   // 2. Sample period (4-byte integer - read and discard)
-   int dummy ;
-   if ( file->read( &dummy , 4 , 1 ) != 1 )
-      error("DecoderSingleTest::loadHTK - error reading sample period") ;
-
-   // 3. Number of bytes per sample (2-byte integer)
-   short bytesPerSamp ;
-   if ( file->read( &bytesPerSamp , 2 , 1 ) != 1 )
-      error("DecoderSingleTest::loadHTK - error reading bytes per sample") ;
-   if ( bytesPerSamp <= 0 )
-      error("DecoderSingleTest::loadHTK - bytesPerSamp <= 0") ;
-
-   // 4. Read parameter type
-   short parmKind ;
-   if ( file->read( &parmKind , 2 , 1 ) != 1 )
-      error("DecoderSingleTest::loadHTK - error reading parm kind") ;
-
-   // Calculate number of features in each vector
-   vecSize = bytesPerSamp / 4 ;
-
-   // Allocate array of pointers to feature vectors
-   decoderInput = new real*[nFrames] ;
-   decoderInput[0] = new real[vecSize * nFrames] ;
-   int i ;
-   for ( i=1 ; i<nFrames ; i++ )
-   {
-      decoderInput[i] = decoderInput[0] + ( i * vecSize ) ;
-   }
-
-   if ( extStartFrame > 0 )
-   {
-      // We need to fseek to the place in the file where the start frame is.
-      file->seek( extStartFrame * bytesPerSamp , SEEK_CUR ) ;
-   }
-
-#ifndef USE_DOUBLE
-   if ( file->read( decoderInput[0] , sizeof(float) , vecSize*nFrames ) != (vecSize*nFrames) )
-      error("DecoderSingleTest::loadHTK - error reading feature vectors") ;
-#else
-   float *tmpBuf = new float[vecSize*nFrames] ;
-   if ( file->read( tmpBuf , sizeof(float) , vecSize*nFrames ) != (vecSize*nFrames) )
-      error("DecoderSingleTest::loadHTK - error reading feature vectors") ;
-   for ( i=0 ; i<(vecSize*nFrames) ; i++ )
-      decoderInput[0][i] = (real)( tmpBuf[i] ) ;
-   delete [] tmpBuf ;
-#endif
-
-   // Close the input file
-   delete file ;
-}
-
-
-void DecoderSingleTest::loadLNA8bit( char *lnaFName )
-{
-   FILE *lnaFD ;
-   int bufSize , stepSize , i ;
-   unsigned char *buf ;
-   real sum=0.0 ;
-
-#ifdef DEBUG
-   if ( sizeof(unsigned char) != 1 )
-      error("DecoderSingleTest::loadLNA8bit - unsigned char not 1 byte") ;
-   if ( (lnaFName == NULL) || (strcmp(lnaFName,"")==0) )
-      error("DecoderSingleTest::loadLNA8bit - lnaFName undefined") ;
-   if ( expVecSize <= 0 )
-      error("DecoderSingleTest::loadLNA8bit - expVecSize <= 0") ;
-#endif
-
-   if ( extStartFrame >= 0 )
-      warning("DST::loadLNA8bit - extended filenames not supported for LNA input") ;
-
-   buf = new unsigned char[10000] ;
-
-   nFrames = 0 ;
-   vecSize = expVecSize ;
-   decoderInput = NULL ;
-   stepSize = (1 + vecSize) * sizeof(unsigned char) ;
-
-   if ( (lnaFD = fopen( lnaFName , "rb" )) == NULL )
-      error("DecoderSingleTest::loadLNA8bit - error opening LNA file") ;
-   do
-   {
-      if ( (bufSize=(int)fread( buf , 1 , stepSize , lnaFD )) != stepSize )
-         error("DecoderSingleTest::loadLNA8bit - error reading prob vector") ;
-
-      if ( (buf[0] != 0x00) && (buf[0] != 0x80) )
-         error("DecoderSingleTest::loadLNA8bit - flag byte error %s %d",lnaFName,nFrames) ;
-
-      nFrames++ ;
-      decoderInput = (real **)realloc( decoderInput , nFrames*sizeof(real *) ) ;
-      decoderInput[nFrames-1] = new real[vecSize] ;
-
-      // Convert from the 8-bit integer in the file to the equivalent floating point
-      //   log probability.
-      sum = 0.0 ;
-      for ( i=0 ; i<vecSize ; i++ )
-      {
-         decoderInput[nFrames-1][i] = -((real)buf[i+1] + (real)0.5) / (real)24.0 ;
-         sum += (real)exp( decoderInput[nFrames-1][i] ) ;
-      }
-
-      if ( (sum < 0.97) || (sum > 1.03) )
-      {
-         printf("LNA Error on %s\n",lnaFName) ;
-         printf("%d:",nFrames-1) ;
-         for ( i=0 ; i<vecSize ; i++ )
-            printf(" %.3f" , (real)exp( decoderInput[nFrames-1][i] ) ) ;
-         printf("\n") ;
-         error("DecoderSingleTest::loadLNA8bit - sum of probs=%.4f not in [0.97,1.03]",sum) ;
-      }
-   }
-   while ( buf[0] != 0x80 ) ;
-
-   // We're done.
-   fclose( lnaFD ) ;
-
-   delete [] buf ;
-}
-
-void DecoderSingleTest::loadLNA16bit( char *lnaFName )
-{
-   FILE *lnaFD ;
-   int bufSize , stepSize , i ;
-   unsigned short *buf ;
-   real sum=0.0 ;
-
-#ifdef DEBUG
-   if ( sizeof(unsigned short) != 1 )
-      error("DecoderSingleTest::loadLNA16bit - unsigned short not 1 byte") ;
-   if ( (lnaFName == NULL) || (strcmp(lnaFName,"")==0) )
-      error("DecoderSingleTest::loadLNA16bit - lnaFName undefined") ;
-   if ( expVecSize <= 0 )
-      error("DecoderSingleTest::loadLNA16bit - expVecSize <= 0") ;
-#endif
-
-   if ( extStartFrame >= 0 )
-      warning("DST::loadLNA16bit - extended filenames not supported for LNA input") ;
-
-   buf = new unsigned short[10000] ;
-
-   nFrames = 0 ;
-   vecSize = expVecSize ;
-   decoderInput = NULL ;
-   stepSize = (1 + vecSize)* sizeof(unsigned short) ;
-
-   if ( (lnaFD = fopen( lnaFName , "rb" )) == NULL )
-      error("DecoderSingleTest::loadLNA16bit - error opening LNA file") ;
-   do
-   {
-      if ( (bufSize=(int)fread( buf , 1, stepSize , lnaFD )) != stepSize )
-         error("DecoderSingleTest::loadLNA16bit - error reading prob vector") ;
-
-      if ( (buf[0] != 0x00) && (buf[0] != 0x80) )
-         error("DecoderSingleTest::loadLNA16bit - flag byte error %s %d",lnaFName,nFrames) ;
-
-      nFrames++ ;
-      decoderInput = (real **)realloc( decoderInput , nFrames*sizeof(real *) ) ;
-      decoderInput[nFrames-1] = new real[vecSize] ;
-
-      // Convert from the 16-bit integer in the file to the equivalent floating point
-      //   log probability.
-      sum = 0.0 ;
-      for ( i=0 ; i<vecSize ; i++ )
-      {
-         decoderInput[nFrames-1][i] = -((real)buf[i+1] + (real)0.5) / (real)5120.0 ;
-         sum += (real)exp( decoderInput[nFrames-1][i] ) ;
-      }
-
-      if ( (sum < 0.97) || (sum > 1.03) )
-      {
-         printf("LNA Error on %s\n",lnaFName) ;
-         printf("%d:",nFrames-1) ;
-         for ( i=0 ; i<vecSize ; i++ )
-            printf(" %.3f" , (real)exp( decoderInput[nFrames-1][i] ) ) ;
-         printf("\n") ;
-         error("DecoderSingleTest::loadLNA16bit - sum of probs=%.4f not in [0.97,1.03]",sum) ;
-      }
-   }
-   while ( buf[0] != 0x80 ) ;
-
-   // We're done.
-   fclose( lnaFD ) ;
-
-   delete [] buf ;
-}
-
-
-void DecoderSingleTest::loadOnlineFtrs( char *onlineFtrsFName )
-{
-   // Only read the first sentence in the file.
-   DiskFile *file ;
-   unsigned char *buf , flag ;
-
-#ifdef DEBUG
-   if ( decoderInput != NULL )
-      error("DecoderSingleTest::loadOnlineFtrs - already have decoder input data") ;
-   if ( (sizeof(unsigned char) != 1) || (sizeof(float) != 4) )
-      error("DecoderSingleTest::loadOnlineFtrs - types have unexpected sizes") ;
-#endif
-
-   if ( extStartFrame >= 0 )
-      warning("DST::loadOnlineFtrs - extended filenames not supported for online_ftrs input") ;
-
-   buf = new unsigned char[10000] ;
-
-   nFrames = 0 ;
-   decoderInput = NULL ;
-   vecSize = expVecSize ;
-
-   // Open the file in big endian mode
-   file = new DiskFile( onlineFtrsFName , "rb" , true ) ;
-
-   do
-   {
-      // read the flag byte
-      file->read( &flag , sizeof(unsigned char) , 1 ) ;
-
-      // read the features
-      if ( file->read( buf , sizeof(float) , vecSize ) != vecSize )
-         error("DecoderSingleTest::loadOnlineFtrs - error reading feature vector\n") ;
-
-      if ( (flag != 0x00) && (flag != 0x80) )
-         error("DecoderSingleTest::loadOnlineFtrs - flag byte error\n") ;
-
-      nFrames++ ;
-      decoderInput = (real **)realloc( decoderInput, nFrames*sizeof(real *) ) ;
-      decoderInput[nFrames-1] = new real[vecSize] ;
-#ifdef USE_DOUBLE
-      for ( int i=0 ; i<vecSize ; i++ )
-         decoderInput[nFrames-1][i] = (real)((float *)buf)[i] ;
-#else
-      memcpy( decoderInput[nFrames-1] , buf , vecSize*sizeof(float) ) ;
-#endif
-   }
-   while ( flag != 0x80 ) ;
-
-   // We're done.
-   delete file ;
-   delete [] buf ;
-}
-
-#endif
-// Above is data loading crap
 
 void DecoderSingleTest::extractResultsFromHyp( DecHyp *hyp , DecVocabulary *vocab )
 {

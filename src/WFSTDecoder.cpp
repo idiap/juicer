@@ -80,9 +80,7 @@ WFSTDecoder::WFSTDecoder()
    newActiveModelsList = NULL ;
    newActiveModelsListLastElem = NULL ;
   
-   // Changes
    bestFinalHyp = NULL ;
-   //DecHypHistPool::initDecHyp( &bestFinalHyp , -1 ) ;
 
    doModelLevelOutput = false ;
 
@@ -96,7 +94,6 @@ WFSTDecoder::WFSTDecoder()
 }
 
 
-// Changes
 WFSTDecoder::WFSTDecoder( 
     WFSTNetwork *network_ , Models *models_ ,
     real phoneStartPruneWin_ , real emitPruneWin_ ,  real phoneEndPruneWin_ ,
@@ -191,7 +188,6 @@ WFSTDecoder::WFSTDecoder(
    newActiveModelsList = NULL ;
    newActiveModelsListLastElem = NULL ;
 
-   // Changes
    if ( isStaticComposition_ )  {
       bestFinalHyp = new DecHyp() ;
       DecHypHistPool::initDecHyp( bestFinalHyp , -1 ) ;
@@ -225,7 +221,6 @@ WFSTDecoder::~WFSTDecoder()
 {
     reset() ;
 
-    // Changes
     delete bestFinalHyp ;
 
     delete [] transBuf ;
@@ -239,34 +234,8 @@ WFSTDecoder::~WFSTDecoder()
     delete lattice ;
 }
 
-
-/* PNG
-DecHyp *WFSTDecoder::decode( real **inputData , int nFrames_ )
-{
-   nFrames = nFrames_ ;
-
-   // Initialise the decoder.
-   init() ;
-
-   // process the inputs
-   for ( int t=0 ; t<nFrames ; t++ )
-   {
-      processFrame( inputData[t], t ) ;
-   }
-   
-   // Return the best final state hypothesis
-   return finish() ;
-}
-*/
-
 void WFSTDecoder::init()
 {
-    // Changes
-    /*
-    if ( bestFinalHyp != NULL )
-       error("WFSTDecoder::init - bestFinalHyp != NULL") ;
-    bestFinalHyp = new DecHyp();
-    */
     DecHypHistPool::initDecHyp( bestFinalHyp , -1 ) ;
     
     reset() ;
@@ -288,8 +257,6 @@ void WFSTDecoder::init()
 
    currStartPruneThresh = bestStartScore - phoneStartPruneWin ;
 
-   // Changes
-   //decHypHistPool->resetDecHyp( &tmpHyp ) ;
    resetDecHyp( &tmpHyp ) ;
 }
 
@@ -303,8 +270,6 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
     nFrames++;
 
    // Reset the bestFinalHyp
-   // Changes
-   //decHypHistPool->resetDecHyp( bestFinalHyp ) ;
    resetDecHyp( bestFinalHyp ) ;  
 
    // Process the hypotheses in the initial states of all active models.
@@ -430,39 +395,26 @@ void WFSTDecoder::extendModelInitState( WFSTModel *model )
         error("WFSTDecoder::extendModelInitSt - no active hyp in init state") ;
 #endif
 
-    //DecodingHMMState *initSt = model->hmm->states ;
     DecHyp *currHyps = model->currHyps ;
 
     // Evaluate transitions from the initial state to successor states.
-    //for ( int i=0 ; i<initSt->n_sucs ; i++ )
     int finalState = models->getNumStates(model->hmmIndex) - 1;
     int nSucs = models->getNumSuccessors(model->hmmIndex, 0);
-    //assert(nSucs == initSt->n_sucs);
     for ( int i=0 ; i<nSucs ; i++ )
     {
-        //int sucInd = initSt->sucs[i] ;
         int sucInd = models->getSuccessor(model->hmmIndex, 0, i) ;
-        //assert(sucInd == initSt->sucs[i]);
-        //if (sucInd == (model->hmm->n_states - 1))
         if (sucInd == finalState)
         {
-            //assert(models->getNumStates(model->hmmIndex) == model->hmm->n_states);
-
             // Ignore tee transitions.  They are dealt with later
-            //assert(model->hmm->teeProb > LOG_ZERO);
             continue;
         }
-        //real newScore = currHyps[0].score + initSt->suc_probs[i] ;
-        //real acousticScore = currHyps[0].acousticScore + initSt->suc_probs[i] ;
         real sucProb = models->getSuccessorLogProb(model->hmmIndex, 0, i);
         real newScore = currHyps[0].score + sucProb;
-        //assert(models->getSuccessorLogProb(model->hmmIndex, 0, i) == initSt->suc_probs[i]);
         real acousticScore = currHyps[0].acousticScore + sucProb ;
         real oldScore = currHyps[sucInd].score ;
 
         if ( newScore > oldScore )
         {
-            //DecodingHMMState *sucSt = (model->hmm->states) + sucInd ;
             bool emittingState = (sucInd != 0) && (sucInd != finalState);
 
             // If the hypothesis for the successor state is being
@@ -471,21 +423,15 @@ void WFSTDecoder::extendModelInitState( WFSTModel *model )
             if ( oldScore <= LOG_ZERO )
             {
                 model->nActiveHyps++ ;
-                //if ( sucSt->type == DHS_EMITTING )
                 if ( emittingState )
                     nActiveEmitHyps++ ;
-                //else if ( sucSt->type == DHS_PHONE_END )
                 else
                 {
                     // Should not get here
                     assert(0);
                     error("WFSTDecoder::extendModelInitSt - "
                           "tee models not supported at the moment") ;
-                    //nActiveEndHyps++ ;
                 }
-                //else
-                //    error("WFSTDecoder::extendModelInitSt - "
-                //          "suc st of init had bad type") ;
             }
 
             // The new hypothesis is better than the one that
@@ -495,7 +441,6 @@ void WFSTDecoder::extendModelInitState( WFSTModel *model )
                 acousticScore , currHyps[0].lmScore
             ) ;
 
-            //if ( (emitHypsHistogram != NULL) && (sucSt->type == DHS_EMITTING) )
             if ( (emitHypsHistogram != NULL) && emittingState )
             {
                 // Add the new score (and perhaps remove the old) from
@@ -505,13 +450,11 @@ void WFSTDecoder::extendModelInitState( WFSTModel *model )
             
             // Update our best emitting state scores and if the
             // successor state was a phone end then process that now.
-            //if ( (sucSt->type == DHS_EMITTING) && (newScore > bestEmitScore) )
             if ( emittingState && (newScore > bestEmitScore) )
             {
                 bestEmitScore = newScore ;
                 bestHypHist = currHyps[sucInd].hist ;
             }
-            //else if ( sucSt->type == DHS_PHONE_END )
             else if (!emittingState)
             {
                 error("WFSTDecoder::extendModelInitSt"
@@ -629,7 +572,6 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
     if ( DecHypHistPool::isActiveHyp( prevHyps ) )
         error("WFSTDecoder::procModelEmitSts - "
               "prevHyps init st hyp is still active") ;
-    //if ( DecHypHistPool::isActiveHyp( prevHyps + (model->hmm->n_states-1) ) )
     if ( DecHypHistPool::isActiveHyp( prevHyps + (nStates-1) ) )
         error("WFSTDecoder::procModelEmitSts - "
               "prevHyps final st hyp is still active") ;
@@ -639,14 +581,8 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
     model->nActiveHyps = 0 ;
     
     // Update the emitting states in currPhone
-    //for ( i=1 ; i<(model->hmm->n_states-1) ; i++ )
     for ( i=1 ; i<(nStates-1) ; i++ )
     {
-#ifdef DEBUG
-        //if ( model->hmm->states[i].type != DHS_EMITTING )
-        //    error("WFSTDecoder::procModelEmitSts - unexpected state type") ;
-#endif
-
         // Look at each emitting state hypothesis in this phone model.
         // Update if active.
         if ( prevHyps[i].score > LOG_ZERO )
@@ -659,27 +595,22 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
             if ( prevHyps[i].score > currEmitPruneThresh )
             {
                 nEmitHypsProcessed++ ;
-                //DecodingHMMState *st = model->hmm->states + i ;
 
                 // 1. Calculate its emission probability.
                 real emisProb ;
-                //emisProb = models->calcOutput( st->emis_prob_index ) ;
                 emisProb = models->calcOutput( model->hmmIndex, i ) ;
 
                 // 2. Evaluate transitions to successor states.
                 int nSucs = models->getNumSuccessors(model->hmmIndex, i);
-                //for ( int j=0 ; j<st->n_sucs ; j++ )
                 for ( int j=0 ; j<nSucs ; j++ )
                 {
                     // Calculate the (potential) new scores for the
                     // successor state.
-                    //int sucInd = st->sucs[j] ;
                     int sucInd = models->getSuccessor(model->hmmIndex, i, j);
                     real sucProb =
                         models->getSuccessorLogProb(model->hmmIndex, i, j);
                     //printf("sucInd = %d\n", sucInd);
                     real newScore =
-                        //prevHyps[i].score + emisProb + st->suc_probs[j] ;
                         prevHyps[i].score + emisProb + sucProb ;
                     real oldScore = currHyps[sucInd].score ;
                     
@@ -687,18 +618,7 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
                     {
                         real acousticScore =
                             prevHyps[i].acousticScore
-                            //+ emisProb + st->suc_probs[j] ;
                             + emisProb + sucProb ;
-                        //DecodingHMMState *sucSt = model->hmm->states + sucInd ;
-#ifdef DEBUG
-                        // From an emitting state, we can only go to
-                        // other emitting states or to PHONE_END
-                        // states. Check.
-                        //if ( (sucSt->type != DHS_EMITTING) &&
-                        //     (sucSt->type != DHS_PHONE_END) )
-                        //    error("WFSTDecoder::procModelEmitSts"
-                        //          " - suc state of emit had bad type") ;
-#endif
 
                         assert(sucInd != 0);
                         bool emittingState =
@@ -709,20 +629,13 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
                         if ( oldScore <= LOG_ZERO )
                         {
                             model->nActiveHyps++ ;
-                            //if ( sucSt->type == DHS_EMITTING )
                             if ( emittingState )
                                 nActiveEmitHyps++ ;
-                            //else if ( sucSt->type == DHS_PHONE_END )
                             else
                                 nActiveEndHyps++ ;
-                            //else
-                            //    error("WFSTDecoder::procModelEmitSts"
-                            //          " - suc st of emit had bad type") ;
                         }
 
-                        if ( (emitHypsHistogram != NULL) &&
-                             //(sucSt->type == DHS_EMITTING) )
-                             emittingState )
+                        if ( (emitHypsHistogram != NULL) && emittingState )
                         {
                             // Add the new score (and perhaps remove
                             // the old) from the emitting state
@@ -739,32 +652,25 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
                         ) ;
 
                         // Update our best scores.
-                        //if ( (sucSt->type == DHS_EMITTING) &&
-                        if ( emittingState &&
-                             (newScore > bestEmitScore) )
+                        if ( emittingState && (newScore > bestEmitScore) )
                         {
                             bestEmitScore = newScore ;
                             bestHypHist = currHyps[sucInd].hist ;
                         }
                         else
-                            //if ( (sucSt->type == DHS_PHONE_END) &&
-                            if ( !emittingState &&
-                                 (newScore > bestEndScore) )
+                            if ( !emittingState && (newScore > bestEndScore) )
                                 bestEndScore = newScore ;
                     }
                 }
             }
 
             // We've finished processing this state - deactivate.
-            // Changes
-            //decHypHistPool->resetDecHyp( prevHyps + i ) ;
             resetDecHyp( prevHyps + i ) ;
         }
     }
 
 #ifdef LOCAL_HYPS
     // *Copy* the new dechyps into the heap storage
-    //for ( i=0 ; i<model->hmm->n_states ; i++ )
     for ( i=0 ; i<nStates ; i++ )
         model->currHyps[i] = currHyps[i];
 #endif
@@ -815,7 +721,6 @@ void WFSTDecoder::processActiveModelsEndStates()
     int nStates = models->getNumStates(model->hmmIndex);
     while ( model != NULL )
     {
-        //DecHyp *endHyp = model->currHyps + (model->hmm->n_states - 1) ;
         DecHyp *endHyp = model->currHyps + (nStates - 1) ;
         if ( endHyp->score > LOG_ZERO )
         {
@@ -1077,11 +982,7 @@ void WFSTDecoder::extendModelEndState(
                 bestStartScore = newScore;
 
             // If this is not a tee, continue to the next transition
-#if 0
-            // Get tee from the models
-            teeWeight = nextModel->hmm->teeProb;
-#else
-            // Find the tee explicitly
+            // PNG: I ain't sure this is fast
             int t;
             int nextFinalState = models->getNumStates(nextModel->hmmIndex) - 1;
             for (t=1; t<models->getNumSuccessors(nextModel->hmmIndex, 0); t++)
@@ -1091,7 +992,7 @@ void WFSTDecoder::extendModelEndState(
                     teeWeight =
                         models->getSuccessorLogProb(nextModel->hmmIndex, 0, t);
             }
-#endif
+
             if (teeWeight == LOG_ZERO)
                 continue;
 
@@ -1160,7 +1061,6 @@ DecHyp *WFSTDecoder::finish()
         lattice->printLogInfo() ;
     }
 
-    // Changes
     if ( DecHypHistPool::isActiveHyp( bestFinalHyp ) )
     {
         // This seems to be something like number of remaining labels
@@ -1317,8 +1217,6 @@ void WFSTDecoder::reset()
    }
 
    // Reset the bestFinalHyp
-   // Changes
-   //decHypHistPool->resetDecHyp( bestFinalHyp ) ;
    resetDecHyp( bestFinalHyp ) ;
 
 }
@@ -1408,7 +1306,6 @@ void WFSTDecoder::resetDecHyp( DecHyp* hyp )
    decHypHistPool->resetDecHyp( hyp ) ;
 }
 
-// Changes
 void WFSTDecoder::registerLabel( DecHyp* hyp , int label )
 {
    DecHypHistPool::registerLabel( hyp, label ) ;

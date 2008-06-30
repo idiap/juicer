@@ -17,8 +17,8 @@
 /*
 	Author:		Darren Moore (moore@idiap.ch)
 	                Modified by John Dines to support LNA16bit (dines@idiap.ch)
+                    ...and moved to tracter by PNG
 	Date:			2004
-	$Id: DecoderSingleTest.h,v 1.13 2006/06/20 17:05:15 juicer Exp $
 */
 
 namespace Juicer {
@@ -129,11 +129,6 @@ private:
 
   // Private methods
   void removeSentMarksFromActual( DecVocabulary *vocab ) ;
-    //void loadDataFile() ;
-    //void loadHTK( const char *htkFName ) ;
-    //void loadLNA8bit( char *lnaFName ) ;
-    //void loadLNA16bit( char *lnaFName ) ;
-    //void loadOnlineFtrs( char *onlineFtrsFName ) ;
   void extractResultsFromHyp( DecHyp *hyp , DecVocabulary *vocab ) ;
   void extractResultsFromHypWordMode( DecHyp *hyp , DecVocabulary *vocab ) ;
   void extractResultsFromHypPhoneMode( DecHyp *hyp , DecVocabulary *vocab ) ;

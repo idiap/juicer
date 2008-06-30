@@ -28,40 +28,12 @@ namespace Juicer {
 // Changes
 WFSTModelPool::WFSTModelPool()
 {
-//PNG   phoneModels = NULL ;
    models = NULL ;
    decHypHistPool = NULL ;
    maxNStates = 0 ;
    nUsed = 0 ;
    pools = NULL ;
 }
-
-//PNG
-#if 0
-WFSTModelPool::WFSTModelPool( PhoneModels *phoneModels_ , DecHypHistPool *decHypHistPool_ )
-{
-	int i ;
-	
-	if ( (phoneModels = phoneModels_) == NULL )
-		error("WFSTModelPool::WFSTModelPool - phoneModels_ is NULL") ;
-   models = NULL ;
-	if ( (decHypHistPool = decHypHistPool_) == NULL )
-		error("WFSTModelPool::WFSTModelPool - decHypHistPool_ is NULL") ;
-
-	// Determine the maximum number of states over all models in phoneModels.
-	maxNStates = 0 ;
-   nUsed = 0 ;
-	for ( i=0 ; i<phoneModels->nModels ; i++ )
-	{
-		if ( phoneModels->models[i]->n_states > maxNStates )
-			maxNStates = phoneModels->models[i]->n_states ;
-	}
-	
-	pools = new WFSTModelFNSPool[maxNStates] ;
-	for ( i=0 ; i<maxNStates ; i++ )
-		initFNSPool( i , i+1 , 100 ) ;
-}
-#endif
 
 WFSTModelPool::WFSTModelPool(
     Models *models_ , DecHypHistPool *decHypHistPool_
@@ -75,13 +47,9 @@ WFSTModelPool::WFSTModelPool(
     // Determine the maximum number of states over all models in phoneModels.
     maxNStates = 0 ;
     nUsed = 0 ;
-    //DecodingHMM *dh ;
     int i ;
     for ( i=0 ; i<models->getNumHMMs() ; i++ )
     {
-        //dh = models->getDecHMM( i ) ;
-        //if ( dh->n_states > maxNStates )
-        //    maxNStates = dh->n_states ;
         int n = models->getNumStates(i);
         if (n > maxNStates)
             maxNStates = n;
@@ -203,7 +171,6 @@ void WFSTModelPool::allocPool( int poolInd )
 	
 WFSTModel *WFSTModelPool::getElem( WFSTTransition *trans )
 {
-//	DecodingHMM *hmm ;
 	WFSTModelFNSPool *pool ;
 	WFSTModel *tmp ;
 
@@ -212,12 +179,9 @@ WFSTModel *WFSTModelPool::getElem( WFSTTransition *trans )
    
     int index = trans->inLabel - 1 ;
     int nStates = models->getNumStates(index);
-//	hmm = getDecHMM( index ) ;
-//	pool = pools + hmm->n_states - 1 ;
     pool = pools + nStates - 1 ;
 	
 	if ( pool->nFree == 0 )
-        //allocPool( hmm->n_states - 1 ) ;
         allocPool( nStates - 1 ) ;
 		
 	pool->nFree-- ;
@@ -233,7 +197,6 @@ WFSTModel *WFSTModelPool::getElem( WFSTTransition *trans )
 
 	// Configure the new element.
 	tmp->trans = trans ;
-    //tmp->hmm = hmm ;
     tmp->hmmIndex = index;
 	tmp->nActiveHyps = 0 ;
 	tmp->next = NULL ;
@@ -250,7 +213,6 @@ void WFSTModelPool::returnElem( WFSTModel *elem )
 	WFSTModelFNSPool *pool ;
 	int nStates ;
 
-    //nStates = elem->hmm->n_states ;
     nStates = models->getNumStates(elem->hmmIndex);
 
     // Phil - This is a big cache miss during decoding as all but the
@@ -278,8 +240,6 @@ void WFSTModelPool::initElem( WFSTModel *elem , int nStates )
 	int i ;
 
 	elem->trans = NULL ;
-//	elem->hmm = NULL ;
-
 	elem->currHyps = elem->hyps1 ;
 #ifndef LOCAL_HYPS
 	elem->prevHyps = elem->hyps2 ;
@@ -304,7 +264,6 @@ void WFSTModelPool::resetElem( WFSTModel *elem , int nStates )
 	int i ;
 	
     elem->trans = NULL ;
-//	elem->hmm = NULL ;
 	for ( i=0 ; i<nStates ; i++ )
 	{
 		decHypHistPool->resetDecHyp( elem->currHyps + i ) ;
@@ -325,7 +284,6 @@ void WFSTModelPool::checkActive( WFSTModel *elem )
 	int i ;
 
     int nStates = models->getNumStates(elem->hmmIndex);
-    //for ( i=0 ; i<elem->hmm->n_states ; i++ )
     for ( i=0 ; i<nStates ; i++ )
 	{
 		if ( (elem->currHyps[i].score > LOG_ZERO) ||
@@ -338,31 +296,5 @@ void WFSTModelPool::checkActive( WFSTModel *elem )
 #endif
 	}
 }
-
-
-#if 0
-DecodingHMM *WFSTModelPool::getDecHMM( int ind )
-{
-   DecodingHMM *dh ;
-
-   if ( ind < 0 )
-      error("WFSTModelPool::getDecHMM - ind < 0") ;
-
-//PNG   if ( phoneModels == NULL )
-//PNG   {
-      if ( ind >= models->getNumHMMs() )
-         error("WFSTModelPool::getDecHMM - ind >= models->getNumHMMs()") ;
-      dh = models->getDecHMM( ind ) ;
-//PNG   }
- //PNG  else
- //PNG  {
-//PNG      if ( ind >= phoneModels->nModels )
-//PNG         error("WFSTModelPool::getDecHMM - ind >= phoneModels->nModels") ;
-//PNG      dh = phoneModels->models[ind] ;
-//PNG   }
-
-   return dh ;
-}
-#endif
 
 }

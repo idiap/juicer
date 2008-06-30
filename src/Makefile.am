@@ -30,19 +30,15 @@ JUICER_SOURCES = \
 	DecHypHistPool.cpp \
 	Histogram.cpp \
 	BlockMemPool.cpp \
-	DiskFile.cpp \
 	LogFile.cpp \
 	WordPairLM.cpp \
 	ARPALM.cpp \
 	string_stuff.cpp
 
-# Ignore for now
+# Ignore until somebody wants the on the fly decoder
 #	WFSTModelOnTheFly.cpp
 #	WFSTOnTheFlyDecoder.cpp
 #	WFSTLatticeOnTheFly.cpp
-
-# Removed
-#	DecodingHMM.cpp
 
 
 # These sources have no corresponding header file

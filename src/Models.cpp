@@ -12,7 +12,6 @@
 /*
    Author:  Darren Moore (moore@idiap.ch)
    Date:    15 November 2004
-   $Id: Models.cpp,v 1.12 2005/09/27 04:00:52 moore Exp $
 */
 
 using namespace Torch;
@@ -27,26 +26,6 @@ namespace Juicer {
 #define  GMM_REALLOC            1000
 #define  HMM_REALLOC            1000
 
-#if 0
-//
-// PNG  Test code to see if it can speed up access
-//
-real* poolAlloc(int iSize, int iIndex, int iOffset)
-{
-    static int ps = 39 * 30000 * 16 * 3;
-    static real* pool = 0;
-    static int size = iSize;
-
-    if (!pool)
-        pool = new real[ps];
-
-    int pc = (iIndex*2 + iOffset) * iSize;;
-    real* ret = &pool[pc];
-    assert(pc < ps);
-    assert(size == iSize);
-    return ret;
-}
-#endif
 
 HTKModels::HTKModels()
 {
@@ -79,7 +58,6 @@ HTKModels::HTKModels()
    nHMMs = 0 ;
    nHMMsAlloc = 0 ;
    hMMs = NULL ;
-//   decHMMs = NULL ;
 
    hybridMode = false ;
    logPriors = NULL ;
@@ -131,7 +109,6 @@ void HTKModels::Load(
    nHMMs = 0 ;
    nHMMsAlloc = 0 ;
    hMMs = NULL ;
-//   decHMMs = NULL ;
 
    hybridMode = false ;
    logPriors = NULL ;
@@ -231,18 +208,6 @@ void HTKModels::Load(
    
    vecSize = nHMMs ;
    hybridMode = true ;
-
-#if 0
-   // Configure the DecodingHMMs
-   decHMMs = new DecodingHMM*[nHMMs] ;
-   for ( i=0 ; i<nHMMs ; i++ )
-   {
-       decHMMs[i] = new DecodingHMM(
-           hMMs+i , transMats + hMMs[i].transMatrixInd
-       ) ;
-       //decHMMs[i]->outputText() ;
-   }
-#endif
 }
 
 
@@ -282,7 +247,6 @@ void HTKModels::Load(
    nHMMs = 0 ;
    nHMMsAlloc = 0 ;
    hMMs = NULL ;
-//   decHMMs = NULL ;
 
    hybridMode = false ;
    logPriors = NULL ;
@@ -404,16 +368,6 @@ HTKModels::~HTKModels()
          free( hMMs ) ;
    }
 
-#if 0
-   // Delete DecodingHMMs
-   if ( decHMMs != NULL )
-   {
-      for ( i=0 ; i<nHMMs ; i++ )
-         delete decHMMs[i] ;
-      delete [] decHMMs ;
-   }
-#endif
-
    // Delete currGMMOutputs
    delete [] currGMMOutputs ;
 
@@ -473,18 +427,6 @@ void HTKModels::initFromHTKParseResult()
    currGMMOutputs = new real[nGMMs] ;
    for ( i=0 ; i<nGMMs ; i++ )
       currGMMOutputs[i] = LOG_ZERO ;
-
-#if 0
-   // Configure the DecodingHMMs
-   decHMMs = new DecodingHMM*[nHMMs] ;
-   for ( i=0 ; i<nHMMs ; i++ )
-   {
-       decHMMs[i] = new DecodingHMM(
-           hMMs+i , transMats + hMMs[i].transMatrixInd
-       ) ;
-       //decHMMs[i]->outputText() ;
-   }
-#endif
 
    fromBinFile = false ;
 }
@@ -1267,17 +1209,6 @@ void HTKModels::readBinary( const char *fName )
          currGMMOutputs[i] = LOG_ZERO ;
       }
    }
-
-#if 0
-   // Configure the DecodingHMMs
-   decHMMs = new DecodingHMM*[nHMMs] ;
-   for ( i=0 ; i<nHMMs ; i++ )
-   {
-       decHMMs[i] = new DecodingHMM(
-           hMMs+i , transMats + hMMs[i].transMatrixInd
-       ) ;
-   }
-#endif
 
    fromBinFile = true ;
 }
