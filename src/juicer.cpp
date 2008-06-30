@@ -11,11 +11,13 @@
 #include "Models.h"
 #include "WFSTNetwork.h"
 #include "WFSTDecoder.h"
-#include "WFSTOnTheFlyDecoder.h"
 #include "DecoderBatchTest.h"
 #include "MonophoneLookup.h"
 #include "LogFile.h"
 
+#ifdef WITH_ONTHEFLY
+# include "WFSTOnTheFlyDecoder.h"
+#endif
 
 /*
   Author :		Darren Moore (moore@idiap.ch)
@@ -482,10 +484,15 @@ int main( int argc , char *argv[] )
             maxHyps , modelLevelOutput , latticeGeneration ) ;
     }
     else  {
+#ifdef WITH_ONTHEFLY
         decoder = new WFSTOnTheFlyDecoder( 
             clNetwork, gNetwork, models, mainBeam, phoneEndBeam, 
             maxHyps, modelLevelOutput, latticeGeneration, 
             doLabelAndWeightPushing, true ) ;
+#else
+        printf("On the fly not compiled in\n");
+        assert(0);
+#endif
     }
     LogFile::puts( "done\n" ) ;
    

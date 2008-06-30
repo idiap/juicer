@@ -1090,13 +1090,12 @@ void WFSTDecoder::extendModelEndState(
                     nextFinalState)
                     teeWeight =
                         models->getSuccessorLogProb(nextModel->hmmIndex, 0, t);
-                printf("Tee: %d\n", nextModel->hmmIndex);
             }
 #endif
             if (teeWeight == LOG_ZERO)
                 continue;
 
-            printf("Tee weight detected\n");
+            //printf("Tee weight detected\n");
         }
 
         // Epsilon transitions and tee models drop to here

@@ -203,7 +203,7 @@ void WFSTModelPool::allocPool( int poolInd )
 	
 WFSTModel *WFSTModelPool::getElem( WFSTTransition *trans )
 {
-	DecodingHMM *hmm ;
+//	DecodingHMM *hmm ;
 	WFSTModelFNSPool *pool ;
 	WFSTModel *tmp ;
 
@@ -211,11 +211,14 @@ WFSTModel *WFSTModelPool::getElem( WFSTTransition *trans )
         error("WFSTModelPool::getElem - trans->inLabel = 0 (i.e. epsilon)") ;
    
     int index = trans->inLabel - 1 ;
-	hmm = getDecHMM( index ) ;
-	pool = pools + hmm->n_states - 1 ;
+    int nStates = models->getNumStates(index);
+//	hmm = getDecHMM( index ) ;
+//	pool = pools + hmm->n_states - 1 ;
+    pool = pools + nStates - 1 ;
 	
 	if ( pool->nFree == 0 )
-		allocPool( hmm->n_states - 1 ) ;
+        //allocPool( hmm->n_states - 1 ) ;
+        allocPool( nStates - 1 ) ;
 		
 	pool->nFree-- ;
 	pool->nUsed++ ;
@@ -247,8 +250,8 @@ void WFSTModelPool::returnElem( WFSTModel *elem )
 	WFSTModelFNSPool *pool ;
 	int nStates ;
 
-    nStates = elem->hmm->n_states ;
-    //nStates = models->getNumStates(elem->hmmIndex);
+    //nStates = elem->hmm->n_states ;
+    nStates = models->getNumStates(elem->hmmIndex);
 
     // Phil - This is a big cache miss during decoding as all but the
     // last hyp will be out of cache.  If DecHyps need to be reset, do
@@ -275,7 +278,7 @@ void WFSTModelPool::initElem( WFSTModel *elem , int nStates )
 	int i ;
 
 	elem->trans = NULL ;
-	elem->hmm = NULL ;
+//	elem->hmm = NULL ;
 
 	elem->currHyps = elem->hyps1 ;
 #ifndef LOCAL_HYPS
@@ -301,7 +304,7 @@ void WFSTModelPool::resetElem( WFSTModel *elem , int nStates )
 	int i ;
 	
     elem->trans = NULL ;
-	elem->hmm = NULL ;
+//	elem->hmm = NULL ;
 	for ( i=0 ; i<nStates ; i++ )
 	{
 		decHypHistPool->resetDecHyp( elem->currHyps + i ) ;
@@ -321,7 +324,9 @@ void WFSTModelPool::checkActive( WFSTModel *elem )
 {
 	int i ;
 
-	for ( i=0 ; i<elem->hmm->n_states ; i++ )
+    int nStates = models->getNumStates(elem->hmmIndex);
+    //for ( i=0 ; i<elem->hmm->n_states ; i++ )
+    for ( i=0 ; i<nStates ; i++ )
 	{
 		if ( (elem->currHyps[i].score > LOG_ZERO) ||
              (elem->currHyps[i].hist != NULL) )
@@ -335,6 +340,7 @@ void WFSTModelPool::checkActive( WFSTModel *elem )
 }
 
 
+#if 0
 DecodingHMM *WFSTModelPool::getDecHMM( int ind )
 {
    DecodingHMM *dh ;
@@ -357,6 +363,6 @@ DecodingHMM *WFSTModelPool::getDecHMM( int ind )
 
    return dh ;
 }
-
+#endif
 
 }

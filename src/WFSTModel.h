@@ -9,7 +9,8 @@
 #define WFST_MODEL_INC
 
 #include "general.h"
-#include "DecodingHMM.h"
+//#include "DecodingHMM.h"
+#include "Models.h"
 #include "DecHypHistPool.h"
 #include "WFSTNetwork.h"
 
@@ -100,7 +101,7 @@ protected:
    // Changes by Octavian - making two of the following virtual
    virtual void initFNSPool( int poolInd , int nStates , int initReallocAmount ) ;
    virtual void allocPool( int poolInd ) ;
-   DecodingHMM *getDecHMM( int ind ) ;
+//   DecodingHMM *getDecHMM( int ind ) ;
 
    // Changes by Octavian
 private:

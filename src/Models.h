@@ -10,7 +10,7 @@
 
 #include "general.h"
 #include "htkparse.h"
-#include "DecodingHMM.h"
+//#include "DecodingHMM.h"
 
 /*
   Author:	Darren Moore (moore@idiap.ch)
@@ -74,7 +74,7 @@ namespace Juicer
     };
 
 
-    class DecodingHMM ;
+//    class DecodingHMM ;
 
     /**
      * Models interface.
@@ -103,7 +103,6 @@ namespace Juicer
 
         virtual int getNumHMMs() = 0 ;
         virtual int getCurrFrame() = 0 ;
-        virtual DecodingHMM *getDecHMM( int hmmInd ) = 0 ;
         virtual const char* getHMMName( int hmmInd ) = 0 ;
         virtual int getInputVecSize() = 0 ;
 
@@ -138,7 +137,7 @@ namespace Juicer
 
         int getNumHMMs() { return nHMMs ; } ;
         int getCurrFrame() { return currFrame ; } ;
-        DecodingHMM *getDecHMM( int hmmInd ) { return decHMMs[hmmInd] ; } ;
+//        DecodingHMM *getDecHMM( int hmmInd ) { return decHMMs[hmmInd] ; } ;
         const char* getHMMName( int hmmInd ) { return hMMs[hmmInd].name ; } ;
         int getInputVecSize() { return vecSize ; } ;
 
@@ -189,7 +188,7 @@ namespace Juicer
         int            nHMMs ;
         int            nHMMsAlloc ;
         HMM            *hMMs ;
-        DecodingHMM    **decHMMs ;
+//        DecodingHMM    **decHMMs ;
 
         FILE           *inFD ;
         FILE           *outFD ;

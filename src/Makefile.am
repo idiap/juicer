@@ -13,12 +13,9 @@ lib_LTLIBRARIES = libjuicer.la
 
 JUICER_SOURCES = \
 	WFSTDecoder.cpp \
-	WFSTOnTheFlyDecoder.cpp \
 	WFSTNetwork.cpp \
 	WFSTModel.cpp \
-	WFSTModelOnTheFly.cpp \
 	WFSTLattice.cpp \
-	WFSTLatticeOnTheFly.cpp \
 	WFSTGramGen.cpp \
 	WFSTCDGen.cpp \
 	WFSTLexGen.cpp \
@@ -33,12 +30,20 @@ JUICER_SOURCES = \
 	DecHypHistPool.cpp \
 	Histogram.cpp \
 	BlockMemPool.cpp \
-	DecodingHMM.cpp \
 	DiskFile.cpp \
 	LogFile.cpp \
 	WordPairLM.cpp \
 	ARPALM.cpp \
 	string_stuff.cpp
+
+# Ignore for now
+#	WFSTModelOnTheFly.cpp
+#	WFSTOnTheFlyDecoder.cpp
+#	WFSTLatticeOnTheFly.cpp
+
+# Removed
+#	DecodingHMM.cpp
+
 
 # These sources have no corresponding header file
 libjuicer_la_SOURCES = $(JUICER_SOURCES) \

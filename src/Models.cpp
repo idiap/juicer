@@ -79,7 +79,7 @@ HTKModels::HTKModels()
    nHMMs = 0 ;
    nHMMsAlloc = 0 ;
    hMMs = NULL ;
-   decHMMs = NULL ;
+//   decHMMs = NULL ;
 
    hybridMode = false ;
    logPriors = NULL ;
@@ -131,7 +131,7 @@ void HTKModels::Load(
    nHMMs = 0 ;
    nHMMsAlloc = 0 ;
    hMMs = NULL ;
-   decHMMs = NULL ;
+//   decHMMs = NULL ;
 
    hybridMode = false ;
    logPriors = NULL ;
@@ -232,6 +232,7 @@ void HTKModels::Load(
    vecSize = nHMMs ;
    hybridMode = true ;
 
+#if 0
    // Configure the DecodingHMMs
    decHMMs = new DecodingHMM*[nHMMs] ;
    for ( i=0 ; i<nHMMs ; i++ )
@@ -241,6 +242,7 @@ void HTKModels::Load(
        ) ;
        //decHMMs[i]->outputText() ;
    }
+#endif
 }
 
 
@@ -280,7 +282,7 @@ void HTKModels::Load(
    nHMMs = 0 ;
    nHMMsAlloc = 0 ;
    hMMs = NULL ;
-   decHMMs = NULL ;
+//   decHMMs = NULL ;
 
    hybridMode = false ;
    logPriors = NULL ;
@@ -402,6 +404,7 @@ HTKModels::~HTKModels()
          free( hMMs ) ;
    }
 
+#if 0
    // Delete DecodingHMMs
    if ( decHMMs != NULL )
    {
@@ -409,6 +412,7 @@ HTKModels::~HTKModels()
          delete decHMMs[i] ;
       delete [] decHMMs ;
    }
+#endif
 
    // Delete currGMMOutputs
    delete [] currGMMOutputs ;
@@ -470,6 +474,7 @@ void HTKModels::initFromHTKParseResult()
    for ( i=0 ; i<nGMMs ; i++ )
       currGMMOutputs[i] = LOG_ZERO ;
 
+#if 0
    // Configure the DecodingHMMs
    decHMMs = new DecodingHMM*[nHMMs] ;
    for ( i=0 ; i<nHMMs ; i++ )
@@ -479,6 +484,7 @@ void HTKModels::initFromHTKParseResult()
        ) ;
        //decHMMs[i]->outputText() ;
    }
+#endif
 
    fromBinFile = false ;
 }
@@ -1262,6 +1268,7 @@ void HTKModels::readBinary( const char *fName )
       }
    }
 
+#if 0
    // Configure the DecodingHMMs
    decHMMs = new DecodingHMM*[nHMMs] ;
    for ( i=0 ; i<nHMMs ; i++ )
@@ -1270,7 +1277,8 @@ void HTKModels::readBinary( const char *fName )
            hMMs+i , transMats + hMMs[i].transMatrixInd
        ) ;
    }
-   
+#endif
+
    fromBinFile = true ;
 }
 
