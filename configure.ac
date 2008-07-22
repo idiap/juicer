@@ -2,7 +2,7 @@
 # ...and manually buggered up by Phil Garner
 
 AC_PREREQ(2.59)
-AC_INIT([Juicer], [0.8.0])
+AC_INIT([Juicer], [0.8.1])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_SRCDIR([src/juicer.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -53,6 +53,38 @@ fi
 
 AC_SUBST(TORCH_CFLAGS)
 AC_SUBST(TORCH_LIBS)
+
+
+# HTK
+AC_ARG_WITH(htk-includes,
+  [AS_HELP_STRING(
+    [--with-htk-includes=DIR],
+    [Directory containing HTK headers]
+  )],
+  [],
+  [with_htk_includes=no]
+)
+AC_ARG_WITH(htk-libs,
+  [AS_HELP_STRING(
+    [--with-htk-libs=DIR],
+    [List of HTK libraries]
+  )],
+  [],
+  [with_htk_libs=no]
+)
+AM_CONDITIONAL([WITH_HTK], [test "x$with_htk_includes" != xno])
+AC_MSG_CHECKING([whether to use HTK])
+AS_IF(
+  [test "x$with_htk_includes" != xno],
+  [AC_SUBST([HTK_LIBS], [$with_htk_libs])
+   AC_SUBST([HTK_INCLUDES], [$with_htk_includes])
+   AC_DEFINE_UNQUOTED(
+       [HAVE_HTKLIB], 1,
+       [Define to 1 if you have HTK.]
+     )
+   AC_MSG_RESULT(yes)],
+  [AC_MSG_RESULT(no)]
+)
 
 
 # Checks for programs.

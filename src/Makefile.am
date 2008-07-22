@@ -61,13 +61,13 @@ LEX_OUTPUT_ROOT = lex.htk
 
 bin_PROGRAMS = juicer gramgen cdgen lexgen genwfstseqs
 
-libjuicer_la_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@
+libjuicer_la_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 libjuicer_la_LIBADD = @TRACTER_LIBS@
 
 LDADD = libjuicer.la @TORCH_LIBS@
 
 juicer_SOURCES = juicer.cpp
-juicer_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@
+juicer_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 
 gramgen_SOURCES = gramgen.cpp
 gramgen_CPPFLAGS = @TORCH_CFLAGS@

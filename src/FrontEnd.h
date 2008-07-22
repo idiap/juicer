@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright 2007,2008 by IDIAP Research Institute
  *                        http://www.idiap.ch
  *
@@ -11,73 +11,84 @@
 #include "HTKSource.h"
 #include "LNASource.h"
 #include "ArraySink.h"
+#include "ALSASource.h"
 
-enum SourceFormat
+#include "config.h"
+
+using namespace Tracter;
+
+namespace Juicer
 {
-    SOURCE_HTK,
-    SOURCE_LNA8,
-    SOURCE_LNA16,
-    SOURCE_FACTORY
-};
-
-class FrontEnd
-{
-public:
-    FrontEnd(int iInputVecSize, SourceFormat iFormat)
+    /**
+     * Format of front-end.
+     * All front-ends are based on Tracter.
+     */
+    enum FrontEndFormat
     {
-        Plugin<float>* source;
-        switch (iFormat)
-        {
-        case SOURCE_HTK:
-        {
-            HTKSource* tmp = new HTKSource();
-            source = tmp;
-            mSource = tmp;
-            break;
-        }
-        case SOURCE_LNA8:
-        {
-            LNASource* tmp = new LNASource();
-            source = tmp;
-            mSource = tmp;
-            break;
-        }
-        case SOURCE_FACTORY:
-        {
-            Tracter::ASRFactory factory;
-            source = factory.CreateSource(mSource);
-            source = factory.CreateFrontend(source);
-            break;
-        }
-        default:
-            assert(0);
-        }
-        mSink = new ArraySink<float>(source);
-        assert(iInputVecSize == mSink->GetArraySize());
-    }
+        FRONTEND_HTK,    ///< HTK file
+        FRONTEND_LNA,    ///< LNA file
+        FRONTEND_FACTORY ///< Tracter::ASRFactory
+    };
 
-    ~FrontEnd()
+    class FrontEnd
     {
-        delete mSink;
-    }
+    public:
+        FrontEnd(int iInputVecSize, FrontEndFormat iFormat)
+        {
+            Plugin<float>* source;
+            switch (iFormat)
+            {
+            case FRONTEND_HTK:
+            {
+                HTKSource* tmp = new HTKSource();
+                source = tmp;
+                mSource = tmp;
+                break;
+            }
+            case FRONTEND_LNA:
+            {
+                LNASource* tmp = new LNASource();
+                source = tmp;
+                mSource = tmp;
+                break;
+            }
+            case FRONTEND_FACTORY:
+            {
+                ASRFactory factory;
+                source = factory.CreateSource(mSource);
+                source = factory.CreateFrontend(source);
+                break;
+            }
+            default:
+                assert(0);
+            }
+            mSink = new ArraySink<float>(source);
+            assert(iInputVecSize == mSink->GetArraySize());
+        }
 
-    bool GetArray(float*& ioData, int iIndex)
-    {
-        if (iIndex == 0)
+        ~FrontEnd()
+        {
+            delete mSink;
+        }
+
+        bool GetArray(float*& ioData, int iIndex)
+        {
+            if (iIndex == 0)
+                mSink->Reset();
+            return mSink->GetArray(ioData, iIndex);
+        }
+
+        void SetSource(char* iFileName)
+        {
+            assert(iFileName);
+            mSource->Open(iFileName);
             mSink->Reset();
-        return mSink->GetArray(ioData, iIndex);
-    }
+        }
 
-    void SetSource(char* iFileName)
-    {
-        assert(iFileName);
-        mSource->Open(iFileName);
-        mSink->Reset();
-    }
-
-private:
-    Source* mSource;
-    ArraySink<float>* mSink;
-};
+    private:
+        Tracter::Source* mSource;
+        ArraySink<float>* mSink;
+    };
+}
 
 #endif /* FRONTEND_H */

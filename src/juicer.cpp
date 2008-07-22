@@ -20,14 +20,14 @@
 #endif
 
 /*
-  Author :		Darren Moore (moore@idiap.ch)
-  Date :		19 Nov 2004
+  Author :      Darren Moore (moore@idiap.ch)
+  Date :        19 Nov 2004
   $Id: juicer.cpp,v 1.16.4.1 2006/06/21 12:34:13 juicer Exp $
 */
 
 /*
-  Author:		Octavian Cheng
-  Date:		16 June 2006
+  Author:       Octavian Cheng
+  Date:     16 June 2006
 */
 
 
@@ -42,9 +42,9 @@ char           *logFName=NULL ;
 int            framesPerSec=0 ;
 
 // Vocabulary parameters
-char 		      *lexFName=NULL ;
-char		      *sentStartWord=NULL ;
-char		      *sentEndWord=NULL ;
+char              *lexFName=NULL ;
+char              *sentStartWord=NULL ;
+char              *sentEndWord=NULL ;
 
 // GMM Model parameters
 char           *htkModelsFName=NULL ;
@@ -60,13 +60,13 @@ char           *inSymsFName=NULL ;
 char           *outSymsFName=NULL ;
 bool           genTestSeqs=false ;
 
-// Changes Octavian 
+// Changes Octavian
 // WFST network parameters for on-the-fly composition
 char           *gramFsmFName=NULL ;
 char           *gramInSymsFName=NULL ;
-char	       *gramOutSymsFName=NULL ;
+char           *gramOutSymsFName=NULL ;
 bool           onTheFlyComposition=false ;
-bool	       doLabelAndWeightPushing=false ;	
+bool           doLabelAndWeightPushing=false ;
 
 // Decoder Parameters
 float          mainBeam=0.0 ;
@@ -100,15 +100,15 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
 {
     // General Parameters
     cmd->addText("\nGeneral Options:") ;
-    cmd->addSCmdOption( "-logFName" , &logFName , "" , 
+    cmd->addSCmdOption( "-logFName" , &logFName , "" ,
                         "the name of the log file" ) ;
-	cmd->addICmdOption( "-framesPerSec" , &framesPerSec , 100 ,
+    cmd->addICmdOption( "-framesPerSec" , &framesPerSec , 100 ,
                         "Number of feature vectors per second (used to output timings in recognised words, "
                         "and also to calculate RT factor" ) ;
-   
+
     // Vocabulary Parameters
     cmd->addText("\nVocabulary Options:") ;
-    cmd->addSCmdOption( "-lexFName" , &lexFName , "" , 
+    cmd->addSCmdOption( "-lexFName" , &lexFName , "" ,
                         "the dictionary filename - monophone transcriptions" ) ;
     cmd->addSCmdOption( "-sentStartWord" , &sentStartWord , "" ,
                         "the name of the dictionary word that will start every sentence" ) ;
@@ -117,55 +117,55 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
 
     // Model parameters
     cmd->addText("\nAcoustic Model Options:") ;
-	cmd->addSCmdOption( "-htkModelsFName" , &htkModelsFName , "" ,
+    cmd->addSCmdOption( "-htkModelsFName" , &htkModelsFName , "" ,
                         "the file containing the acoustic models in HTK MMF format" ) ;
     cmd->addBCmdOption( "-doModelsIOTest" , &doModelsIOTest , false ,
                         "tests the text and binary acoustic models load/save" ) ;
 
     // Hybrid HMM/ANN Parameters
     cmd->addText("\nHybrid HMM/ANN related options:") ;
-	cmd->addSCmdOption( "-priorsFName" , &priorsFName , "" ,
+    cmd->addSCmdOption( "-priorsFName" , &priorsFName , "" ,
                         "the file containing the phone priors" ) ;
     cmd->addICmdOption( "-statesPerModel" , &statesPerModel , 0 ,
                         "the number of states in each HMM used in the hybrid system" ) ;
 
-	// WFST network parameters
-	cmd->addText("\nWFST network parameters:") ;
-	cmd->addSCmdOption( "-fsmFName" , &fsmFName , "" ,
+    // WFST network parameters
+    cmd->addText("\nWFST network parameters:") ;
+    cmd->addSCmdOption( "-fsmFName" , &fsmFName , "" ,
                         "the FSM filename" ) ;
-	cmd->addSCmdOption( "-inSymsFName" , &inSymsFName , "" ,
+    cmd->addSCmdOption( "-inSymsFName" , &inSymsFName , "" ,
                         "the input symbols (ie. CD phone names) filename" ) ;
-	cmd->addSCmdOption( "-outSymsFName" , &outSymsFName , "" ,
+    cmd->addSCmdOption( "-outSymsFName" , &outSymsFName , "" ,
                         "the output symbols (ie. words) filename" ) ;
     cmd->addBCmdOption( "-genTestSeqs" , &genTestSeqs , false ,
                         "generates some test sequences using the network." ) ;
-   
+
     // Changes Octavian WFST network parameters for on-the-fly composition
     cmd->addSCmdOption( "-gramFsmFName" , &gramFsmFName , "" , "the grammar FSM filename" ) ;
     cmd->addSCmdOption( "-gramInSymsFName" , &gramInSymsFName , "" , "the grammar FSM input symbols" ) ;
     cmd->addSCmdOption( "-gramOutSymsFName" , &gramOutSymsFName , "" , "the grammar FSM output symbols" ) ;
-    cmd->addBCmdOption( "-pushing", &doLabelAndWeightPushing, false, 
+    cmd->addBCmdOption( "-pushing", &doLabelAndWeightPushing, false,
                         "Do weight pushing for on-the-fly composition" ) ;
 
-	// Decoder parameters
-	cmd->addText("\nDecoder Options:") ;
-	cmd->addRCmdOption( "-mainBeam" , &mainBeam , LOG_ZERO ,
+    // Decoder parameters
+    cmd->addText("\nDecoder Options:") ;
+    cmd->addRCmdOption( "-mainBeam" , &mainBeam , LOG_ZERO ,
                         "the (+ve log) window used for pruning emitting state hypotheses" ) ;
-	cmd->addRCmdOption( "-phoneStartBeam" , &phoneStartBeam , LOG_ZERO ,
+    cmd->addRCmdOption( "-phoneStartBeam" , &phoneStartBeam , LOG_ZERO ,
                         "the (+ve log) window used for pruning phone-start state hypotheses" ) ;
-	cmd->addRCmdOption( "-phoneEndBeam" , &phoneEndBeam , LOG_ZERO ,
+    cmd->addRCmdOption( "-phoneEndBeam" , &phoneEndBeam , LOG_ZERO ,
                         "the (+ve log) window used for pruning phone-end state hypotheses" ) ;
-	cmd->addICmdOption( "-maxHyps" , &maxHyps , 0 ,
+    cmd->addICmdOption( "-maxHyps" , &maxHyps , 0 ,
                         "Upper limit on the number of active emitting state hypotheses" ) ;
-	cmd->addSCmdOption( "-inputFName" , &inputFName , "" ,
+    cmd->addSCmdOption( "-inputFName" , &inputFName , "" ,
                         "the file containing the list of files to be decoded" ) ;
-	cmd->addSCmdOption( "-inputFormat" , &inputFormat_s , "" , 
+    cmd->addSCmdOption( "-inputFormat" , &inputFormat_s , "" ,
                         "the format of the input files (htk,lna)" ) ;
-	cmd->addSCmdOption( "-outputFName" , &outputFName , "" ,
+    cmd->addSCmdOption( "-outputFName" , &outputFName , "" ,
                         "the file where decoding results are written (stdout,stderr,<filename>). default=stdout" ) ;
-	cmd->addSCmdOption( "-outputFormat" , &outputFormat_s , "" ,
+    cmd->addSCmdOption( "-outputFormat" , &outputFormat_s , "" ,
                         "the format used for recognition results output (ref,mlf,xmlf,verbose). default=ref" ) ;
-	cmd->addSCmdOption( "-refFName" , &refFName , "" ,
+    cmd->addSCmdOption( "-refFName" , &refFName , "" ,
                         "the file containing word-level reference transcriptions" ) ;
     cmd->addRCmdOption( "-lmScaleFactor" , &lmScaleFactor , 1.0 ,
                         "the language model scaling factor" ) ;
@@ -175,55 +175,55 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
                         "removes sentence start and end markers from decoding result before outputting." ) ;
     cmd->addBCmdOption( "-modelLevelOutput" , &modelLevelOutput , false ,
                         "outputs recognised models instead of recognised words." ) ;
-	cmd->addSCmdOption( "-latticeDir" , &latticeDir , "" ,
+    cmd->addSCmdOption( "-latticeDir" , &latticeDir , "" ,
                         "the directory where output lattices will be placed" ) ;
-   
+
     // modelLevelOutput == true related parameters
-	cmd->addSCmdOption( "-monoListFName" , &monoListFName , "" ,
+    cmd->addSCmdOption( "-monoListFName" , &monoListFName , "" ,
                         "the file containing the list of monophones" ) ;
-	cmd->addSCmdOption( "-silMonophone" , &silMonophone , "" ,
+    cmd->addSCmdOption( "-silMonophone" , &silMonophone , "" ,
                         "the name of the silence monophone" ) ;
-	cmd->addSCmdOption( "-pauseMonophone" , &pauseMonophone , "" ,
+    cmd->addSCmdOption( "-pauseMonophone" , &pauseMonophone , "" ,
                         "the name of the pause monophone" ) ;
-	cmd->addSCmdOption( "-tiedListFName" , &tiedListFName , "" ,
+    cmd->addSCmdOption( "-tiedListFName" , &tiedListFName , "" ,
                         "the file containing the (tied) model list" ) ;
     cmd->addSCmdOption( "-cdSepChars" , &cdSepChars , "" ,
                         "the characters that separate monophones in context-dependent phone names (in order)") ;
 
-	cmd->read( argc , argv ) ;
-   
-	// First interpret the inputFormat
-	if ( strcmp( inputFormat_s , "factory" ) == 0 )
-		inputFormat = DST_FEATS_FACTORY ;
-    else if ( strcmp( inputFormat_s , "htk" ) == 0 )
-		inputFormat = DST_FEATS_HTK ;
-	else if ( strcmp( inputFormat_s , "lna" ) == 0 )
-		inputFormat = DST_PROBS_LNA8BIT ;
-	else
-		error("juicer: -inputFormat %s ... unrecognised format" , inputFormat_s ) ;
+    cmd->read( argc , argv ) ;
 
-	// Basic parameter checks
-	if ( strcmp( lexFName , "" ) == 0 )
-		error("juicer: lexFName undefined") ;
+    // First interpret the inputFormat
+    if ( strcmp( inputFormat_s , "factory" ) == 0 )
+        inputFormat = DST_FEATS_FACTORY ;
+    else if ( strcmp( inputFormat_s , "htk" ) == 0 )
+        inputFormat = DST_FEATS_HTK ;
+    else if ( strcmp( inputFormat_s , "lna" ) == 0 )
+        inputFormat = DST_PROBS_LNA8BIT ;
+    else
+        error("juicer: -inputFormat %s ... unrecognised format" , inputFormat_s ) ;
+
+    // Basic parameter checks
+    if ( strcmp( lexFName , "" ) == 0 )
+        error("juicer: lexFName undefined") ;
     if ( strcmp( inputFName , "" ) == 0 )
-		error("juicer: inputFName undefined") ;
-	if ( strcmp( fsmFName , "" ) == 0 )
-		error("juicer: fsmFName undefined") ;
-	if ( strcmp( inSymsFName , "" ) == 0 )
-		error("juicer: inSymsFName undefined") ;
-	if ( strcmp( outSymsFName , "" ) == 0 )
-		error("juicer: outSymsFName undefined") ;
-	
-	if ( (strcmp(gramFsmFName, "")==0) && 
+        error("juicer: inputFName undefined") ;
+    if ( strcmp( fsmFName , "" ) == 0 )
+        error("juicer: fsmFName undefined") ;
+    if ( strcmp( inSymsFName , "" ) == 0 )
+        error("juicer: inSymsFName undefined") ;
+    if ( strcmp( outSymsFName , "" ) == 0 )
+        error("juicer: outSymsFName undefined") ;
+
+    if ( (strcmp(gramFsmFName, "")==0) &&
          ( (strcmp(gramInSymsFName, "")!=0) || (strcmp(gramOutSymsFName, "")!=0) ) )
-		error("juicer: gramFsmFName undefined while gramIn/OutSymsFName defined") ;
-	if ( (strcmp(gramFsmFName, "")!=0) && 
+        error("juicer: gramFsmFName undefined while gramIn/OutSymsFName defined") ;
+    if ( (strcmp(gramFsmFName, "")!=0) &&
          ( (strcmp(gramInSymsFName, "")==0) || (strcmp(gramOutSymsFName, "")==0) ) )
-		error("juicer: gramFsmFName defined while gramIn/OutSymsFName undefined") ;
-	
-	if ( strcmp(gramFsmFName, "") != 0 ) 
+        error("juicer: gramFsmFName defined while gramIn/OutSymsFName undefined") ;
+
+    if ( strcmp(gramFsmFName, "") != 0 )
         onTheFlyComposition = true ;
-	
+
     if ( (htkModelsFName != NULL) && (htkModelsFName[0] != '\0') )
     {
         // HMM/GMM system
@@ -247,21 +247,21 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
     }
 
     // Interpret the input and output format strings
-	// Interpret the (optional) outputFormat
-	if ( (outputFormat_s == NULL) || (strcmp( outputFormat_s , "" ) == 0) )
-		outputFormat = DBT_OUTPUT_REF ;
-	else if ( strcmp( outputFormat_s , "ref" ) == 0 )
-		outputFormat = DBT_OUTPUT_REF ;
-	else if ( strcmp( outputFormat_s , "mlf" ) == 0 )
-		outputFormat = DBT_OUTPUT_MLF ;
-	else if ( strcmp( outputFormat_s , "xmlf" ) == 0 )
-		outputFormat = DBT_OUTPUT_XMLF ;
-	else if ( strcmp( outputFormat_s , "trans" ) == 0 )
-		outputFormat = DBT_OUTPUT_TRANS ;
-	else if ( strcmp( outputFormat_s , "verbose" ) == 0 )
-		outputFormat = DBT_OUTPUT_VERBOSE ;
-	else
-		error("juicer: -outputFormat %s ... unrecognised format" , outputFormat_s ) ;
+    // Interpret the (optional) outputFormat
+    if ( (outputFormat_s == NULL) || (strcmp( outputFormat_s , "" ) == 0) )
+        outputFormat = DBT_OUTPUT_REF ;
+    else if ( strcmp( outputFormat_s , "ref" ) == 0 )
+        outputFormat = DBT_OUTPUT_REF ;
+    else if ( strcmp( outputFormat_s , "mlf" ) == 0 )
+        outputFormat = DBT_OUTPUT_MLF ;
+    else if ( strcmp( outputFormat_s , "xmlf" ) == 0 )
+        outputFormat = DBT_OUTPUT_XMLF ;
+    else if ( strcmp( outputFormat_s , "trans" ) == 0 )
+        outputFormat = DBT_OUTPUT_TRANS ;
+    else if ( strcmp( outputFormat_s , "verbose" ) == 0 )
+        outputFormat = DBT_OUTPUT_VERBOSE ;
+    else
+        error("juicer: -outputFormat %s ... unrecognised format" , outputFormat_s ) ;
 
     if ( modelLevelOutput )
     {
@@ -283,11 +283,11 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
 
 bool fileExists( const char *fname )
 {
-	FILE *pFile ;
+    FILE *pFile ;
     if ( (pFile = fopen( fname , "rb" )) == NULL )
-		return false ;
-	fclose( pFile ) ;
-	return true ;
+        return false ;
+    fclose( pFile ) ;
+    return true ;
 }
 
 void setupModels( Models **models ) ;
@@ -306,7 +306,7 @@ int main( int argc , char *argv[] )
 
     // load vocabulary
     LogFile::puts( "loading vocab .... " ) ;
-    DecVocabulary *vocab = new DecVocabulary( 
+    DecVocabulary *vocab = new DecVocabulary(
         lexFName , '!' , sentStartWord , sentEndWord );
     LogFile::puts( "done\n" ) ;
 
@@ -317,10 +317,10 @@ int main( int argc , char *argv[] )
     LogFile::puts( "done\n" ) ;
     if ( doModelsIOTest )
     {
-        testModelsIO( 
+        testModelsIO(
             htkModelsFName , monoListFName , priorsFName , statesPerModel ) ;
     }
-   
+
     // load network
     LogFile::puts( "loading transducer network .... " ) ;
     WFSTNetwork *network=NULL ;
@@ -333,7 +333,7 @@ int main( int argc , char *argv[] )
     WFSTSortedInLabelNetwork *gNetwork = NULL ;
     char *clNetBinFName = NULL ;
     char *gNetBinFName = NULL ;
-  
+
     // Load network: Either static or on-the-fly composition
     if ( !onTheFlyComposition )  {
         if ( fileExists( netBinFName ) )
@@ -346,7 +346,7 @@ int main( int argc , char *argv[] )
         {
             LogFile::puts( "from ascii FSM file .... " ) ;
             // Changes Octavian 20060523
-            network = new WFSTNetwork( 
+            network = new WFSTNetwork(
                 fsmFName , inSymsFName , outSymsFName ,
                 lmScaleFactor , insPenalty,
                 REMOVEBOTH
@@ -358,12 +358,12 @@ int main( int argc , char *argv[] )
             network->writeBinary( netBinFName ) ;
 #endif
         }
-      
+
         delete [] netBinFName ;
-      
-        LogFile::printf( "nStates=%d nTrans=%d ... done\n" , 
+
+        LogFile::printf( "nStates=%d nTrans=%d ... done\n" ,
                          network->getNumStates() , network->getNumTransitions() ) ;
-      
+
         if ( genTestSeqs )
         {
             network->generateSequences( 10 ) ;
@@ -376,7 +376,7 @@ int main( int argc , char *argv[] )
         clNetBinFName = netBinFName ;
         gNetBinFName = new char[strlen(gramFsmFName)+5] ;
         sprintf( gNetBinFName, "%s.bin", gramFsmFName );
-      
+
         // Load C o L network
         LogFile::puts( "loading C o L network .... " ) ;
         if ( fileExists(clNetBinFName) )  {
@@ -390,24 +390,24 @@ int main( int argc , char *argv[] )
                 LogFile::puts( "No pushing .... " ) ;
                 clNetwork = new WFSTNetwork( 1.0 , 0.0 ) ;
             }
-	 
+
             clNetwork->readBinary( clNetBinFName );
         }
         else  {
             LogFile::puts( "from ascii FSM file .... " ) ;
-	 
+
             if ( doLabelAndWeightPushing )  {
                 LogFile::puts( "With label and weight pushing ... " ) ;
-                clNetwork = new WFSTLabelPushingNetwork( 
+                clNetwork = new WFSTLabelPushingNetwork(
                     fsmFName, inSymsFName, outSymsFName, 1.0 , REMOVEINPUT ) ;
             }
             else  {
                 LogFile::puts( "No pushing ... " ) ;
                 // Changes Octavian 20060523
-                clNetwork = new WFSTNetwork ( 
+                clNetwork = new WFSTNetwork (
                     fsmFName, inSymsFName, outSymsFName, 1.0 , REMOVEINPUT ) ;
             }
-	 
+
             LogFile::puts( "writing new binary file .... " ) ;
             clNetwork->writeBinary( clNetBinFName ) ;
         }
@@ -416,7 +416,7 @@ int main( int argc , char *argv[] )
         // After loading CoL transducer. Print the number of max outLabels
         if ( doLabelAndWeightPushing )  {
             LogFile::printf(
-                "Max number of output labels in a set = %d\n", 
+                "Max number of output labels in a set = %d\n",
                 ((WFSTLabelPushingNetwork*) clNetwork)->getMaxOutLabels() ) ;
         }
 
@@ -430,8 +430,8 @@ int main( int argc , char *argv[] )
         else  {
             LogFile::puts( "from ascii FSM file .... " ) ;
             // Changes Octavian 20060523
-            gNetwork = new WFSTSortedInLabelNetwork( 
-                gramFsmFName, gramInSymsFName, gramOutSymsFName, 
+            gNetwork = new WFSTSortedInLabelNetwork(
+                gramFsmFName, gramInSymsFName, gramOutSymsFName,
                 lmScaleFactor , NOTREMOVE ) ;
             LogFile::puts( "writing new binary file .... " ) ;
             gNetwork->writeBinary( gNetBinFName );
@@ -440,35 +440,35 @@ int main( int argc , char *argv[] )
         // Changes Octavian 20060616
         // After loeading the G transducer, print the max number of transitions
         // out of a state
-        LogFile::printf( 
+        LogFile::printf(
             "Max number of transitions from a state in G = %d\n",
             gNetwork->getMaxOutTransitions() ) ;
-      
+
         delete [] clNetBinFName ;
         delete [] gNetBinFName ;
-      
+
         LogFile::printf(
-            "C o L: nStates=%d nTrans=%d ... done\n" , 
+            "C o L: nStates=%d nTrans=%d ... done\n" ,
             clNetwork->getNumStates() , clNetwork->getNumTransitions()
         ) ;
         LogFile::printf(
-            "G: nStates=%d nTrans=%d ... done\n" , 
+            "G: nStates=%d nTrans=%d ... done\n" ,
             gNetwork->getNumStates() , gNetwork->getNumTransitions()
         ) ;
     }
 
-    // Create front-end.  Just HTK capable for now
-    SourceFormat source;
+    // Create front-end.
+    FrontEndFormat source;
     switch (inputFormat)
     {
     case DST_FEATS_FACTORY:
-        source = SOURCE_FACTORY;
+        source = FRONTEND_FACTORY;
         break;
     case DST_FEATS_HTK:
-        source = SOURCE_HTK;
+        source = FRONTEND_HTK;
         break;
     case DST_PROBS_LNA8BIT:
-        source = SOURCE_LNA8;
+        source = FRONTEND_LNA;
         break;
     default:
         assert(0);
@@ -479,15 +479,15 @@ int main( int argc , char *argv[] )
     LogFile::puts( "creating WFSTDecoder .... " ) ;
     WFSTDecoder *decoder = NULL ;
     if ( !onTheFlyComposition )  {
-        decoder = new WFSTDecoder( 
+        decoder = new WFSTDecoder(
             network , models , phoneStartBeam, mainBeam , phoneEndBeam ,
             maxHyps , modelLevelOutput , latticeGeneration ) ;
     }
     else  {
 #ifdef WITH_ONTHEFLY
-        decoder = new WFSTOnTheFlyDecoder( 
-            clNetwork, gNetwork, models, mainBeam, phoneEndBeam, 
-            maxHyps, modelLevelOutput, latticeGeneration, 
+        decoder = new WFSTOnTheFlyDecoder(
+            clNetwork, gNetwork, models, mainBeam, phoneEndBeam,
+            maxHyps, modelLevelOutput, latticeGeneration,
             doLabelAndWeightPushing, true ) ;
 #else
         printf("On the fly not compiled in\n");
@@ -495,17 +495,17 @@ int main( int argc , char *argv[] )
 #endif
     }
     LogFile::puts( "done\n" ) ;
-   
+
     // setup phoneLookup
     PhoneLookup *phoneLookup=NULL ;
     if ( modelLevelOutput )
     {
-        phoneLookup = new PhoneLookup( 
-            monoListFName , silMonophone , pauseMonophone , 
+        phoneLookup = new PhoneLookup(
+            monoListFName , silMonophone , pauseMonophone ,
             tiedListFName , cdSepChars ) ;
-      
+
         // Add the model indices to the PhoneLookup
-        int i ;   
+        int i ;
         for ( i=0 ; i<models->getNumHMMs() ; i++ )
         {
             const char* hmmName = models->getHMMName( i ) ;
@@ -516,21 +516,21 @@ int main( int argc , char *argv[] )
 
     // create batch tester
     LogFile::puts( "creating DecoderBatchTest .... " ) ;
-    DecoderBatchTest *tester = new DecoderBatchTest( 
-        vocab , phoneLookup , frontend , decoder , inputFName , inputFormat , 
-        models->getInputVecSize() , outputFName , outputFormat , refFName , 
+    DecoderBatchTest *tester = new DecoderBatchTest(
+        vocab , phoneLookup , frontend , decoder , inputFName , inputFormat ,
+        models->getInputVecSize() , outputFName , outputFormat , refFName ,
         removeSentMarks , framesPerSec ) ;
-   
+
     if ( latticeGeneration )
     {
         tester->activateLatticeGeneration( latticeDir ) ;
         LogFile::puts( "lattice generation activated ..." ) ;
     }
     LogFile::puts( "done\n\njuicer initialisation complete\n\n" ) ;
-   
+
     // run the decoder
     tester->run() ;
-   
+
     // cleanup and exit
     delete tester ;
     delete phoneLookup ;
@@ -558,7 +558,7 @@ void setupModels( Models **models )
              (inputFormat != DST_FEATS_FACTORY) )
             error("juicer: setupModels - "
                   "htkModelsFName defined but inputFormat not htk") ;
-         
+
         // HTK MMF model input - i.e. a HMM/GMM system
         char *modelsBinFName = new char[strlen(htkModelsFName)+5] ;
         sprintf( modelsBinFName , "%s.bin" , htkModelsFName ) ;
@@ -608,7 +608,7 @@ void checkConsistency()
     // (containing CD phone names).  We should be able to configure a
     // PhoneLookup instance from scratch and its indices should match
     // those in the inSymsFName symbols filename.
-    PhoneLookup modelLookup( monoListFName , silMonophone , pauseMonophone , 
+    PhoneLookup modelLookup( monoListFName , silMonophone , pauseMonophone ,
                              tiedListFName , cdSepChars ) ;
     WFSTAlphabet cdPhones( inSymsFName ) ;
 
@@ -636,7 +636,7 @@ void checkConsistency()
             error("juicer: checkConsistency ... "
                   "mdlLookup %s=%d != %d in cdPhones" , str , i , ind ) ;
     }
-   
+
     // 2. Check the consistency of our outSymsFName symbols file
     // (containing words).  We should be able to configure a
     // DecVocabulary instance from scratch and its indices should
