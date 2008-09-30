@@ -36,7 +36,7 @@ WFSTDecoder::WFSTDecoder()
    transBuf = NULL ;
 
    // Hypothesis Management
-   decHypHistPool = new DecHypHistPool( DEFAULT_DECHYPHISTPOOL_SIZE ) ; 
+   decHypHistPool = new DecHypHistPool( DEFAULT_DECHYPHISTPOOL_SIZE ) ;
    modelPool = NULL ;
    auxReplaced = true;
 
@@ -58,7 +58,7 @@ WFSTDecoder::WFSTDecoder()
 
    activeModelsList = NULL ;
    activeModelsLookup = NULL ;
-   
+
    // Pruning
    emitPruneWin = -LOG_ZERO ;
    phoneEndPruneWin = -LOG_ZERO ;
@@ -79,7 +79,7 @@ WFSTDecoder::WFSTDecoder()
    models = NULL ;
    newActiveModelsList = NULL ;
    newActiveModelsListLastElem = NULL ;
-  
+
    bestFinalHyp = NULL ;
 
    doModelLevelOutput = false ;
@@ -94,7 +94,7 @@ WFSTDecoder::WFSTDecoder()
 }
 
 
-WFSTDecoder::WFSTDecoder( 
+WFSTDecoder::WFSTDecoder(
     WFSTNetwork *network_ , Models *models_ ,
     real phoneStartPruneWin_ , real emitPruneWin_ ,  real phoneEndPruneWin_ ,
     int maxEmitHyps_ , bool doModelLevelOutput_ ,
@@ -102,20 +102,23 @@ WFSTDecoder::WFSTDecoder(
 )
 {
    int i ;
-   
+
    if ( (network = network_) == NULL )
       error("WFSTDecoder::WFSTDecoder(2) - network_ is NULL") ;
    if ( (models = models_) == NULL )
       error("WFSTDecoder::WFSTDecoder(2) - models is NULL") ;
 
    transBuf = new WFSTTransition*[network->getMaxOutTransitions()] ;
-   
+#ifdef OPTIMISE_TRANSBUFPOOL
+   transBufPool = new BlockMemPool(sizeof(WFSTTransition)*network->getMaxOutTransitions(), 100);
+#endif
+
    currFrame = -1 ;
-   
+
    // Hypothesis Management
    decHypHistPool = new DecHypHistPool( DEFAULT_DECHYPHISTPOOL_SIZE ) ;
    auxReplaced = true;
-   
+
    if ( isStaticComposition_ )
       modelPool = new WFSTModelPool( models , decHypHistPool ) ;
    else
@@ -164,10 +167,10 @@ WFSTDecoder::WFSTDecoder(
        phoneStartPruneWin = -LOG_ZERO ;
    if ( (maxEmitHyps = maxEmitHyps_) < 0 )
        maxEmitHyps = 0 ;
-   
+
    currEmitPruneThresh = LOG_ZERO ;
    currEndPruneThresh = LOG_ZERO ;
-   
+
    bestEmitScore = LOG_ZERO ;
    bestEndScore = LOG_ZERO ;
    bestStartScore = LOG_ZERO ;
@@ -208,7 +211,7 @@ WFSTDecoder::WFSTDecoder(
    if ( doLatticeGeneration )
    {
       lattice = new WFSTLattice( network->getNumStates() , false , false ) ;
-      lattice->enableDeadEndRemoval( FRAMES_BETWEEN_LATTICE_PARTIAL_CLEANUP , 
+      lattice->enableDeadEndRemoval( FRAMES_BETWEEN_LATTICE_PARTIAL_CLEANUP ,
                                      FRAMES_BETWEEN_LATTICE_FULL_CLEANUP ) ;
       decHypHistPool->setLattice( lattice ) ;
    }
@@ -224,11 +227,14 @@ WFSTDecoder::~WFSTDecoder()
     delete bestFinalHyp ;
 
     delete [] transBuf ;
+#ifdef OPTIMISE_TRANSBUFPOOL
+    delete transBufPool;
+#endif
     delete emitHypsHistogram ;
 
     if ( activeModelsLookup != NULL )
         free( activeModelsLookup ) ;
-        
+
     delete modelPool ;
     delete decHypHistPool ;
     delete lattice ;
@@ -237,12 +243,12 @@ WFSTDecoder::~WFSTDecoder()
 void WFSTDecoder::init()
 {
     DecHypHistPool::initDecHyp( bestFinalHyp , -1 ) ;
-    
+
     reset() ;
 
     // Reset the time
     currFrame = 0 ;
-    
+
    // initialise a starting hypothesis.
    DecHyp tmpHyp ;
    DecHypHistPool::initDecHyp( &tmpHyp, -1 );
@@ -266,11 +272,12 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
     // PNG - This could be maintained by the decoder alone rather than
     // the calling routine, but for now this is OK as it eases the
     // translation to real-time.
+    // printf("process frame %d\n", currFrame_);
     currFrame = currFrame_;
     nFrames++;
 
    // Reset the bestFinalHyp
-   resetDecHyp( bestFinalHyp ) ;  
+   resetDecHyp( bestFinalHyp ) ;
 
    // Process the hypotheses in the initial states of all active models.
    processActiveModelsInitStates() ;
@@ -304,9 +311,9 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
     else
         currEmitPruneThresh = -emitPruneWin ;
 
-//printf( "bestEmitScore = %6f normaliseScore = %6f currEmitThresh = %6f\n" , 
+//printf( "bestEmitScore = %6f normaliseScore = %6f currEmitThresh = %6f\n" ,
 //        bestEmitScore , normaliseScore , currEmitPruneThresh ) ;
-    
+
     // Process emitting states for the new frame and calculate the new phone-end
     //   pruning threshold.
     processActiveModelsEmitStates() ;
@@ -319,11 +326,11 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
 
    //printf("PHN(%d): nActPhn=%d nActiveEmit=%d nActiveEnd=%d nEmitProc=%d ",currFrame,nActiveModels,nActiveEmitHyps,nActiveEndHyps,nEmitHypsProcessed);fflush(stdout);
 
-   //printf( "bestEndScore = %6f normaliseScore = %6f currEndThresh = %6f\n" , 
+   //printf( "bestEndScore = %6f normaliseScore = %6f currEndThresh = %6f\n" ,
    //         bestEndScore , normaliseScore , currEndPruneThresh ) ;
 
     // Process phone-end hyps and calculate the new pronun-end pruning threshold
-    processActiveModelsEndStates() ;   
+    processActiveModelsEndStates() ;
     totalProcEndHyps += nEndHypsProcessed ;
     currStartPruneThresh = bestStartScore - phoneStartPruneWin ;
 //printf("nEndProc=%d\n",nEndHypsProcessed);fflush(stdout);
@@ -437,7 +444,7 @@ void WFSTDecoder::extendModelInitState( WFSTModel *model )
             // The new hypothesis is better than the one that
             //   is already at this successor state. Replace.
             decHypHistPool->extendDecHyp(
-                currHyps , currHyps+sucInd , newScore , 
+                currHyps , currHyps+sucInd , newScore ,
                 acousticScore , currHyps[0].lmScore
             ) ;
 
@@ -447,7 +454,7 @@ void WFSTDecoder::extendModelInitState( WFSTModel *model )
                 // the emitting state hypothesis scores histogram.
                 emitHypsHistogram->addScore( newScore , oldScore ) ;
             }
-            
+
             // Update our best emitting state scores and if the
             // successor state was a phone end then process that now.
             if ( emittingState && (newScore > bestEmitScore) )
@@ -506,7 +513,7 @@ void WFSTDecoder::processActiveModelsEmitStates()
    {
       processModelEmitStates( model ) ;
 
-      // Check to see if pruning resulted in no emitting 
+      // Check to see if pruning resulted in no emitting
       //   states being extended.
       if ( model->nActiveHyps <= 0 )
       {
@@ -544,7 +551,7 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
     model->prevHyps = prevHyps ;
 #endif
 
-    
+
 #ifdef DEBUG
     // All hyps in the 'currHyps' field of this WFSTModel element
     // should be inactive - check
@@ -579,20 +586,22 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
     
     // Reset the count of active hyps
     model->nActiveHyps = 0 ;
-    
+
     // Update the emitting states in currPhone
-    for ( i=1 ; i<(nStates-1) ; i++ )
+    int nEmitStates = nStates-1;
+    for ( i=1 ; i<nEmitStates ; i++ )
     {
         // Look at each emitting state hypothesis in this phone model.
         // Update if active.
-        if ( prevHyps[i].score > LOG_ZERO )
+        DecHyp &prevHyp_i = prevHyps[i];
+        if ( prevHyp_i.score > LOG_ZERO )
         {
             // We have an active hypothesis.  Normalise this score
             // using the best hypothesis score from the previous frame
-            prevHyps[i].score -= normaliseScore ;
-            
+            prevHyp_i.score -= normaliseScore ;
+
             // Check if it is within the current emitting state pruning beam.
-            if ( prevHyps[i].score > currEmitPruneThresh )
+            if ( prevHyp_i.score > currEmitPruneThresh )
             {
                 nEmitHypsProcessed++ ;
 
@@ -611,13 +620,13 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
                         models->getSuccessorLogProb(model->hmmIndex, i, j);
                     //printf("sucInd = %d\n", sucInd);
                     real newScore =
-                        prevHyps[i].score + emisProb + sucProb ;
+                        prevHyp_i.score + emisProb + sucProb ;
                     real oldScore = currHyps[sucInd].score ;
-                    
+
                     if ( newScore > oldScore )
                     {
                         real acousticScore =
-                            prevHyps[i].acousticScore
+                            prevHyp_i.acousticScore
                             + emisProb + sucProb ;
 
                         assert(sucInd != 0);
@@ -642,13 +651,13 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
                             // hypothesis scores histogram.
                             emitHypsHistogram->addScore( newScore , oldScore );
                         }
-                        
+
                         // The new hypothesis is better than the one
                         // that is already at this successor
                         // state. Replace.
                         decHypHistPool->extendDecHyp(
-                            prevHyps+i , currHyps+sucInd , newScore , 
-                            acousticScore , prevHyps[i].lmScore
+                            prevHyps+i , currHyps+sucInd , newScore ,
+                            acousticScore , prevHyp_i.lmScore
                         ) ;
 
                         // Update our best scores.
@@ -665,7 +674,7 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
             }
 
             // We've finished processing this state - deactivate.
-            resetDecHyp( prevHyps + i ) ;
+             resetDecHyp(&prevHyp_i ) ;
         }
     }
 
@@ -700,6 +709,8 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
 #endif
 }
 
+}
+
 
 /**
  * Look at the final state hypothesis for all models in the active
@@ -711,16 +722,18 @@ void WFSTDecoder::processActiveModelsEndStates()
 #ifdef DEBUG
     checkActiveNumbers( false ) ;
 #endif
-    
+
     // If we don't have any phone end hyps we don't need to go any further.
     if ( nActiveEndHyps <= 0 )
         return ;
 
+
     WFSTModel *model = activeModelsList ;
     WFSTModel *prevModel = NULL ;
-    int nStates = models->getNumStates(model->hmmIndex);
     while ( model != NULL )
     {
+        // zl: nStates need to be updated for each model (as sp can only has 3 states not 5 states for example)
+        int nStates = models->getNumStates(model->hmmIndex);
         DecHyp *endHyp = model->currHyps + (nStates - 1) ;
         if ( endHyp->score > LOG_ZERO )
         {
@@ -730,10 +743,9 @@ void WFSTDecoder::processActiveModelsEndStates()
                 nEndHypsProcessed++ ;
                 extendModelEndState( endHyp , model->trans , transBuf ) ;
             }
-
             // Deactivate endHyp
             resetDecHyp( endHyp ) ;
-            if ( (--nActiveEndHyps) < 0 )
+           if ( (--nActiveEndHyps) < 0 )
                 error("WFSTDecoder::processActiveModelsEndHyps"
                       " - nActiveEndHyps < 0") ;
 
@@ -768,9 +780,8 @@ void WFSTDecoder::processActiveModelsEndStates()
 #endif
 }
 
-
 void WFSTDecoder::extendModelEndState(
-    DecHyp *endHyp , WFSTTransition *trans , 
+    DecHyp *endHyp , WFSTTransition *trans ,
     WFSTTransition **nextTransBuf
 )
 {
@@ -785,8 +796,8 @@ void WFSTDecoder::extendModelEndState(
 #endif
 
     int lattToState=-1 , lattFromState=-1 ;
-   
-    if ( trans != NULL ) 
+
+    if ( trans != NULL )
     {
 #ifdef DEBUG
         if ( trans->outLabel == network->getWordEndMarker() )
@@ -817,6 +828,7 @@ void WFSTDecoder::extendModelEndState(
         }
         else
         {
+
             if ( trans->outLabel != WFST_EPSILON )
             {
                 registerLabel( endHyp, trans->outLabel ) ;
@@ -824,7 +836,7 @@ void WFSTDecoder::extendModelEndState(
                     // PNG - Immediately register the end as there are no
                     // word end labels.
                     decHypHistPool->registerEnd(
-                        endHyp, endHyp->score, currFrame, 
+                        endHyp, endHyp->score, currFrame,
                         endHyp->acousticScore, endHyp->lmScore
                     );
             }
@@ -833,12 +845,11 @@ void WFSTDecoder::extendModelEndState(
                 if ( trans->inLabel == network->getWordEndMarker() )
                 {
                     decHypHistPool->registerEnd(
-                        endHyp, endHyp->score, currFrame, 
+                        endHyp, endHyp->score, currFrame,
                         endHyp->acousticScore, endHyp->lmScore
                     );
                 }
         }
-
 #ifdef DEBUG
         if ( doLatticeGeneration )
         {
@@ -874,6 +885,7 @@ void WFSTDecoder::extendModelEndState(
             }
         }
 
+    } // if ( trans != NULL )
         if ( doLatticeGeneration )
         {
             // Add lattice history to this end hyp, for quick access
@@ -936,7 +948,11 @@ void WFSTDecoder::extendModelEndState(
     {
         // We need to allocate our own memory to store next
         // transitions results.
+#ifdef OPTIMISE_TRANSBUFPOOL
+        nextTransBuf = (WFSTTransition**)transBufPool->getElem();
+#else
         nextTransBuf = new WFSTTransition*[network->getMaxOutTransitions()] ;
+#endif
         ownNextTransBuf = true ;
     }
 
@@ -948,7 +964,15 @@ void WFSTDecoder::extendModelEndState(
              (nextTransBuf[i]->inLabel != network->getWordEndMarker()) )
         {
             // There is a model associated with the next transition
-            WFSTModel *nextModel = getModel( nextTransBuf[i] ) ;
+            // zl: replace old call to getModel, so reducing actuall function calls
+#ifdef OPTIMISE_GETNEWMODEL
+            WFSTModel *nextModel = activeModelsLookup[nextTransBuf[i]->id];
+            if (nextModel == NULL)
+                nextModel = getNewModel(nextTransBuf[i]) ;
+#else
+            WFSTModel *nextModel = getModel(nextTransBuf[i]);
+#endif
+
             real newScore = endHyp->score + nextTransBuf[i]->weight ;
 #ifdef MIRROR_SCORE0
             if ( newScore <= nextModel->score0 )
@@ -969,10 +993,10 @@ void WFSTDecoder::extendModelEndState(
             {
                 nextModel->nActiveHyps++ ;
             }
-            
+
             decHypHistPool->extendDecHyp(
-                endHyp , nextModel->currHyps , newScore , 
-                endHyp->acousticScore , 
+                endHyp , nextModel->currHyps , newScore ,
+                endHyp->acousticScore ,
                 (endHyp->lmScore + nextTransBuf[i]->weight)
             ) ;
 #ifdef MIRROR_SCORE0
@@ -982,7 +1006,11 @@ void WFSTDecoder::extendModelEndState(
                 bestStartScore = newScore;
 
             // If this is not a tee, continue to the next transition
+#ifdef OPTIMISE_TEEMODEL
+            teeWeight = models->getTeeWeight(nextModel->hmmIndex);
+#else
             // PNG: I ain't sure this is fast
+            // zl: I'm sure this is not fast
             int t;
             int nextFinalState = models->getNumStates(nextModel->hmmIndex) - 1;
             for (t=1; t<models->getNumSuccessors(nextModel->hmmIndex, 0); t++)
@@ -992,17 +1020,16 @@ void WFSTDecoder::extendModelEndState(
                     teeWeight =
                         models->getSuccessorLogProb(nextModel->hmmIndex, 0, t);
             }
+#endif
 
             if (teeWeight == LOG_ZERO)
                 continue;
 
-            //printf("Tee weight detected\n");
+            // printf("Tee weight detected\n");
         }
 
         // Epsilon transitions and tee models drop to here
         real weight = nextTransBuf[i]->weight;
-        if (teeWeight > LOG_ZERO)
-            weight += teeWeight;
 
         // There is no input (ie. model) associated with this
         // transition.  There could possibly be an output label
@@ -1011,13 +1038,23 @@ void WFSTDecoder::extendModelEndState(
         // extend temp hypothesis into transitions that follow the
         // one with epsilon input label.
         DecHyp tmp ;
-        tmp.hist = NULL;
-        decHypHistPool->extendDecHyp(
-            endHyp , &tmp ,
-            endHyp->score + weight ,
-            endHyp->acousticScore , 
-            endHyp->lmScore + weight
-        ) ;
+        tmp.hist = NULL; // TODO: zl: this line is not needed
+        if (teeWeight > LOG_ZERO) {
+            // weight += teeWeight;
+            decHypHistPool->extendDecHyp(
+                endHyp , &tmp ,
+                endHyp->score + weight + teeWeight,
+                endHyp->acousticScore + teeWeight, 
+                endHyp->lmScore + weight
+            ) ;
+        } else {
+            decHypHistPool->extendDecHyp(
+                endHyp , &tmp ,
+                endHyp->score + weight ,
+                endHyp->acousticScore , 
+                endHyp->lmScore + weight
+            ) ;
+        }
 
         // nextTransBuf field is NULL so that the recursive call
         // to this function uses a new buffer for storing next
@@ -1029,8 +1066,13 @@ void WFSTDecoder::extendModelEndState(
         resetDecHyp( &tmp ) ;
     }
 
-    if ( ownNextTransBuf )
+    if ( ownNextTransBuf ) {
+#ifdef OPTIMISE_TRANSBUFPOOL
+        transBufPool->returnElem(nextTransBuf);
+#else
         delete [] nextTransBuf ;
+#endif
+    }
 }
 
 
@@ -1047,7 +1089,7 @@ DecHyp *WFSTDecoder::finish()
         "\nStatistics:\n  nFrames=%d\n  avgActiveEmitHyps=%.2f\n"
         "  avgActiveEndHyps=%.2f\n  avgActiveModels=%.2f\n"
         "  avgProcessedEmitHyps=%.2f\n  avgProcessedEndHyps=%.2f\n" ,
-        nFrames , avgActiveEmitHyps , avgActiveEndHyps , avgActiveModels , 
+        nFrames , avgActiveEmitHyps , avgActiveEndHyps , avgActiveModels ,
         avgProcEmitHyps , avgProcEndHyps
     ) ;
 
@@ -1126,6 +1168,27 @@ WFSTModel *WFSTDecoder::getModel( WFSTTransition *trans )
    return activeModelsLookup[trans->id] ;
 }
 
+#ifdef OPTIMISE_GETNEWMODEL
+// zl: getModel (above) can be called thousands of times but only a handful new model 
+// actually will be created. So move the new model creation to getNewModel to avoid unnecessary function call
+WFSTModel *WFSTDecoder::getNewModel( WFSTTransition *trans )
+{
+
+    assert(activeModelsLookup[trans->id] == NULL);
+    // If we did not find a match, grab a new WFSTModel element
+    //   from the pool and add to lookup table and temp active list.
+    WFSTModel *model = modelPool->getElem( trans ) ;
+    model->next = newActiveModelsList ;
+    newActiveModelsList = model ;
+    if ( newActiveModelsListLastElem == NULL )
+        newActiveModelsListLastElem = model ;
+
+    activeModelsLookup[trans->id] = model ;
+    nActiveModels++ ;
+   return activeModelsLookup[trans->id] ;
+}
+#endif
+
 
 void WFSTDecoder::joinNewActiveModelsList()
 {
@@ -1152,7 +1215,7 @@ WFSTModel *WFSTDecoder::returnModel(
 
     // Reset the entry in the active models lookup array.
     activeModelsLookup[model->trans->id] = NULL ;
-   
+
     // Return the model to the pool and remove it from the linked list of
     //   active models.
     if ( prevActiveModel == NULL )
@@ -1180,10 +1243,10 @@ WFSTModel *WFSTDecoder::returnModel(
 void WFSTDecoder::reset()
 {
    currFrame = -1 ;
- 
+
    // Reset any active hypotheses
    resetActiveHyps() ;
-  
+
    // Reset statistics
    nFrames = 0 ;
    totalActiveModels = 0 ;
@@ -1201,7 +1264,7 @@ void WFSTDecoder::reset()
    // Reset pruning stuff
    currEmitPruneThresh = LOG_ZERO ;
    currEndPruneThresh = LOG_ZERO ;
-   
+
    bestEmitScore = LOG_ZERO ;
    bestEndScore = LOG_ZERO ;
    bestHypHist = NULL ;
@@ -1228,7 +1291,7 @@ void WFSTDecoder::resetActiveHyps()
    nActiveEndHyps = 0 ;
    nEmitHypsProcessed = 0 ;
    nEndHypsProcessed = 0 ;
-   
+
    activeModelsList = NULL ;
    if ( activeModelsLookup != NULL )
    {
@@ -1241,11 +1304,11 @@ void WFSTDecoder::resetActiveHyps()
             activeModelsLookup[i] = NULL ;
          }
       }
-      
+
       if ( nActiveModels != 0 )
          error("WFSTDecoder::resetActiveHyps - nActiveModels has unexpected value") ;
    }
-  
+
    if ( modelPool != NULL )  {
       if ( modelPool->numUsed() != 0 )
      error("WFSTDecoder::resetActiveHyps - modelPool had nUsed != 0 after reset") ;
@@ -1293,17 +1356,25 @@ void WFSTDecoder::checkActiveNumbers( bool checkModelPrevHyps )
       ++cnt ;
       model = model->next ;
    }
-      
+
    if ( cnt != nActiveModels )
    {
-      error("WFSTDecoder::checkActiveNumbers - unexpected active model count in list %d %d" , 
+      error("WFSTDecoder::checkActiveNumbers - unexpected active model count in list %d %d" ,
             cnt , nActiveModels ) ;
    }
 }
 
 void WFSTDecoder::resetDecHyp( DecHyp* hyp )
 {
-   decHypHistPool->resetDecHyp( hyp ) ;
+#ifdef OPTIMISE_INLINE_RESET_DECHYP
+   hyp->score = LOG_ZERO;
+   if (hyp->hist) {
+       decHypHistPool->resetDecHypHist(hyp->hist);
+       hyp->hist = NULL;
+   }
+#else
+       decHypHistPool->resetDecHyp( hyp ) ;
+#endif
 }
 
 void WFSTDecoder::registerLabel( DecHyp* hyp , int label )
@@ -1321,7 +1392,7 @@ int WFSTDecoder::addLatticeEntry( DecHyp *hyp , WFSTTransition *trans , int *fro
 {
    if ( doLatticeGeneration == false )
       error("WFSTDecoder::addLatticeEntry - doLatticeGeneration == false") ;
-      
+
    // The first element in the history linked list for endHyp should be a lattice
    //   entry containing the lattice WFST state we want to use as the from state.
    if ( (hyp->hist == NULL) || (hyp->hist->type != LATTICEDHHTYPE) )
@@ -1335,11 +1406,11 @@ int WFSTDecoder::addLatticeEntry( DecHyp *hyp , WFSTTransition *trans , int *fro
 #else
    real newScore = hyp->acousticScore + hyp->lmScore - hist->accScore ;
 #endif
-   
+
    int toState ;
-   toState = lattice->addEntry( hist->latState , trans->toState , trans->inLabel , 
+   toState = lattice->addEntry( hist->latState , trans->toState , trans->inLabel ,
                                 trans->outLabel , newScore ) ;
-                                
+
    if ( fromState != NULL )
       *fromState = hist->latState ;
 

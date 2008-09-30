@@ -129,7 +129,15 @@ protected:
    virtual void resetActiveHyps() ;
    virtual void checkActiveNumbers( bool checkPhonePrevHyps ) ;
 
+#ifdef OPTIMISE_INLINE_RESET_DECHYP
+   /* remove virtual functional call and only call resetDecHypHist on non-NULL hist
+    * gives roughly 1.5% speed improvement for this
+    * frequently called function in an informal test
+    */
+   inline void resetDecHyp( DecHyp* hyp ) ;
+#else
    virtual void resetDecHyp( DecHyp* hyp ) ;
+#endif
    virtual void registerLabel( DecHyp* hyp , int label ) ;
 
    virtual void addLabelHist( DecHyp* hyp , int label ) ;
@@ -149,6 +157,15 @@ private:
    void processModelEmitStates( WFSTModel *model ) ;
    void extendModelEndState( DecHyp *endHyp , WFSTTransition *trans , 
                              WFSTTransition **nextTransBuf ) ;
+
+
+   // added by zl
+#ifdef OPTIMISE_GETNEWMODEL
+   WFSTModel *getNewModel( WFSTTransition *trans );
+#endif
+#ifdef OPTIMISE_TRANSBUFPOOL
+   BlockMemPool      *transBufPool;
+#endif
 };
 
 }

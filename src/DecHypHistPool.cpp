@@ -246,6 +246,31 @@ bool DecHypHistPool::isActiveHyp( DecHyp *hyp )
 	return false ;
 }
 
+#ifdef OPTIMISE_INLINE_RESET_DECHYP
+void DecHypHistPool::resetDecHypHist(DecHypHist* hist )
+{
+    assert(hist);
+    if ( latticeMode && (hist->type == LATTICEDHHTYPE) )
+    {
+        lattice->registerInactiveTrans(
+            ((LatticeDecHypHist *)hist)->latState
+        ) ;
+    }
+  
+    if ( --(hist->nConnect) <= 0 )
+    {
+        // Only this hypothesis is accessing this history information.
+        // Return the element to it's pool.
+#ifdef DEBUG
+        if ( hist->nConnect < 0 )
+            error("resetDecHyp - nConnect < 0") ;
+#endif
+        returnElem( hist ) ;
+    }
+
+    // hist = NULL ; // set by caller
+}
+#endif
 // Changes
 void DecHypHistPool::resetDecHyp( DecHyp *hyp )
 {

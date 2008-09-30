@@ -318,6 +318,9 @@ public:
    void returnSingleElem( DecHypHist *elem ) ;
    void setLattice( WFSTLattice *lattice_ ) { lattice = lattice_ ; latticeMode = true ; } ;
 
+#ifdef OPTIMISE_INLINE_RESET_DECHYP
+    void resetDecHypHist(DecHypHist* hist );
+#endif
 private:
    
    // Private member variables

@@ -10,7 +10,7 @@
 
 #include "general.h"
 #include "MonophoneLookup.h"
-#include "Models.h"
+#include "HTKModels.h"
 
 
 /*
@@ -37,7 +37,7 @@ typedef enum
 struct WFSTCDSMNode
 {
    int   monophone ;
-   int   state ;  // the state ID we have allocated to 
+   int   state ;  // the state ID we have allocated to
    int   nextSib ;
    int   firstChild ;
 };
@@ -53,7 +53,7 @@ public:
    int getNumStates() { return nStates ; } ;
    int getEpsState() { return epsilonState ; } ;
    void outputText() ;
-   
+
 private:
    MonophoneLookup   *monoLookup ;
    int               nAuxSyms;
@@ -85,19 +85,19 @@ private:
 class WFSTCDGen
 {
 public:
-   WFSTCDGen( WFSTCDType type_ , const char *htkModelsFName , 
+   WFSTCDGen( WFSTCDType type_ , const char *htkModelsFName ,
               const char *monophoneListFName , const char *silMonoStr , const char *pauseMonoStr ,
-              const char *tiedListFName , const char *sepChars , 
+              const char *tiedListFName , const char *sepChars ,
               const char *priorsFName=NULL , int statesPerModel=0 ) ;
    virtual ~WFSTCDGen() ;
 
    void outputText() {}
-   void writeFSM( const char *fsmFName , const char *inSymbolsFName , 
+   void writeFSM( const char *fsmFName , const char *inSymbolsFName ,
                   const char *outSymbolsFName , const char *lexInSymbolsFName ) ;
 
 private:
    WFSTCDType           type ;
-   
+
    MonophoneLookup      *monoLookup ;
    PhoneLookup          *phoneLookup ;
    Models               *models ;
@@ -112,7 +112,7 @@ private:
    void writeFSMXWordTriphoneDetInv( FILE *fsmFD, bool ciPause );
    void writeFSMXWordTriphoneNonDetInv(FILE *fsmFD, bool ciSil, bool ciPause);
     void writeFSMAuxTrans( FILE *fsmFD );
-       
+
 };
 
 

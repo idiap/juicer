@@ -35,7 +35,8 @@ using namespace Torch ;
 using namespace Juicer ;
 
 // Compile time
-#define INHIBIT_BINARY
+// zl: turn binary lattice on for fast loading in debug
+// #define INHIBIT_BINARY
 
 // General parameters
 char           *logFName=NULL ;

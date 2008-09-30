@@ -657,17 +657,21 @@ void WFSTNetwork::getTransitions(
       error("WFSTNetwork::getTransitions - state out of range") ;
 #endif
    
-   *nNext = states[state].nTrans ;
-   for ( int i=0 ; i<(*nNext) ; i++ )
+   int n = states[state].nTrans ;
+   int* trans = states[state].trans;
+   for ( int i=0 ; i<n ; i++ )
    {
 #ifdef DEBUG
       if ( (states[state].trans[i] < 0) || (states[state].trans[i] >= nTransitions) )
          error("WFSTNetwork::getTransitions - states[state].trans[i] invalid") ;
 #endif
-      next[i] = transitions + states[state].trans[i] ;
+      next[i] = transitions + trans[i];
    }
+   *nNext = n;
 }
 
+#if 0
+//zl: inlined
 // Changes by Octavian
 int WFSTNetwork::getNumTransitionsOfOneState ( int state )
 {
@@ -713,6 +717,7 @@ real WFSTNetwork::getFinalStateWeight( int stateIndex )
       return finalStates[ind].weight ;
    }
 }
+#endif
 
 // Changes by Octavian
 const int *WFSTNetwork::getTransitions( const WFSTTransition *prev , int *nNext )
@@ -786,6 +791,8 @@ int WFSTNetwork::getInLabelOfOneTransition( const int gState , const int n )
 }
 
 
+#if 0
+//zl: inlined
 bool WFSTNetwork::transGoesToFinalState( WFSTTransition *trans )
 {
 #ifdef DEBUG
@@ -824,6 +831,7 @@ real WFSTNetwork::getFinalStateWeight( WFSTTransition *trans )
       return finalStates[ind].weight ;
    }
 }
+#endif
 
 
 void WFSTNetwork::outputText( int type )

@@ -8,6 +8,7 @@
 #ifndef WFST_NETWORK_INC
 #define WFST_NETWORK_INC
 
+#include <cassert>
 #include "general.h"
 #include "WFSTGeneral.h"
 
@@ -123,13 +124,19 @@ public:
    int getNumTransitions() { return nTransitions ; } ;
    int getNumStates() { return nStates ; } ;
    int getWordEndMarker() { return wordEndMarker ; } ;
-   int getNumTransitionsOfOneState ( int state ) ;
+   int getNumTransitionsOfOneState ( int state )  {
+       return states[state].nTrans ;   
+   }
    // Changes Octavian 20050325
    int getNumOutLabels() { return outputAlphabet->getNumLabels() ; } ;
  
    // Changes by Octavian
-   bool isFinalState( int stateIndex ) ;
-   real getFinalStateWeight( int stateIndex ) ;
+   bool isFinalState( int stateIndex ) {
+       return states[stateIndex].finalInd >= 0; 
+   }
+   real getFinalStateWeight( int stateIndex ) {
+      return finalStates[states[stateIndex].finalInd].weight ;
+   }
    const int *getTransitions( const WFSTTransition *prev , int *nNext ) ;
    WFSTTransition *getOneTransition( int transIndex ) ;
    int getInfoOfOneTransition( 
@@ -142,8 +149,13 @@ public:
    int getTransID( int stateIndex, int nth ) { 
       return states[stateIndex].trans[nth] ; } ;
 
-   bool transGoesToFinalState( WFSTTransition *trans ) ;
-   real getFinalStateWeight( WFSTTransition *trans ) ;
+   bool transGoesToFinalState( WFSTTransition *trans ) {
+       assert(trans);
+       return  states[trans->toState].finalInd >= 0;
+   }
+   real getFinalStateWeight( WFSTTransition *trans ) {
+       return finalStates[states[trans->toState].finalInd].weight ;
+   }
    
    void outputText( int type=0 ) ;
    void generateSequences( int maxSeqs=0 , bool logBase10=false ) ;
