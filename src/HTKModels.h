@@ -122,7 +122,7 @@ namespace Juicer
         real getTeeWeight(int hmmInd) { return hMMs[hmmInd].teeWeight; }
 #endif
 
-    private:
+    potected:
         int            currFrame ;
         const real     *currInput ;
         int            vecSize ;
