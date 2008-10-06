@@ -8,7 +8,11 @@
 #include "general.h"
 #include "CmdLine.h"
 #include "DecVocabulary.h"
-#include "Models.h"
+#ifdef OPTIMISE_FLATMODEL
+#include "HTKFlatModels.h"
+#else
+#include "HTKModels.h"
+#endif
 #include "WFSTNetwork.h"
 #include "WFSTDecoder.h"
 #include "DecoderBatchTest.h"

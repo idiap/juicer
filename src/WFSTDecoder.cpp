@@ -709,7 +709,6 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
 #endif
 }
 
-}
 
 
 /**
@@ -780,10 +779,8 @@ void WFSTDecoder::processActiveModelsEndStates()
 #endif
 }
 
-void WFSTDecoder::extendModelEndState(
-    DecHyp *endHyp , WFSTTransition *trans ,
-    WFSTTransition **nextTransBuf
-)
+void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans ,
+        WFSTTransition **nextTransBuf)
 {
 #ifdef DEBUG
     if ( endHyp == NULL )
@@ -885,7 +882,6 @@ void WFSTDecoder::extendModelEndState(
             }
         }
 
-    } // if ( trans != NULL )
         if ( doLatticeGeneration )
         {
             // Add lattice history to this end hyp, for quick access

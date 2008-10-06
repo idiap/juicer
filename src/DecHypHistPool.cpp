@@ -5,6 +5,7 @@
  * See the file COPYING for the licence associated with this software.
  */
 
+#include <cassert>
 #include "DecHypHistPool.h"
 #include "log_add.h"
 
