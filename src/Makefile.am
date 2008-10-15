@@ -24,7 +24,7 @@ JUICER_SOURCES = \
 	DecVocabulary.cpp \
 	DecLexInfo.cpp \
 	DecPhoneInfo.cpp \
-	Models.cpp \
+	HTKModels.cpp \
 	DecoderBatchTest.cpp \
 	DecoderSingleTest.cpp \
 	DecHypHistPool.cpp \
