@@ -36,11 +36,11 @@ using namespace Torch ;
 using namespace Juicer ;
 
 // Compile time
-#define INHIBIT_BINARY
 
 // General parameters
 char           *logFName=NULL ;
 int            framesPerSec=0 ;
+bool           writeBinaryFiles=false;
 
 // Vocabulary parameters
 char              *lexFName=NULL ;
@@ -73,6 +73,7 @@ bool           doLabelAndWeightPushing=false ;
 float          mainBeam=0.0 ;
 float          phoneEndBeam=0.0 ;
 float          phoneStartBeam=0.0 ;
+float          wordEmitBeam=0.0 ;
 int            maxHyps=0 ;
 char           *inputFormat_s=NULL ;
 DSTDataFileFormat inputFormat ;
@@ -106,6 +107,8 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
     cmd->addICmdOption( "-framesPerSec" , &framesPerSec , 100 ,
                         "Number of feature vectors per second (used to output timings in recognised words, "
                         "and also to calculate RT factor" ) ;
+    cmd->addBCmdOption( "-writeBinaryFiles" , &writeBinaryFiles , false ,
+                        "write binary WFST and model files if they don't already exist" ) ;
 
     // Vocabulary Parameters
     cmd->addText("\nVocabulary Options:") ;
@@ -156,6 +159,8 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
                         "the (+ve log) window used for pruning phone-start state hypotheses" ) ;
     cmd->addRCmdOption( "-phoneEndBeam" , &phoneEndBeam , LOG_ZERO ,
                         "the (+ve log) window used for pruning phone-end state hypotheses" ) ;
+    cmd->addRCmdOption( "-wordEmitBeam" , &wordEmitBeam , LOG_ZERO ,
+                        "the (+ve log) window used for pruning word-emitting-state hypotheses" ) ;
     cmd->addICmdOption( "-maxHyps" , &maxHyps , 0 ,
                         "Upper limit on the number of active emitting state hypotheses" ) ;
     cmd->addSCmdOption( "-inputFName" , &inputFName , "" ,
@@ -352,12 +357,15 @@ int main( int argc , char *argv[] )
                 lmScaleFactor , insPenalty,
                 REMOVEBOTH
             ) ;
-#ifdef INHIBIT_BINARY
-            LogFile::puts( "binary file writing inhibited\n");
-#else
-            LogFile::puts( "writing new binary file .... " ) ;
-            network->writeBinary( netBinFName ) ;
-#endif
+	    if ( writeBinaryFiles )
+	    {
+	        LogFile::puts( "writing new binary file .... " ) ;
+	        network->writeBinary( netBinFName ) ;
+	    }
+	    else
+	    {
+	        LogFile::puts( "binary file writing inhibited ....\n");
+	    }
         }
 
         delete [] netBinFName ;
@@ -481,7 +489,7 @@ int main( int argc , char *argv[] )
     WFSTDecoder *decoder = NULL ;
     if ( !onTheFlyComposition )  {
         decoder = new WFSTDecoder(
-            network , models , phoneStartBeam, mainBeam , phoneEndBeam ,
+	    network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
             maxHyps , modelLevelOutput , latticeGeneration ) ;
     }
     else  {
@@ -574,8 +582,15 @@ void setupModels( Models **models )
             LogFile::puts( "from ascii HTK MMF file .... " ) ;
             *models = new HModels();
             (*models)->Load( htkModelsFName , false /*fixTeeModels*/ ) ;
-            LogFile::puts( "writing new binary file .... " ) ;
-            (*models)->output( modelsBinFName , true ) ;
+	    if ( writeBinaryFiles )
+	    {
+	        LogFile::puts( "writing new binary file .... " ) ;
+                (*models)->output( modelsBinFName , true ) ;
+	    }
+	    else
+	    {
+	        LogFile::puts( "binary file writing inhibited ....\n");
+	    }
         }
         delete [] modelsBinFName ;
     }

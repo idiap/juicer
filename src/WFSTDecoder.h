@@ -47,14 +47,16 @@ public:
    int               activeModelsLookupLen ;
 
     // Pruning
-    real              emitPruneWin ;	
-    real              phoneEndPruneWin ;	
-    real              phoneStartPruneWin ;	
+    real              emitPruneWin ;
+    real              phoneEndPruneWin ;
+    real              phoneStartPruneWin ;
+    real              wordPruneWin ;
     int               maxEmitHyps ;
 
     real              currEmitPruneThresh ;
     real              currEndPruneThresh ;
     real              currStartPruneThresh ;
+    real              currWordPruneThresh ;
 
     real              bestEmitScore ;
     real              bestEndScore ;
@@ -70,6 +72,7 @@ public:
     WFSTDecoder(
         WFSTNetwork *network_ , Models *models_ ,
         real phoneStartPruneWin_, real emitPruneWin_, real phoneEndPruneWin_,
+	real wordPruneWin_,
         int maxEmitHyps_ , bool doModelLevelOutput_ ,
         bool doLatticeGeneration_ , bool isStaticComposition_ = true
     ) ;
