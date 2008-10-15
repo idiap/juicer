@@ -579,7 +579,7 @@ int HTKModels::addHMM( HTKHMM *hmm )
             if (curr->teeWeight != LOG_ZERO)
                 error("HTKModels::addHMM more then one tee transition found in HMM: %s", curr->name);
             curr->teeWeight = transMats[curr->transMatrixInd].logProbs[0][t];
-            printf("HMM %s with tee weight: %f\n", curr->name, curr->teeWeight);
+            // printf("HMM %s with tee weight: %f\n", curr->name, curr->teeWeight);
         }
     }
 #endif
