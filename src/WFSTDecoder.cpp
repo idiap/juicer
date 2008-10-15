@@ -63,10 +63,12 @@ WFSTDecoder::WFSTDecoder()
    emitPruneWin = -LOG_ZERO ;
    phoneEndPruneWin = -LOG_ZERO ;
    phoneStartPruneWin = -LOG_ZERO ;
+   wordPruneWin = -LOG_ZERO ;
    maxEmitHyps = 0 ;
 
    currEmitPruneThresh = LOG_ZERO ;
    currEndPruneThresh = LOG_ZERO ;
+   currWordPruneThresh = LOG_ZERO ;
 
    bestEmitScore = LOG_ZERO ;
    bestEndScore = LOG_ZERO ;
@@ -96,7 +98,7 @@ WFSTDecoder::WFSTDecoder()
 
 WFSTDecoder::WFSTDecoder(
     WFSTNetwork *network_ , Models *models_ ,
-    real phoneStartPruneWin_ , real emitPruneWin_ ,  real phoneEndPruneWin_ ,
+    real phoneStartPruneWin_ , real emitPruneWin_ ,  real phoneEndPruneWin_ , real wordPruneWin_ ,
     int maxEmitHyps_ , bool doModelLevelOutput_ ,
     bool doLatticeGeneration_ , bool isStaticComposition_
 )
@@ -165,11 +167,14 @@ WFSTDecoder::WFSTDecoder(
        phoneEndPruneWin = -LOG_ZERO ;
    if ( (phoneStartPruneWin = phoneStartPruneWin_) <= 0.0 )
        phoneStartPruneWin = -LOG_ZERO ;
+   if ( (wordPruneWin = wordPruneWin_) <= 0.0 )
+       wordPruneWin = -LOG_ZERO ;
    if ( (maxEmitHyps = maxEmitHyps_) < 0 )
        maxEmitHyps = 0 ;
 
    currEmitPruneThresh = LOG_ZERO ;
    currEndPruneThresh = LOG_ZERO ;
+   currWordPruneThresh = LOG_ZERO ;
 
    bestEmitScore = LOG_ZERO ;
    bestEndScore = LOG_ZERO ;
@@ -318,6 +323,7 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
     //   pruning threshold.
     processActiveModelsEmitStates() ;
     currEndPruneThresh = bestEndScore - phoneEndPruneWin ;
+    currWordPruneThresh = bestEndScore - wordPruneWin ;
 
    totalActiveEmitHyps += nActiveEmitHyps ;
    totalActiveEndHyps += nActiveEndHyps ;
@@ -736,15 +742,29 @@ void WFSTDecoder::processActiveModelsEndStates()
         DecHyp *endHyp = model->currHyps + (nStates - 1) ;
         if ( endHyp->score > LOG_ZERO )
         {
-            if ( endHyp->score > currEndPruneThresh )
-            {
-                // Extend hypothesis to new models.
-                nEndHypsProcessed++ ;
-                extendModelEndState( endHyp , model->trans , transBuf ) ;
-            }
+	    // VW - word based pruning
+	    // Use a different purning threshold when a word is emitted
+	    if ( model->trans->outLabel == WFST_EPSILON )
+	    {
+	        if ( endHyp->score > currEndPruneThresh )
+                {
+		    // Extend hypothesis to new models.
+		    nEndHypsProcessed++ ;
+		    extendModelEndState( endHyp , model->trans , transBuf ) ;
+		}
+	    }
+	    else
+	    {
+	        if ( endHyp->score > currWordPruneThresh )
+		{
+		    // Extend hypothesis to new models.
+		    nEndHypsProcessed++ ;
+		    extendModelEndState( endHyp , model->trans , transBuf ) ;
+		}
+	    }
             // Deactivate endHyp
             resetDecHyp( endHyp ) ;
-           if ( (--nActiveEndHyps) < 0 )
+	    if ( (--nActiveEndHyps) < 0 )
                 error("WFSTDecoder::processActiveModelsEndHyps"
                       " - nActiveEndHyps < 0") ;
 
@@ -1039,8 +1059,8 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans ,
             // weight += teeWeight;
             decHypHistPool->extendDecHyp(
                 endHyp , &tmp ,
-                endHyp->score + weight + teeWeight,
-                endHyp->acousticScore + teeWeight, 
+                endHyp->score + weight + teeWeight ,
+                endHyp->acousticScore + teeWeight ,
                 endHyp->lmScore + weight
             ) ;
         } else {
@@ -1260,6 +1280,7 @@ void WFSTDecoder::reset()
    // Reset pruning stuff
    currEmitPruneThresh = LOG_ZERO ;
    currEndPruneThresh = LOG_ZERO ;
+   currWordPruneThresh = LOG_ZERO ;
 
    bestEmitScore = LOG_ZERO ;
    bestEndScore = LOG_ZERO ;

@@ -7,7 +7,7 @@
 
 ## Process this file with automake to produce Makefile.in
 
-AM_CPPFLAGS = -DMIRROR_SCORE0 -DLOCAL_HYPS
+AM_CPPFLAGS = -DMIRROR_SCORE0
 
 lib_LTLIBRARIES = libjuicer.la
 
@@ -25,6 +25,8 @@ JUICER_SOURCES = \
 	DecLexInfo.cpp \
 	DecPhoneInfo.cpp \
 	HTKModels.cpp \
+	HModels.cpp \
+	HTKFlatModels.cpp \
 	DecoderBatchTest.cpp \
 	DecoderSingleTest.cpp \
 	DecHypHistPool.cpp \
@@ -59,7 +61,7 @@ AM_YFLAGS = -d -p htk
 AM_LFLAGS = -Phtk -L
 LEX_OUTPUT_ROOT = lex.htk
 
-bin_PROGRAMS = juicer gramgen cdgen lexgen genwfstseqs
+bin_PROGRAMS = juicer juicer-htk gramgen cdgen lexgen genwfstseqs
 
 libjuicer_la_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 libjuicer_la_LIBADD = @TRACTER_LIBS@
@@ -68,6 +70,9 @@ LDADD = libjuicer.la @TORCH_LIBS@
 
 juicer_SOURCES = juicer.cpp
 juicer_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
+
+juicer_htk_SOURCES = juicer-htk.cpp
+juicer_htk_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 
 gramgen_SOURCES = gramgen.cpp
 gramgen_CPPFLAGS = @TORCH_CFLAGS@
