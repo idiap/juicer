@@ -7,7 +7,7 @@
 
 ## Process this file with automake to produce Makefile.in
 
-AM_CPPFLAGS = -DMIRROR_SCORE0 -DLOCAL_HYPS
+#AM_CPPFLAGS = -DMIRROR_SCORE0 -DLOCAL_HYPS
 
 lib_LTLIBRARIES = libjuicer.la
 
@@ -24,7 +24,7 @@ JUICER_SOURCES = \
 	DecVocabulary.cpp \
 	DecLexInfo.cpp \
 	DecPhoneInfo.cpp \
-	Models.cpp \
+	HTKModels.cpp \
 	DecoderBatchTest.cpp \
 	DecoderSingleTest.cpp \
 	DecHypHistPool.cpp \
@@ -65,6 +65,10 @@ libjuicer_la_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 libjuicer_la_LIBADD = @TRACTER_LIBS@
 
 LDADD = libjuicer.la @TORCH_LIBS@
+
+if WITH_HTK
+JUICER_SOURCES += HModels.cpp
+endif
 
 juicer_SOURCES = juicer.cpp
 juicer_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@

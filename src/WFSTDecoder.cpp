@@ -7,6 +7,8 @@
 
 #include <assert.h>
 
+#define TRANS_OPT
+
 #include "WFSTDecoder.h"
 #include "DecHypHistPool.h"
 #include "log_add.h"
@@ -65,12 +67,15 @@ WFSTDecoder::WFSTDecoder()
    phoneStartPruneWin = -LOG_ZERO ;
    maxEmitHyps = 0 ;
 
-   currEmitPruneThresh = LOG_ZERO ;
-   currEndPruneThresh = LOG_ZERO ;
-
    bestEmitScore = LOG_ZERO ;
+   currEmitPruneThresh = LOG_ZERO ;
+#ifndef NO_BEST_END
    bestEndScore = LOG_ZERO ;
+#endif
+   currEndPruneThresh = LOG_ZERO ;
+#ifndef NO_BEST_START
    bestStartScore = LOG_ZERO ;
+#endif
    bestHypHist = NULL ;
 
    normaliseScore = 0.0 ;
@@ -108,8 +113,12 @@ WFSTDecoder::WFSTDecoder(
    if ( (models = models_) == NULL )
       error("WFSTDecoder::WFSTDecoder(2) - models is NULL") ;
 
+#ifdef TRANS_OPT
+   transBuf = 0;
+#else
    transBuf = new WFSTTransition*[network->getMaxOutTransitions()] ;
-   
+#endif
+
    currFrame = -1 ;
    
    // Hypothesis Management
@@ -165,12 +174,15 @@ WFSTDecoder::WFSTDecoder(
    if ( (maxEmitHyps = maxEmitHyps_) < 0 )
        maxEmitHyps = 0 ;
    
-   currEmitPruneThresh = LOG_ZERO ;
-   currEndPruneThresh = LOG_ZERO ;
-   
    bestEmitScore = LOG_ZERO ;
+   currEmitPruneThresh = LOG_ZERO ;
+#ifndef NO_BEST_END
    bestEndScore = LOG_ZERO ;
+#endif
+   currEndPruneThresh = LOG_ZERO ;
+#ifndef NO_BEST_START
    bestStartScore = LOG_ZERO ;
+#endif
    bestHypHist = NULL ;
 
    normaliseScore = 0.0 ;
@@ -223,7 +235,9 @@ WFSTDecoder::~WFSTDecoder()
 
     delete bestFinalHyp ;
 
+#ifndef TRANS_OPT
     delete [] transBuf ;
+#endif
     delete emitHypsHistogram ;
 
     if ( activeModelsLookup != NULL )
@@ -252,10 +266,13 @@ void WFSTDecoder::init()
 
    // Extend the hypothesis into the initial states of the models
    //   associated with the transitions out of the initial state.
+#ifdef TRANS_OPT
+   extendModelEndState( &tmpHyp , NULL , 0 ) ;
+#else
    extendModelEndState( &tmpHyp , NULL , transBuf ) ;
-   joinNewActiveModelsList() ;
+#endif
 
-   currStartPruneThresh = bestStartScore - phoneStartPruneWin ;
+   joinNewActiveModelsList() ;
 
    resetDecHyp( &tmpHyp ) ;
 }
@@ -271,6 +288,12 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
 
    // Reset the bestFinalHyp
    resetDecHyp( bestFinalHyp ) ;  
+
+#ifdef NO_BEST_START
+   currStartPruneThresh = bestEmitScore - phoneStartPruneWin ;
+#else
+   currStartPruneThresh = bestStartScore - phoneStartPruneWin ;
+#endif
 
    // Process the hypotheses in the initial states of all active models.
    processActiveModelsInitStates() ;
@@ -310,8 +333,11 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
     // Process emitting states for the new frame and calculate the new phone-end
     //   pruning threshold.
     processActiveModelsEmitStates() ;
+#ifdef NO_BEST_END
+    currEndPruneThresh = bestEmitScore - phoneEndPruneWin ;
+#else
     currEndPruneThresh = bestEndScore - phoneEndPruneWin ;
-
+#endif
    totalActiveEmitHyps += nActiveEmitHyps ;
    totalActiveEndHyps += nActiveEndHyps ;
    totalActiveModels += nActiveModels ;
@@ -325,7 +351,6 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
     // Process phone-end hyps and calculate the new pronun-end pruning threshold
     processActiveModelsEndStates() ;   
     totalProcEndHyps += nEndHypsProcessed ;
-    currStartPruneThresh = bestStartScore - phoneStartPruneWin ;
 //printf("nEndProc=%d\n",nEndHypsProcessed);fflush(stdout);
 
 //lattice->printLogInfo() ;
@@ -452,6 +477,8 @@ void WFSTDecoder::extendModelInitState( WFSTModel *model )
             // successor state was a phone end then process that now.
             if ( emittingState && (newScore > bestEmitScore) )
             {
+//                printf("InitState: bestEmitScore %e -> %e\n",
+//                      bestEmitScore, newScore);
                 bestEmitScore = newScore ;
                 bestHypHist = currHyps[sucInd].hist ;
             }
@@ -489,8 +516,9 @@ void WFSTDecoder::processActiveModelsEmitStates()
     nEmitHypsProcessed = 0 ;
     nEndHypsProcessed = 0 ;
     bestEmitScore = LOG_ZERO ;
+#ifndef NO_BEST_END
     bestEndScore = LOG_ZERO ;
-    bestStartScore = LOG_ZERO ;
+#endif
     bestHypHist = NULL ;
 
 #ifdef DEBUG
@@ -658,8 +686,13 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
                             bestHypHist = currHyps[sucInd].hist ;
                         }
                         else
+#ifdef NO_BEST_END
+                            if ( !emittingState && (newScore > bestEmitScore) )
+                                bestEmitScore = newScore ;
+#else
                             if ( !emittingState && (newScore > bestEndScore) )
                                 bestEndScore = newScore ;
+#endif
                     }
                 }
             }
@@ -716,6 +749,10 @@ void WFSTDecoder::processActiveModelsEndStates()
     if ( nActiveEndHyps <= 0 )
         return ;
 
+#ifndef NO_BEST_START
+    bestStartScore = LOG_ZERO ;
+#endif
+
     WFSTModel *model = activeModelsList ;
     WFSTModel *prevModel = NULL ;
     int nStates = models->getNumStates(model->hmmIndex);
@@ -728,7 +765,11 @@ void WFSTDecoder::processActiveModelsEndStates()
             {
                 // Extend hypothesis to new models.
                 nEndHypsProcessed++ ;
+#ifdef TRANS_OPT
+                extendModelEndState( endHyp , model->trans , 0 ) ;
+#else
                 extendModelEndState( endHyp , model->trans , transBuf ) ;
+#endif
             }
 
             // Deactivate endHyp
@@ -781,11 +822,12 @@ void WFSTDecoder::extendModelEndState(
         error("WFSTDecoder::extendModelEndState - score <= LOG_ZERO") ;
     if ( endHyp->score <= currEndPruneThresh )
         error("WFSTDecoder::extendModelEndState"
-              " - score <= currEndPruneThresh");
+              " - score %e <= currEndPruneThresh %e",
+              endHyp->score, currEndPruneThresh);
 #endif
 
     int lattToState=-1 , lattFromState=-1 ;
-   
+
     if ( trans != NULL ) 
     {
 #ifdef DEBUG
@@ -932,6 +974,7 @@ void WFSTDecoder::extendModelEndState(
     // Retrieve the next transitions for the current model
     bool ownNextTransBuf=false ;
     int nNextTrans=0 ;
+#ifndef TRANS_OPT
     if ( nextTransBuf == NULL )
     {
         // We need to allocate our own memory to store next
@@ -941,98 +984,166 @@ void WFSTDecoder::extendModelEndState(
     }
 
     network->getTransitions( trans , &nNextTrans , nextTransBuf ) ;
+#else
+    WFSTTransition* nextTrans;
+    nNextTrans = network->getTransitions(trans, &nextTrans);
+#endif
     for ( int i=0 ; i<nNextTrans ; i++ )
     {
-        real teeWeight = LOG_ZERO;
+#ifdef TRANS_OPT
+        if ( (nextTrans[i].inLabel != WFST_EPSILON) &&
+             (nextTrans[i].inLabel != network->getWordEndMarker()) )
+        {
+            // There is a model associated with the next transition
+            WFSTModel *nextModel = getModel( &nextTrans[i] ) ;
+            real newScore = endHyp->score + nextTrans[i].weight ;
+#else
         if ( (nextTransBuf[i]->inLabel != WFST_EPSILON) &&
              (nextTransBuf[i]->inLabel != network->getWordEndMarker()) )
         {
             // There is a model associated with the next transition
             WFSTModel *nextModel = getModel( nextTransBuf[i] ) ;
             real newScore = endHyp->score + nextTransBuf[i]->weight ;
-#ifdef MIRROR_SCORE0
-            if ( newScore <= nextModel->score0 )
-#else
-            if ( newScore <= nextModel->currHyps[0].score )
 #endif
-            {
-                // Better hypothesis in initial state of next model
-                // already exists.
-                continue ;
-            }
 
 #ifdef MIRROR_SCORE0
-            if ( nextModel->score0 <= LOG_ZERO )
+            if ( newScore > nextModel->score0 )
 #else
-            if ( nextModel->currHyps[0].score <= LOG_ZERO )
+            if ( newScore > nextModel->currHyps[0].score )
 #endif
             {
-                nextModel->nActiveHyps++ ;
+                // Extend this hypothesis into the new model
+#ifdef MIRROR_SCORE0
+                if ( nextModel->score0 <= LOG_ZERO )
+#else
+                if ( nextModel->currHyps[0].score <= LOG_ZERO )
+#endif
+                    nextModel->nActiveHyps++ ;
+
+                decHypHistPool->extendDecHyp(
+                    endHyp , nextModel->currHyps , newScore,
+                    endHyp->acousticScore,
+#ifdef TRANS_OPT
+                    (endHyp->lmScore + nextTrans[i].weight)
+#else
+                    (endHyp->lmScore + nextTransBuf[i]->weight)
+#endif
+                ) ;
+#ifdef MIRROR_SCORE0
+                nextModel->score0 = newScore;
+#endif
+
+#ifdef NO_BEST_START
+                if (newScore > bestEmitScore)
+                    bestEmitScore = newScore;
+#else
+                if (newScore > bestStartScore)
+                    bestStartScore = newScore;
+#endif
+
+                // In addition, there might be a tee transition.
+                real teeWeight = getTeeWeight(nextModel->hmmIndex);
+                if (teeWeight > LOG_ZERO)
+                {
+                    int finalState =
+                        models->getNumStates(nextModel->hmmIndex) - 1;
+                    newScore += teeWeight;
+                    if (newScore > nextModel->currHyps[finalState].score)
+                    {
+                        // Extend the tee into the final state
+                        if (nextModel->currHyps[finalState].score <= LOG_ZERO)
+                        {
+                            nextModel->nActiveHyps++ ;
+                            nActiveEndHyps++;
+                        }
+
+                        decHypHistPool->extendDecHyp(
+                            nextModel->currHyps,
+                            nextModel->currHyps + finalState,
+                            newScore,
+                            nextModel->currHyps->acousticScore + teeWeight,
+                            nextModel->currHyps->lmScore
+                        ) ;
+
+                        if (newScore > currEndPruneThresh)
+                        {
+#ifdef TRANS_OPT
+                            extendModelEndState(
+                                nextModel->currHyps + finalState,
+                                &nextTrans[i] , NULL
+                            ) ;
+#else
+                            extendModelEndState(
+                                nextModel->currHyps + finalState,
+                                nextTransBuf[i] , NULL
+                            ) ;
+#endif
+                        }
+
+                        // Reset the end hyp
+                        resetDecHyp(nextModel->currHyps + finalState);
+                        nextModel->nActiveHyps--;
+                    }
+                }
             }
-            
+        }
+        else
+        {
+            // Epsilon transitions
+#ifdef TRANS_OPT
+            real epsWeight = nextTrans[i].weight;
+#else
+            real epsWeight = nextTransBuf[i]->weight;
+#endif
+
+            // There is no input (ie. model) associated with this
+            // transition.  There could possibly be an output label
+            // though.  Extend current end hypothesis to a temp
+            // hypothesis and then recursively call this function to
+            // extend temp hypothesis into transitions that follow the
+            // one with epsilon input label.
+            DecHyp tmp ;
+            tmp.hist = NULL;
             decHypHistPool->extendDecHyp(
-                endHyp , nextModel->currHyps , newScore , 
-                endHyp->acousticScore , 
-                (endHyp->lmScore + nextTransBuf[i]->weight)
+                endHyp , &tmp ,
+                endHyp->score + epsWeight,
+                endHyp->acousticScore,
+                endHyp->lmScore + epsWeight
             ) ;
-#ifdef MIRROR_SCORE0
-            nextModel->score0 = newScore;
-#endif
-            if (newScore > bestStartScore)
-                bestStartScore = newScore;
 
-            // If this is not a tee, continue to the next transition
-            // PNG: I ain't sure this is fast
-            int t;
-            int nextFinalState = models->getNumStates(nextModel->hmmIndex) - 1;
-            for (t=1; t<models->getNumSuccessors(nextModel->hmmIndex, 0); t++)
+            // nextTransBuf field is NULL so that the recursive call
+            // to this function uses a new buffer for storing next
+            // transitions.  (required because we haven't finished
+            // processing the transitions in this buffer yet.
+            if (tmp.score > currEndPruneThresh)
             {
-                if (models->getSuccessor(nextModel->hmmIndex, 0, t) ==
-                    nextFinalState)
-                    teeWeight =
-                        models->getSuccessorLogProb(nextModel->hmmIndex, 0, t);
+#ifdef TRANS_OPT
+                extendModelEndState( &tmp , &nextTrans[i] , NULL ) ;
+#else
+                extendModelEndState( &tmp , nextTransBuf[i] , NULL ) ;
+#endif
             }
 
-            if (teeWeight == LOG_ZERO)
-                continue;
-
-            //printf("Tee weight detected\n");
+            // Reset the temp hypothesis before it goes out of scope.
+            resetDecHyp( &tmp ) ;
+        }
         }
 
-        // Epsilon transitions and tee models drop to here
-        real weight = nextTransBuf[i]->weight;
-        if (teeWeight > LOG_ZERO)
-            weight += teeWeight;
-
-        // There is no input (ie. model) associated with this
-        // transition.  There could possibly be an output label
-        // though.  Extend current end hypothesis to a temp
-        // hypothesis and then recursively call this function to
-        // extend temp hypothesis into transitions that follow the
-        // one with epsilon input label.
-        DecHyp tmp ;
-        tmp.hist = NULL;
-        decHypHistPool->extendDecHyp(
-            endHyp , &tmp ,
-            endHyp->score + weight ,
-            endHyp->acousticScore , 
-            endHyp->lmScore + weight
-        ) ;
-
-        // nextTransBuf field is NULL so that the recursive call
-        // to this function uses a new buffer for storing next
-        // transitions.  (required because we haven't finished
-        // processing the transitions in this buffer yet.
-        extendModelEndState( &tmp , nextTransBuf[i] , NULL ) ;
-
-        // Reset the temp hypothesis before it goes out of scope.
-        resetDecHyp( &tmp ) ;
-    }
-
-    if ( ownNextTransBuf )
-        delete [] nextTransBuf ;
+        if ( ownNextTransBuf )
+            delete [] nextTransBuf ;
 }
 
+real WFSTDecoder::getTeeWeight(int hmmIndex)
+{
+    int finalState = models->getNumStates(hmmIndex) - 1;
+    int n = models->getNumSuccessors(hmmIndex, 0);
+    for (int t=1; t<n; t++)
+    {
+        if (models->getSuccessor(hmmIndex, 0, t) == finalState)
+            return models->getSuccessorLogProb(hmmIndex, 0, t);
+    }
+    return LOG_ZERO;
+}
 
 DecHyp *WFSTDecoder::finish()
 {
@@ -1199,11 +1310,12 @@ void WFSTDecoder::reset()
    avgProcEndHyps = 0.0 ;
 
    // Reset pruning stuff
-   currEmitPruneThresh = LOG_ZERO ;
-   currEndPruneThresh = LOG_ZERO ;
-   
    bestEmitScore = LOG_ZERO ;
+   currEmitPruneThresh = LOG_ZERO ;
+#ifndef NO_BEST_END
    bestEndScore = LOG_ZERO ;
+#endif
+   currEndPruneThresh = LOG_ZERO ;
    bestHypHist = NULL ;
 
    normaliseScore = 0.0 ;

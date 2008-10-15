@@ -668,6 +668,24 @@ void WFSTNetwork::getTransitions(
    }
 }
 
+/**
+ * Alternative getTransitions() that just returns a pointer rather
+ * than copy an array of pointers.
+ */
+int WFSTNetwork::getTransitions(
+    WFSTTransition *prev, WFSTTransition **next
+)
+{
+    int state ;
+    if ( prev == NULL )
+        state = initState ;
+    else
+        state = prev->toState ;
+    if (states[state].nTrans > 0)
+        *next = transitions + states[state].trans[0] ;
+    return states[state].nTrans ;
+}
+
 // Changes by Octavian
 int WFSTNetwork::getNumTransitionsOfOneState ( int state )
 {

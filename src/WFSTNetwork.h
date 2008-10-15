@@ -119,6 +119,9 @@ public:
    int getInitState() { return initState ; } ;
    void getTransitions( 
 	 WFSTTransition *prev , int *nNext , WFSTTransition **next ) ;
+    int getTransitions(
+        WFSTTransition *prev, WFSTTransition **next
+    );
    int getMaxOutTransitions() { return maxOutTransitions ; } ;
    int getNumTransitions() { return nTransitions ; } ;
    int getNumStates() { return nStates ; } ;

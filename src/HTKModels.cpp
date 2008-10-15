@@ -1,12 +1,12 @@
 /*
- * Copyright 2004 by IDIAP Research Institute
- *                   http://www.idiap.ch
+ * Copyright 2004,2008 by IDIAP Research Institute
+ *                        http://www.idiap.ch
  *
  * See the file COPYING for the licence associated with this software.
  */
 
 #include <assert.h>
-#include "Models.h"
+#include "HTKModels.h"
 #include "log_add.h"
 
 /*

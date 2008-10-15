@@ -10,7 +10,7 @@
 
 #include "general.h"
 #include "MonophoneLookup.h"
-#include "Models.h"
+#include "HTKModels.h"
 
 
 /*

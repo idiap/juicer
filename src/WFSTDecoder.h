@@ -8,6 +8,9 @@
 #ifndef WFST_DECODER_INC
 #define WFST_DECODER_INC
 
+#define NO_BEST_END
+#define NO_BEST_START
+
 #include "general.h"
 #include "WFSTNetwork.h"
 #include "WFSTModel.h"
@@ -52,13 +55,16 @@ public:
     real              phoneStartPruneWin ;	
     int               maxEmitHyps ;
 
-    real              currEmitPruneThresh ;
-    real              currEndPruneThresh ;
-    real              currStartPruneThresh ;
-
     real              bestEmitScore ;
+    real              currEmitPruneThresh ;
+#ifndef NO_BEST_END
     real              bestEndScore ;
-    real bestStartScore;
+#endif
+    real              currEndPruneThresh ;
+#ifndef NO_BEST_START
+    real              bestStartScore;
+#endif
+    real              currStartPruneThresh ;
 
    DecHypHist			*bestHypHist ;
 
@@ -149,6 +155,8 @@ private:
    void processModelEmitStates( WFSTModel *model ) ;
    void extendModelEndState( DecHyp *endHyp , WFSTTransition *trans , 
                              WFSTTransition **nextTransBuf ) ;
+    real getTeeWeight(int hmmIndex);
+
 };
 
 }
