@@ -2,11 +2,11 @@
  * vi:ts=4:tw=78:shiftwidth=4:expandtab
  * vim600:fdm=marker
  *
- * HTKFlatModels.cpp  -  description
- *
+ * HTKFlatModels.cpp  -  store GMM parameters in flat arrays for fast
+ * computation, derived from HTKModels.
  * by Zhang Le
  * Begin       : 02-Oct-2008
- * Last Change : 03-Oct-2008.
+ * Last Change : 15-Oct-2008.
  * 
  */
 

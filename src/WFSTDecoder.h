@@ -139,7 +139,7 @@ protected:
    virtual void checkActiveNumbers( bool checkPhonePrevHyps ) ;
 
 #ifdef OPTIMISE_INLINE_RESET_DECHYP
-   /* remove virtual functional call and only call resetDecHypHist on
+   /* zl:remove virtual functional call and only call resetDecHypHist on
     * non-NULL hist gives roughly 1.5% speed improvement for this
     * frequently called function in an informal test
     */

@@ -659,7 +659,8 @@ void setupModels( Models **models )
         *models = new HModels() ;
 #else
 # ifdef OPTIMISE_FLATMODEL
-        *models = new HTKFlatModels();
+        //  not implemented, use HTKModels instead now
+        *models = new HTKModels();
 # else
         *models = new HTKModels() ;
 # endif
