@@ -8,16 +8,21 @@
 #include "general.h"
 #include "CmdLine.h"
 #include "DecVocabulary.h"
-#ifdef OPTIMISE_FLATMODEL
-#include "HTKFlatModels.h"
-#else
-#include "HTKModels.h"
-#endif
 #include "WFSTNetwork.h"
 #include "WFSTDecoder.h"
 #include "DecoderBatchTest.h"
 #include "MonophoneLookup.h"
 #include "LogFile.h"
+
+#ifdef HAVE_HTKLIB
+# include "HModels.h"
+#else
+# ifdef OPTIMISE_FLATMODEL
+#  include "HTKFlatModels.h"
+# else
+#  include "HTKModels.h"
+# endif
+#endif
 
 #ifdef WITH_ONTHEFLY
 # include "WFSTOnTheFlyDecoder.h"
@@ -37,8 +42,6 @@
 
 using namespace Torch ;
 using namespace Juicer ;
-
-// Compile time
 
 // General parameters
 char           *logFName=NULL ;
@@ -324,27 +327,42 @@ int main( int argc , char *argv[] )
     Models *models=NULL ;
     setupModels( &models ) ;
     LogFile::puts( "done\n" ) ;
+
+#if 0
+    // Check model order
+    for (int i=0; i<models->getNumHMMs(); i++)
+    {
+        printf("Model %d is %s\n", i, models->getHMMName(i));
+    }
+    assert(0);
+#endif
+
+#ifndef HAVE_HTKLIB
     if ( doModelsIOTest )
     {
         testModelsIO(
             htkModelsFName , monoListFName , priorsFName , statesPerModel ) ;
     }
+#endif
 
     // load network
     LogFile::puts( "loading transducer network .... " ) ;
     WFSTNetwork *network=NULL ;
+#ifdef USE_BINARY_WFST
     char *netBinFName = new char[strlen(fsmFName)+5] ;
     sprintf( netBinFName , "%s.bin" , fsmFName ) ;
+    char *clNetBinFName = NULL ;
+    char *gNetBinFName = NULL ;
+#endif
 
     // Networks for on-the-fly composition
     // Changes
     WFSTNetwork *clNetwork = NULL ;
     WFSTSortedInLabelNetwork *gNetwork = NULL ;
-    char *clNetBinFName = NULL ;
-    char *gNetBinFName = NULL ;
 
     // Load network: Either static or on-the-fly composition
     if ( !onTheFlyComposition )  {
+#ifdef USE_BINARY_WFST
         if ( fileExists( netBinFName ) )
         {
             LogFile::puts( "from pre-existing binary file .... " ) ;
@@ -353,6 +371,7 @@ int main( int argc , char *argv[] )
         }
         else
         {
+#endif
             LogFile::puts( "from ascii FSM file .... " ) ;
             // Changes Octavian 20060523
             network = new WFSTNetwork(
@@ -360,18 +379,19 @@ int main( int argc , char *argv[] )
                 lmScaleFactor , insPenalty,
                 REMOVEBOTH
             ) ;
-	    if ( writeBinaryFiles )
-	    {
-	        LogFile::puts( "writing new binary file .... " ) ;
-	        network->writeBinary( netBinFName ) ;
-	    }
-	    else
-	    {
-	        LogFile::puts( "binary file writing inhibited .... \n");
-	    }
+#ifdef USE_BINARY_WFST
+            if ( writeBinaryFiles )
+            {
+                LogFile::puts( "writing new binary file .... " ) ;
+                network->writeBinary( netBinFName ) ;
+            }
+            else
+            {
+                LogFile::puts( "binary file writing inhibited .... \n");
+            }
         }
-
         delete [] netBinFName ;
+#endif
 
         LogFile::printf( "nStates=%d nTrans=%d ... done\n" ,
                          network->getNumStates() , network->getNumTransitions() ) ;
@@ -385,12 +405,15 @@ int main( int argc , char *argv[] )
     }
     else  {
         // On-the-fly composition
+#ifdef USE_BINARY_WFST
         clNetBinFName = netBinFName ;
         gNetBinFName = new char[strlen(gramFsmFName)+5] ;
         sprintf( gNetBinFName, "%s.bin", gramFsmFName );
+#endif
 
         // Load C o L network
         LogFile::puts( "loading C o L network .... " ) ;
+#ifdef USE_BINARY_WFST
         if ( fileExists(clNetBinFName) )  {
             LogFile::puts( "from pre-existing binary file .... " ) ;
 
@@ -406,6 +429,7 @@ int main( int argc , char *argv[] )
             clNetwork->readBinary( clNetBinFName );
         }
         else  {
+#endif
             LogFile::puts( "from ascii FSM file .... " ) ;
 
             if ( doLabelAndWeightPushing )  {
@@ -420,10 +444,11 @@ int main( int argc , char *argv[] )
                     fsmFName, inSymsFName, outSymsFName, 1.0 , REMOVEINPUT ) ;
             }
 
+#ifdef USE_BINARY_WFST
             LogFile::puts( "writing new binary file .... " ) ;
             clNetwork->writeBinary( clNetBinFName ) ;
         }
-
+#endif
         // Changes Octavian 20060616
         // After loading CoL transducer. Print the number of max outLabels
         if ( doLabelAndWeightPushing )  {
@@ -434,20 +459,26 @@ int main( int argc , char *argv[] )
 
         // Load G network
         LogFile::puts( "loading G network .... " ) ;
+#ifdef USE_BINARY_WFST
         if ( fileExists(gNetBinFName) )  {
             LogFile::puts( "from pre-existing binary file .... " ) ;
             gNetwork = new WFSTSortedInLabelNetwork( lmScaleFactor ) ;
             gNetwork->readBinary( gNetBinFName );
         }
         else  {
+#endif
             LogFile::puts( "from ascii FSM file .... " ) ;
             // Changes Octavian 20060523
             gNetwork = new WFSTSortedInLabelNetwork(
                 gramFsmFName, gramInSymsFName, gramOutSymsFName,
                 lmScaleFactor , NOTREMOVE ) ;
+#ifdef USE_BINARY_WFST
             LogFile::puts( "writing new binary file .... " ) ;
             gNetwork->writeBinary( gNetBinFName );
         }
+        delete [] clNetBinFName ;
+        delete [] gNetBinFName ;
+#endif
 
         // Changes Octavian 20060616
         // After loeading the G transducer, print the max number of transitions
@@ -455,10 +486,6 @@ int main( int argc , char *argv[] )
         LogFile::printf(
             "Max number of transitions from a state in G = %d\n",
             gNetwork->getMaxOutTransitions() ) ;
-
-        delete [] clNetBinFName ;
-        delete [] gNetBinFName ;
-
         LogFile::printf(
             "C o L: nStates=%d nTrans=%d ... done\n" ,
             clNetwork->getNumStates() , clNetwork->getNumTransitions()
@@ -572,30 +599,42 @@ void setupModels( Models **models )
                   "htkModelsFName defined but inputFormat not htk") ;
 
         // HTK MMF model input - i.e. a HMM/GMM system
+#ifdef HAVE_HTKLIB
+        *models = new HModels() ;
+#else
+# ifdef OPTIMISE_FLATMODEL
+        *models = new HTKFlatModels() ;
+# else
+        *models = new HTKModels() ;
+# endif
+#endif
+
+#ifdef USE_BINARY_MODELS
         char *modelsBinFName = new char[strlen(htkModelsFName)+5] ;
         sprintf( modelsBinFName , "%s.bin" , htkModelsFName ) ;
         if ( fileExists( modelsBinFName ) )
         {
             LogFile::puts( "from pre-existing binary file .... " ) ;
-            *models = new HTKFlatModels() ;
             (*models)->readBinary( modelsBinFName ) ;
         }
         else
         {
+#endif
             LogFile::puts( "from ascii HTK MMF file .... " ) ;
-            *models = new HTKFlatModels();
             (*models)->Load( htkModelsFName , false /*fixTeeModels*/ ) ;
-	    if ( writeBinaryFiles )
-	    {
-	        LogFile::puts( "writing new binary file .... " ) ;
+#ifdef USE_BINARY_MODELS
+            if ( writeBinaryFiles )
+            {
+                LogFile::puts( "writing new binary file .... " ) ;
                 (*models)->output( modelsBinFName , true ) ;
-	    }
-	    else
-	    {
-	        LogFile::puts( "binary file writing inhibited ....\n");
-	    }
+            }
+            else
+            {
+                LogFile::puts( "binary file writing inhibited ....\n");
+            }
         }
         delete [] modelsBinFName ;
+#endif
     }
     else if ( (priorsFName != NULL) && (priorsFName[0] != '\0') )
     {
@@ -615,7 +654,16 @@ void setupModels( Models **models )
             error("juicer: setupModels - "
                   "aNNPriorsFName defined but statesPerModel <= 2") ;
 
+#ifdef HAVE_HTKLIB
+        assert(0);  // makes no sense right now to have HTK models and LNA
+        *models = new HModels() ;
+#else
+# ifdef OPTIMISE_FLATMODEL
         *models = new HTKFlatModels();
+# else
+        *models = new HTKModels() ;
+# endif
+#endif
         (*models)->Load( monoListFName , priorsFName , statesPerModel ) ;
     }
 }

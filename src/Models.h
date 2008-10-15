@@ -1,23 +1,22 @@
 /*
- * Models.h
+ * Copyright 2008 by IDIAP Research Institute
+ *                   http://www.idiap.ch
  *
- *  Created on: 12-Aug-2008
- *      Author: vinny
+ * See the file COPYING for the licence associated with this software.
  */
 
-#ifndef MODELS_H_INC
-#define MODELS_H_INC
+#ifndef MODELS_H
+#define MODELS_H
 
 #include "general.h"
 #include "htkparse.h"
 
-/**
- * Models interface.
- * Models such as HTK MMFs should implement this interface.
- *
- * TODO: Put this class in a separate header file and use
- *       an include directive
- */
+namespace Juicer
+{
+    /**
+     * Models interface.
+     * Models such as HTK MMFs should implement this interface.
+     */
     class Models
     {
     public:
@@ -48,10 +47,13 @@
         virtual int getNumStates(int hmmInd) = 0;
         virtual int getNumSuccessors(int hmmInd, int stateInd) = 0;
         virtual int getSuccessor(int hmmInd, int stateInd, int sucInd) = 0;
-        virtual real getSuccessorLogProb(int hmmInd, int stateInd, int sucInd) = 0;
+        virtual real getSuccessorLogProb(
+            int hmmInd, int stateInd, int sucInd
+        ) = 0;
 #ifdef OPTIMISE_TEEMODEL
         virtual real getTeeWeight(int hmmInd) = 0;
 #endif
     };
+}
 
- #endif /* MODELS_H_INC */
+#endif /* MODELS_H */

@@ -8,6 +8,9 @@
 #ifndef WFST_DECODER_INC
 #define WFST_DECODER_INC
 
+#define NO_BEST_END
+#define NO_BEST_START
+
 #include "general.h"
 #include "WFSTNetwork.h"
 #include "WFSTModel.h"
@@ -53,14 +56,17 @@ public:
     real              wordPruneWin ;
     int               maxEmitHyps ;
 
+    real              bestEmitScore ;
     real              currEmitPruneThresh ;
+#ifndef NO_BEST_END
+    real              bestEndScore ;
+#endif
     real              currEndPruneThresh ;
+#ifndef NO_BEST_START
+    real              bestStartScore;
+#endif
     real              currStartPruneThresh ;
     real              currWordPruneThresh ;
-
-    real              bestEmitScore ;
-    real              bestEndScore ;
-    real bestStartScore;
 
    DecHypHist			*bestHypHist ;
 
@@ -133,8 +139,8 @@ protected:
    virtual void checkActiveNumbers( bool checkPhonePrevHyps ) ;
 
 #ifdef OPTIMISE_INLINE_RESET_DECHYP
-   /* remove virtual functional call and only call resetDecHypHist on non-NULL hist
-    * gives roughly 1.5% speed improvement for this
+   /* remove virtual functional call and only call resetDecHypHist on
+    * non-NULL hist gives roughly 1.5% speed improvement for this
     * frequently called function in an informal test
     */
    inline void resetDecHyp( DecHyp* hyp ) ;
@@ -161,14 +167,15 @@ private:
    void extendModelEndState( DecHyp *endHyp , WFSTTransition *trans , 
                              WFSTTransition **nextTransBuf ) ;
 
-
-   // added by zl
 #ifdef OPTIMISE_GETNEWMODEL
    WFSTModel *getNewModel( WFSTTransition *trans );
 #endif
 #ifdef OPTIMISE_TRANSBUFPOOL
    BlockMemPool      *transBufPool;
 #endif
+
+    real getTeeWeight(int hmmIndex);
+
 };
 
 }

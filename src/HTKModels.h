@@ -1,6 +1,6 @@
 /*
- * Copyright 2004 by IDIAP Research Institute
- *                   http://www.idiap.ch
+ * Copyright 2004,2008 by IDIAP Research Institute
+ *                        http://www.idiap.ch
  *
  * See the file COPYING for the licence associated with this software.
  */
@@ -75,7 +75,6 @@ namespace Juicer
     };
 
 
-
     /**
      * HTK models
      */
@@ -86,9 +85,9 @@ namespace Juicer
         virtual ~HTKModels() ;
 
         void Load( const char *phonesListFName , const char *priorsFName ,
-                int statesPerModel ) ;
+                   int statesPerModel ) ;
         void Load( const char *htkModelsFName ,
-                bool removeInitialToFinalTransitions_=false ) ;
+                   bool removeInitialToFinalTransitions_=false ) ;
 
         void readBinary( const char *fName ) ;
         void output( const char *fName , bool outputBinary ) ;
@@ -123,6 +122,7 @@ namespace Juicer
 #endif
 
     protected:
+
         int            currFrame ;
         const real     *currInput ;
         int            vecSize ;
@@ -199,7 +199,6 @@ namespace Juicer
         const char *htkModelsFName , const char *phonesListFName ,
         const char *priorsFName , int statesPerModel
     ) ;
-
 
 }
 

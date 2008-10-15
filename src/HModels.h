@@ -24,9 +24,6 @@
  *  HTK command line) are required then they can be included in the function
  *  HModels.cpp::InitialiseHTK() and HModels.cpp::ParseArgs().
  *
- *
- *
- *
  */
 
 

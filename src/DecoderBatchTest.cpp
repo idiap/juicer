@@ -629,7 +629,7 @@ void DecoderBatchTest::outputResultPhones( DecoderSingleTest *test )
          LogFile::printf( "    %s  start=%d end=%d " , 
                           phoneLookup->getModelStr(test->resultWords[0][j].index) ,
                           test->resultWords[0][j].startTime , test->resultWords[0][j].endTime ) ;
-         LogFile::printf( "acousticScore=%.4f lmScore=%.4f\n" , 
+         LogFile::printf( "acousticScore=%.6f lmScore=%.6f\n" , 
                           test->resultWords[0][j].acousticScore , test->resultWords[0][j].lmScore ) ;
       }
       

@@ -30,7 +30,7 @@ namespace Juicer{
 /**
  * Constructor: We initialise this class by running HTK's init functions
  * following the same procedure in HTKLVrec/HDecode.c
-Xenos 3HA headp */
+ */
 HModels::HModels()
 {
     /*
@@ -56,19 +56,20 @@ HModels::HModels()
 /**
  * Free up memory
  */
-HModels::~HModels() {
-	delete[] HTKCFG;
-	delete[] HTKMMF;
-	delete[] HTKMList;
-	if (isHTKinitialised) {
-		delete[] stateProbCache;
-		for( int i=0;i<hSet.numTransP;i++ )
-		{
-			for( int j=0;j<maxStates;j++ )
-			{
-				delete[] transMats[i].logProbs[j];
-				delete[] transMats[i].sucs[j];
-			}
+HModels::~HModels()
+{
+    delete[] HTKCFG;
+    delete[] HTKMMF;
+    delete[] HTKMList;
+    if (isHTKinitialised) {
+        delete[] stateProbCache;
+        for( int i=0;i<hSet.numTransP;i++ )
+        {
+            for( int j=0;j<maxStates;j++ )
+            {
+                delete[] transMats[i].logProbs[j];
+                delete[] transMats[i].sucs[j];
+            }
 			delete[] transMats[i].logProbs;
 			delete[] transMats[i].sucs;
 			delete[] transMats[i].nSucs;
@@ -309,10 +310,11 @@ void HModels::InitialiseHModels( bool removeInitialToFinalTransitions )
 	{
 		transMats[i].nStates  = -1;
 		transMats[i].nSucs    = new int[ maxStates ];
-		transMats[i].sucs     = new int*[ maxStates ];
+        transMats[i].sucs     = new int*[ maxStates ];
 		transMats[i].logProbs = new real*[ maxStates ];
 		for( int j=0;j<maxStates;j++ )
 		{
+            assert(j < maxStates);
 			transMats[i].sucs[j] = new int[ maxStates ];
 			transMats[i].logProbs[j] = new real[ maxStates ];
 		}
@@ -439,8 +441,9 @@ real HModels::calcOutput( int gmmInd )
 	{
 		/*
 		 * 2: Get the GMM corresponding to gmmInd from GMMlookupTable.
-		 * 3: Call HTK's SoutP to calculate the output probability for
-		 *    stream 1 of currentFrameData using that GMM.
+		 * 3: Get the probability distribution function of stream 1.
+		 * 4: Call HTK's SoutP to calculate the output probability for
+		 *    stream 1 of currentFrameData using that pdf.
 		 */
 		stateProbCache[gmmInd].isEmpty = false;
 		stateProbCache[gmmInd].logProb = SOutP( hset , 1 , &currentFrameData , GMMlookupTable[gmmInd] );
