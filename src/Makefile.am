@@ -58,7 +58,7 @@ AM_YFLAGS = -d -p htk
 AM_LFLAGS = -Phtk -L
 LEX_OUTPUT_ROOT = lex.htk
 
-bin_PROGRAMS = juicer juicer-htk gramgen cdgen lexgen genwfstseqs
+bin_PROGRAMS = juicer gramgen cdgen lexgen genwfstseqs #juicer-htk
 
 libjuicer_la_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@ -DMIRROR_SCORE0 -DOPTIMISE_FLATMODEL -DOPTIMISE_ALIGN4 -DOPTIMISE_TRANSBUFPOOL -DOPTIMISE_GETNEWMODEL -DOPTIMISE_INLINE_RESET_DECHYP -DOPTIMISE_TEEMODEL
 libjuicer_la_LIBADD = @TRACTER_LIBS@
@@ -72,8 +72,8 @@ endif
 juicer_SOURCES = juicer.cpp
 juicer_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 
-juicer_htk_SOURCES = juicer-htk.cpp
-juicer_htk_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
+# juicer_htk_SOURCES = juicer-htk.cpp
+# juicer_htk_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 
 gramgen_SOURCES = gramgen.cpp
 gramgen_CPPFLAGS = @TORCH_CFLAGS@
