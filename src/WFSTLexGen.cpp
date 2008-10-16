@@ -652,7 +652,7 @@ void WFSTLexGen::outputFSMWord(
     real weight = -logProb;
 
     // change this to enable/disable weighting of pronuns
-    bool doPronunWeighting=true ;
+    bool doPronunWeighting=false ;
     if ( doPronunWeighting )
     {
         int scale=1 ;
