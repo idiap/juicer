@@ -7,6 +7,20 @@
 
 ## Process this file with automake to produce Makefile.in
 
+OPT = # add flags as you wish
+OPT += -DTRANS_OPT
+OPT += -DOPTIMISE_FLATMODEL
+OPT += -DOPTIMISE_TEEMODEL
+OPT += -DNO_BEST_END
+OPT += -DNO_BEST_START
+#OPT += -DLOCAL_HYPS
+#OPT += -DMIRROR_SCORE0
+#OPT += -DOPTIMISE_ALIGN4
+#OPT += -DOPTIMISE_TRANSBUFPOOL
+#OPT += -DOPTIMISE_GETNEWMODEL
+#OPT += -DOPTIMISE_INLINE_RESET_DECHYP
+
+
 lib_LTLIBRARIES = libjuicer.la
 
 JUICER_SOURCES = \
@@ -58,9 +72,9 @@ AM_YFLAGS = -d -p htk
 AM_LFLAGS = -Phtk -L
 LEX_OUTPUT_ROOT = lex.htk
 
-bin_PROGRAMS = juicer gramgen cdgen lexgen genwfstseqs #juicer-htk
+bin_PROGRAMS = juicer gramgen cdgen lexgen genwfstseqs
 
-libjuicer_la_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@ -DMIRROR_SCORE0 -DOPTIMISE_FLATMODEL -DOPTIMISE_ALIGN4 -DOPTIMISE_TRANSBUFPOOL -DOPTIMISE_GETNEWMODEL -DOPTIMISE_INLINE_RESET_DECHYP -DOPTIMISE_TEEMODEL
+libjuicer_la_CPPFLAGS = $(OPT) @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 libjuicer_la_LIBADD = @TRACTER_LIBS@
 
 LDADD = libjuicer.la @TORCH_LIBS@
@@ -70,19 +84,19 @@ JUICER_SOURCES += HModels.cpp
 endif
 
 juicer_SOURCES = juicer.cpp
-juicer_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
+juicer_CPPFLAGS = $(OPT) @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 
 # juicer_htk_SOURCES = juicer-htk.cpp
 # juicer_htk_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 
 gramgen_SOURCES = gramgen.cpp
-gramgen_CPPFLAGS = @TORCH_CFLAGS@
+gramgen_CPPFLAGS = $(OPT) @TORCH_CFLAGS@
 
 cdgen_SOURCES = cdgen.cpp
-cdgen_CPPFLAGS = @TORCH_CFLAGS@
+cdgen_CPPFLAGS = $(OPT) @TORCH_CFLAGS@
 
 lexgen_SOURCES = lexgen.cpp
-lexgen_CPPFLAGS = @TORCH_CFLAGS@
+lexgen_CPPFLAGS = $(OPT) @TORCH_CFLAGS@
 
 genwfstseqs_SOURCES = genwfstseqs.cpp
-genwfstseqs_CPPFLAGS = @TORCH_CFLAGS@
+genwfstseqs_CPPFLAGS = $(OPT) @TORCH_CFLAGS@

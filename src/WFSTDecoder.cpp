@@ -7,8 +7,6 @@
 
 #include <assert.h>
 
-#define TRANS_OPT
-
 #include "WFSTDecoder.h"
 #include "DecHypHistPool.h"
 #include "log_add.h"

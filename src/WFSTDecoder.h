@@ -8,9 +8,6 @@
 #ifndef WFST_DECODER_INC
 #define WFST_DECODER_INC
 
-#define NO_BEST_END
-#define NO_BEST_START
-
 #include "general.h"
 #include "WFSTNetwork.h"
 #include "WFSTModel.h"
