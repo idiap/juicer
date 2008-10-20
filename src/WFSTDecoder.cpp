@@ -322,7 +322,7 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
    {
       // Inform the lattice of the new frame
       lattice->newFrame( currFrame ) ;
-   }     
+   }
 
     // Calculate the new normalisation factor and emitting state pruning threshold.
     if ( bestEmitScore <= LOG_ZERO )
@@ -544,7 +544,7 @@ void WFSTDecoder::processActiveModelsEmitStates()
     if ( currFrame != models->getCurrFrame() )
         error("WFSTDecoder::procActModEmitSts - "
               "currFrame != models->getCurrFrame()") ;
-#endif  
+#endif
 
    WFSTModel *model = activeModelsList ;
    WFSTModel *prevModel = NULL ;
@@ -610,7 +610,7 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
     }
     if ( cnt != model->nActiveHyps )
     {
-        error("WFSTDecoder::procModelEmitSts - nActiveHyps incorrect %d %d" , 
+        error("WFSTDecoder::procModelEmitSts - nActiveHyps incorrect %d %d" ,
               cnt , model->nActiveHyps ) ;
     }
     // The initial and final state hyps in 'prevHyps' should be
@@ -622,7 +622,7 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
         error("WFSTDecoder::procModelEmitSts - "
               "prevHyps final st hyp is still active") ;
 #endif
-    
+
     // Reset the count of active hyps
     model->nActiveHyps = 0 ;
 
@@ -747,7 +747,7 @@ void WFSTDecoder::processModelEmitStates( WFSTModel *model )
     if ( cnt2 != model->nActiveHyps )
     {
         error("WFSTDecoder::procModelEmitSts - "
-              "nActiveHyps incorrect at end. %d %d" , 
+              "nActiveHyps incorrect at end. %d %d" ,
               cnt2 , model->nActiveHyps ) ;
     }
 #endif
@@ -786,9 +786,9 @@ void WFSTDecoder::processActiveModelsEndStates()
         {
             // VW - word based pruning
             // Use a different purning threshold when a word is emitted
-            if ( model->trans->outLabel == WFST_EPSILON )
+            if ( model->trans->inLabel == network->silMarker || model->trans->inLabel == network->spMarker )
             {
-                if ( endHyp->score > currEndPruneThresh )
+                if ( endHyp->score > currWordPruneThresh )
                 {
                     // Extend hypothesis to new models.
                     nEndHypsProcessed++ ;
@@ -801,7 +801,7 @@ void WFSTDecoder::processActiveModelsEndStates()
             }
             else
             {
-                if ( endHyp->score > currWordPruneThresh )
+                if ( endHyp->score > currEndPruneThresh )
                 {
                     // Extend hypothesis to new models.
                     nEndHypsProcessed++ ;
@@ -878,7 +878,7 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans ,
         {
             lattToState = addLatticeEntry( endHyp , trans , &lattFromState ) ;
         }
-         
+
         if ( doModelLevelOutput )
         {
             if ( trans->outLabel != WFST_EPSILON )
@@ -890,7 +890,7 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans ,
                  (trans->inLabel != network->getWordEndMarker()) )
             {
                 decHypHistPool->addHistToDecHyp(
-                    endHyp , trans->inLabel , endHyp->score , 
+                    endHyp , trans->inLabel , endHyp->score ,
                     currFrame , endHyp->acousticScore , endHyp->lmScore
                 );
             }
@@ -961,16 +961,16 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans ,
 
             //   Changes Octavian 20060828
 #ifdef ACOUSTIC_SCORE_ONLY
-            decHypHistPool->addLatticeHistToDecHyp( 
+            decHypHistPool->addLatticeHistToDecHyp(
                 endHyp , lattToState , endHyp->acousticScore
-            ) ; 
+            ) ;
 #else
             decHypHistPool->addLatticeHistToDecHyp(
-                endHyp , lattToState , 
+                endHyp , lattToState ,
                 endHyp->acousticScore + endHyp->lmScore
-            ) ; 
+            ) ;
 #endif
-         
+
             // Register that there is a potential transition going out
             // from lattToState.  This is so that there is correct
             // behaviour when endHyp gets deactivated after being
@@ -985,7 +985,7 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans ,
             error("WFSTDecoder::extModelEndState"
                   " - currFrame==0 when trans==NULL assumption wrong") ;
 #endif
-       
+
         if ( doLatticeGeneration )
         {
             // Add lattice history to this end hyp, for quick access
@@ -1298,7 +1298,7 @@ WFSTModel *WFSTDecoder::getModel( WFSTTransition *trans )
 }
 
 #ifdef OPTIMISE_GETNEWMODEL
-// zl: getModel (above) can be called thousands of times but only a handful new model 
+// zl: getModel (above) can be called thousands of times but only a handful new model
 // actually will be created. So move the new model creation to getNewModel to avoid unnecessary function call
 WFSTModel *WFSTDecoder::getNewModel( WFSTTransition *trans )
 {

@@ -53,7 +53,7 @@ WFSTAlphabet::WFSTAlphabet( const char *symbolsFilename )
    labels = NULL ;
    nAux = 0 ;
    isAux = NULL ;
-   
+
    if ( symbolsFilename == NULL )
       error("WFSTAlphabet::WFSTAlphabet - symbolsFilename is NULL") ;
 
@@ -66,7 +66,7 @@ WFSTAlphabet::WFSTAlphabet( const char *symbolsFilename )
    {
       if ( sscanf( line , "%s %d" , symStr , &symID ) != 2 )
          continue ;
-         
+
       if ( symID >= nLabelsAlloc )
       {
          labels = (char **)realloc( labels , (symID+1000)*sizeof(char *) ) ;
@@ -77,7 +77,7 @@ WFSTAlphabet::WFSTAlphabet( const char *symbolsFilename )
 
       if ( labels[symID] != NULL )
          error("WFSTAlphabet::WFSTAlphabet - duplicate symbol detected for %s" , symStr ) ;
-      
+
       labels[symID] = new char[strlen(symStr)+1] ;
       strcpy( labels[symID] , symStr ) ;
 
@@ -98,11 +98,11 @@ WFSTAlphabet::WFSTAlphabet( const char *symbolsFilename )
          nAux++ ;
       }
       else
-         isAux[i] = false ;      
+         isAux[i] = false ;
    }
-  
+
    delete [] line ;
-   fclose( fd ) ;   
+   fclose( fd ) ;
 
    fromBinFile = false ;
 }
@@ -138,7 +138,7 @@ const char *WFSTAlphabet::getLabel( int index )
       error("WFSTAlphabet::getLabel - labels[%d] is NULL" , index ) ;
       return NULL ;
    }
-   
+
    return labels[index] ;
 }
 
@@ -212,7 +212,7 @@ void WFSTAlphabet::writeBinary( FILE *fd )
    char id[5] ;
    strcpy( id , "JWAL" ) ;
    fwrite( (int *)id , sizeof(int) , 1 , fd ) ;
-   
+
    // 1. Write maxLabel, nLabels
    fwrite( &maxLabel , sizeof(int) , 1 , fd ) ;
    fwrite( &nLabels , sizeof(int) , 1 , fd ) ;
@@ -235,7 +235,7 @@ void WFSTAlphabet::writeBinary( FILE *fd )
             fwrite( labels[i] , sizeof(char) , len , fd ) ;
          }
       }
-   
+
       // 3. Write nAux and isAux array
       fwrite( &nAux , sizeof(int) , 1 , fd ) ;
       fwrite( isAux , sizeof(bool) , maxLabel+1 , fd ) ;
@@ -252,7 +252,7 @@ void WFSTAlphabet::readBinary( FILE *fd )
    id[4] = '\0' ;
    if ( strcmp( id , "JWAL" ) != 0 )
       error("WFSTAlphabet::readBinary - invalid ID") ;
-   
+
    // 1. Read maxLabel, nLabels
    if ( fread( &maxLabel , sizeof(int) , 1 , fd ) != 1 )
       error("WFSTAlphabet::readBinary - error reading maxLabel") ;
@@ -280,7 +280,7 @@ void WFSTAlphabet::readBinary( FILE *fd )
          else
             labels[i] = NULL ;
       }
-      
+
       // 3. Read nAux and isAux array
       if ( fread( &nAux , sizeof(int) , 1 , fd ) != 1 )
          error("WFSTAlphabet::readBinary - error reading nAux") ;
@@ -310,7 +310,7 @@ WFSTNetwork::WFSTNetwork()
 
    nFinalStates = 0 ;
    nFinalStatesAlloc = 0 ;
-   finalStates = NULL ; 
+   finalStates = NULL ;
 
    nTransitions = 0 ;
    nTransitionsAlloc = 0 ;
@@ -320,7 +320,9 @@ WFSTNetwork::WFSTNetwork()
    fromBinFile = false ;
    transWeightScalingFactor = 1.0 ;
    insPenalty = 0.0 ;
-   wordEndMarker = -1 ; 
+   wordEndMarker = -1 ;
+   silMarker = -1;
+   spMarker = -1;
 }
 
 
@@ -339,7 +341,7 @@ WFSTNetwork::WFSTNetwork( real transWeightScalingFactor_ , real insPenalty_ )
 
    nFinalStates = 0 ;
    nFinalStatesAlloc = 0 ;
-   finalStates = NULL ; 
+   finalStates = NULL ;
 
    nTransitions = 0 ;
    nTransitionsAlloc = 0 ;
@@ -350,18 +352,20 @@ WFSTNetwork::WFSTNetwork( real transWeightScalingFactor_ , real insPenalty_ )
    transWeightScalingFactor = transWeightScalingFactor_ ;
    insPenalty = insPenalty_;
    wordEndMarker = -1 ;
+   silMarker = -1;
+   spMarker = -1;
 }
 
 // Changes Octavian 20060523
 // Adding a variable for remove aux symbols
-// removeAuxOption: 
-// REMOVEBOTH => 	remove aux symbols from both alphabet. 
-// REMOVEINPUT =>	remove aux symbols only in the input alphabet 
+// removeAuxOption:
+// REMOVEBOTH => 	remove aux symbols from both alphabet.
+// REMOVEINPUT =>	remove aux symbols only in the input alphabet
 // NOTREMOVE =>		Not remove any aux symbols
 // wordEndMarker will still be the max of both alphabet + 1
 
 WFSTNetwork::WFSTNetwork(
-	const char *wfstFilename , const char *inSymsFilename , 
+	const char *wfstFilename , const char *inSymsFilename ,
 	const char *outSymsFilename ,
     real transWeightScalingFactor_ , real insPenalty_ ,
 	RemoveAuxOption removeAuxOption
@@ -380,7 +384,7 @@ WFSTNetwork::WFSTNetwork(
 
    nFinalStates = 0 ;
    nFinalStatesAlloc = 0 ;
-   finalStates = NULL ; 
+   finalStates = NULL ;
 
    nTransitions = 0 ;
    nTransitionsAlloc = 0 ;
@@ -390,17 +394,19 @@ WFSTNetwork::WFSTNetwork(
    transWeightScalingFactor = transWeightScalingFactor_ ;
    insPenalty = insPenalty_ ;
    wordEndMarker = -1 ;
+   silMarker = -1;
+   spMarker = -1;
 
    FILE *fd ;
 
    if ( (fd = fopen( wfstFilename , "rb" )) == NULL )
       error("WFSTNetwork::WFSTNetwork - error opening wfstFilename") ;
-   
+
    int cnt , i ;
    int from , to , in , out , final , maxOutLab=-1 , maxInLab=-1;
    float weight ;
    char *line ;
-   
+
    line = new char[10000] ;
    while ( fgets( line , 10000 , fd ) != NULL )
    {
@@ -418,7 +424,7 @@ WFSTNetwork::WFSTNetwork(
                else
                   weight = 0.0 ;
             }
-            
+
             // Final state line
             if ( nFinalStates == nFinalStatesAlloc )
             {
@@ -438,10 +444,10 @@ WFSTNetwork::WFSTNetwork(
 
       if ( (from < 0) || (to < 0) || (in < 0) || (out < 0) )
          error("WFSTNetwork::WFSTNetwork - something < 0. %d %d %d %d",from,to,in,out) ;
-         
+
       if ( initState < 0 )
          initState = from ;   // init state is source state in first line of file
-         
+
       if ( from > maxState )
          maxState = from ;
       if ( to > maxState )
@@ -465,9 +471,9 @@ WFSTNetwork::WFSTNetwork(
       transitions[nTransitions].toState = to ;
       transitions[nTransitions].inLabel = in ;
       transitions[nTransitions].outLabel = out ;
-      
+
       // FSM weights are -ve log
-      transitions[nTransitions].weight = (real)(-weight * transWeightScalingFactor ) ; 
+      transitions[nTransitions].weight = (real)(-weight * transWeightScalingFactor ) ;
 
       // This is implemented as a word insertion penalty as is normal.
       // It could conceivably also be a model insertion penalty.
@@ -475,15 +481,15 @@ WFSTNetwork::WFSTNetwork(
           transitions[nTransitions].weight += insPenalty;
 
       ++nTransitions ;
- 
+
       if ( in > maxInLab ) {
          maxInLab = in;
       }
       if ( out > maxOutLab ) {
          maxOutLab = out;
       }
- 
-      // Make sure we have state entries for both from and to states in the 
+
+      // Make sure we have state entries for both from and to states in the
       // new transition.
       if ( maxState >= nStatesAlloc )
       {
@@ -504,12 +510,12 @@ WFSTNetwork::WFSTNetwork(
          states[from].label = from ;
       else if ( states[from].label != from )
          error("WFSTNetwork::WFSTNetwork - from state %d label mismatch" , from ) ;
-      
+
       if ( states[to].label < 0 )
          states[to].label = to ;
       else if ( states[to].label != to )
          error("WFSTNetwork::WFSTNetwork - to state %d label mismatch" , to ) ;
-      
+
       // Add the new transition index to the list in the from state
       int ind = (states[from].nTrans)++ ;
       states[from].trans = (int *)realloc( states[from].trans , states[from].nTrans*sizeof(int) ) ;
@@ -517,17 +523,17 @@ WFSTNetwork::WFSTNetwork(
       if ( states[from].nTrans > maxOutTransitions )
          maxOutTransitions = states[from].nTrans ;
    }
-  
+
    for ( i=0 ; i<nFinalStates ; i++ )
    {
       if ( (finalStates[i].id < 0) || (finalStates[i].id > maxState) )
          error("WFSTNetwork::WFSTNetwork - finalState[%d].id out of range" , i ) ;
       if ( states[finalStates[i].id].label < 0 )
          error("WFSTNetwork::WFSTNetwork - finalState[%d] state label < 0" , i ) ;
-      
+
       states[finalStates[i].id].finalInd = i ;
    }
-  
+
    // Now create the input and/or output alphabets
    if ( inSymsFilename != NULL )
    {
@@ -536,7 +542,7 @@ WFSTNetwork::WFSTNetwork(
          error("WFSTNetwork::WFSTNetwork - maxInLab > inputAlphabet->getMaxLabel()");
       maxInLab = inputAlphabet->getMaxLabel();
    }
-   if ( outSymsFilename != NULL ) 
+   if ( outSymsFilename != NULL )
    {
       outputAlphabet = new WFSTAlphabet( outSymsFilename ) ;
       if ( maxOutLab > outputAlphabet->getMaxLabel() ) {
@@ -545,7 +551,7 @@ WFSTNetwork::WFSTNetwork(
       }
       maxOutLab = outputAlphabet->getMaxLabel();
    }
-  
+
    wordEndMarker = maxInLab + 1;
    if ( wordEndMarker <= maxOutLab ) {
       wordEndMarker = maxOutLab + 1;
@@ -565,7 +571,7 @@ WFSTNetwork::WFSTNetwork(
 	 if ( inputAlphabet != NULL )
 	 {
 	    removeAuxiliaryInputSymbols( true ) ;
-	 }	    
+	 }
 	 break ;
       case NOTREMOVE:
 	 break ;
@@ -587,6 +593,19 @@ WFSTNetwork::WFSTNetwork(
 
    fromBinFile = false ;
    nStates = (maxState+1) ;
+
+   // VW: record sil and sp indices for word end pruning
+   for ( i=0 ; i<inputAlphabet->getNumLabels() ; i++ ){
+	   if ( strcmp( inputAlphabet->getLabel( i ) , "sil" ) == 0 )
+	   {
+		   silMarker = i ;
+	   }
+	   if ( strcmp( inputAlphabet->getLabel( i ) , "sp" ) == 0 )
+	   {
+		   spMarker = i ;
+	   }
+   }
+   //printf( "sil index = %d\n sp index  = %d\n" , silMarker , spMarker );
 }
 
 
@@ -606,13 +625,13 @@ WFSTNetwork::~WFSTNetwork()
                free( states[i].trans ) ;
          }
       }
-      
+
       if ( fromBinFile )
          delete [] states ;
       else
          free( states ) ;
    }
-   
+
    if ( transitions != NULL )
    {
       if ( fromBinFile )
@@ -620,7 +639,7 @@ WFSTNetwork::~WFSTNetwork()
       else
          free( transitions ) ;
    }
-   
+
    if ( finalStates != NULL )
    {
       if ( fromBinFile )
@@ -651,12 +670,12 @@ void WFSTNetwork::getTransitions(
       state = initState ;
    else
       state = prev->toState ;
-   
+
 #ifdef DEBUG
    if ( (state < 0) || (state > maxState) )
       error("WFSTNetwork::getTransitions - state out of range") ;
 #endif
-   
+
    int n = states[state].nTrans ;
    int* trans = states[state].trans;
    for ( int i=0 ; i<n ; i++ )
@@ -697,14 +716,14 @@ int WFSTNetwork::getNumTransitionsOfOneState ( int state )
       error("WFSTNetwork::getNumTransitionsOfOneState - state out of range") ;
    }
 #endif
-   return states[state].nTrans ;   
+   return states[state].nTrans ;
 }
 
 // Changes
 bool WFSTNetwork::isFinalState( int stateIndex )
 {
 #ifdef DEBUG
-   if (( stateIndex < 0 ) || ( stateIndex >= nStates )) 
+   if (( stateIndex < 0 ) || ( stateIndex >= nStates ))
       error("WFSTNetwork::isFinalState - state out of range") ;
 #endif
    if ( states[stateIndex].finalInd < 0 )
@@ -749,7 +768,7 @@ const int *WFSTNetwork::getTransitions( const WFSTTransition *prev , int *nNext 
       state = initState ;
    else
       state = prev->toState ;
-   
+
 #ifdef DEBUG
    if ( (state < 0) || (state > maxState) )
       error("WFSTNetwork::getTransitions (2) - state out of range") ;
@@ -773,11 +792,11 @@ WFSTTransition *WFSTNetwork::getOneTransition( int transIndex )
 // Changes by Octavian
 int WFSTNetwork::getInfoOfOneTransition( const int gState, const int n, real *weight, int *toState, int *outLabel )
 {
-   
+
 #ifdef DEBUG
    if (( gState < 0 ) || ( gState >= nStates ))
       error("WFSTNetwork::getInfoOfOneTransition - gState out of range") ;
-   
+
    int nTrans = states[gState].nTrans ;
    if (( n < 0 ) || ( n >= nTrans ))
       error("WFSTNetwork::getInfoOfOneTransition - n = %d out of range (state = %d)", n , gState ) ;
@@ -797,12 +816,12 @@ int WFSTNetwork::getInLabelOfOneTransition( const int gState , const int n )
 #ifdef DEBUG
    if (( gState < 0 ) || ( gState >= nStates ))
       error("WFSTNetwork::getInLabelOfOneTransition - gState out of range") ;
-   
+
    int nTrans = states[gState].nTrans ;
    if (( n < 0 ) || ( n >= nTrans ))
       error("WFSTNetwork::getInLabelOfOneTransition - n = %d out of range (state = %d)", n , gState ) ;
 #endif
-   
+
    int transIndex = states[gState].trans[n] ;
    return ( transitions[transIndex].inLabel ) ;
 }
@@ -865,7 +884,7 @@ void WFSTNetwork::outputText( int type )
       for ( j=0 ; j<states[initState].nTrans ; j++ )
       {
          WFSTTransition *trans = transitions + states[initState].trans[j] ;
-         printf("%-10d %-10d %-10d %-10d %0.3f\n" , states[initState].label , 
+         printf("%-10d %-10d %-10d %-10d %0.3f\n" , states[initState].label ,
                trans->toState , trans->inLabel , trans->outLabel , -(trans->weight) ) ;
       }
 
@@ -880,7 +899,7 @@ void WFSTNetwork::outputText( int type )
             for ( j=0 ; j<states[i].nTrans ; j++ )
             {
                WFSTTransition *trans = transitions + states[i].trans[j] ;
-               printf("%-10d %-10d %-10d %-10d %0.3f\n" , states[i].label , 
+               printf("%-10d %-10d %-10d %-10d %0.3f\n" , states[i].label ,
                      trans->toState , trans->inLabel , trans->outLabel , -(trans->weight) ) ;
             }
          }
@@ -914,13 +933,13 @@ void WFSTNetwork::generateSequences( int maxSeqs , bool logBase10 )
 
    // Seed the random number generator.
    srand( time(NULL) ) ;
-   
+
    int ind=0 ;
    WFSTTransition *tran = NULL ;
    real totalWeight=0.0 ;
 
    real ln10 = log(10.0) ;
-   
+
    for ( int i=0 ; i<maxSeqs ; i++ )
    {
       totalWeight = 0.0 ;
@@ -946,7 +965,7 @@ void WFSTNetwork::generateSequences( int maxSeqs , bool logBase10 )
                totalWeight += finalStates[states[tran->toState].finalInd].weight ;
                if ( logBase10 )
                {
-                  printf("** (%.3f) %.3f\n" , 
+                  printf("** (%.3f) %.3f\n" ,
                         finalStates[states[tran->toState].finalInd].weight / ln10 ,
                         totalWeight / ln10 ) ;
                }
@@ -965,7 +984,7 @@ void WFSTNetwork::generateSequences( int maxSeqs , bool logBase10 )
                ind-- ;
          }
 
-         tran = trans[ind] ;     
+         tran = trans[ind] ;
 
          // Output the transition details
          // Input label.
@@ -1007,7 +1026,7 @@ void WFSTNetwork::generateSequences( int maxSeqs , bool logBase10 )
 }
 
 
-void WFSTNetwork::writeFSM( const char *fsmFName , const char *inSymsFName , 
+void WFSTNetwork::writeFSM( const char *fsmFName , const char *inSymsFName ,
                             const char *outSymsFName )
 {
 /*
@@ -1017,7 +1036,7 @@ void WFSTNetwork::writeFSM( const char *fsmFName , const char *inSymsFName ,
       error("WFSTNetwork::writeFSM - outputAlphabet is NULL") ;
 
    FILE *fsmFD , *inSymsFD , *outSymsFD ;
-   
+
    // ** FSM file **
    // Open the FSM output file
    if ( (fsmFD = fopen( fsmFName , "wb" )) == NULL )
@@ -1032,8 +1051,8 @@ void WFSTNetwork::writeFSM( const char *fsmFName , const char *inSymsFName ,
       if ( outputAlphabet->isAuxiliary( transitions[i].outLabel ) )
          error("WFSTNetwork::writeFSM - auxiliary output label detected") ;
 
-      writeFSMTransition( fsmFD , transitions[i].fromState , transitions[i].toState , 
-                          transitions[i].inLabel , transitions[i].outLabel , 
+      writeFSMTransition( fsmFD , transitions[i].fromState , transitions[i].toState ,
+                          transitions[i].inLabel , transitions[i].outLabel ,
                           transitions[i].weight ) ;
    }
 
@@ -1042,7 +1061,7 @@ void WFSTNetwork::writeFSM( const char *fsmFName , const char *inSymsFName ,
    {
       writeFSMFinalState( fsmFD , finalStates[i].id , finalStates[i].weight ) ;
    }
-   
+
    // Close FSM file
    fclose( fsmFD ) ;
 
@@ -1050,18 +1069,18 @@ void WFSTNetwork::writeFSM( const char *fsmFName , const char *inSymsFName ,
    // Open file
    if ( (inSymsFD = fopen( inSymsFName , "wb" )) == NULL )
       error("WFSTNetwork::writeFSM - error opening input symbols output file") ;
-   
+
    // Write
    inputAlphabet->write( inSymsFD , false ) ;
 
    // Close file
    fclose( inSymsFD ) ;
-   
+
    // ** Output symbols file **
    // Open file
    if ( (outSymsFD = fopen( outSymsFName , "wb" )) == NULL )
       error("WFSTNetwork::writeFSM - error opening output symbols output file") ;
-   
+
    // Write
    outputAlphabet->write( outSymsFD , false ) ;
 
@@ -1073,9 +1092,9 @@ void WFSTNetwork::writeFSM( const char *fsmFName , const char *inSymsFName ,
 
 void WFSTNetwork::writeBinary( const char *fname )
 {
-   // If we have scaled all transition weights, unscale them before we write 
+   // If we have scaled all transition weights, unscale them before we write
    // them to binary file.
-   
+
     // Yet to propagate the insertion penalty
     assert(insPenalty == 0.0);
 
@@ -1094,7 +1113,7 @@ void WFSTNetwork::writeBinary( const char *fname )
    char id[5] ;
    strcpy( id , "JWNT" ) ;
 
-   // 1. Write ID, initState , maxState, nStates, maxOutTransitions, 
+   // 1. Write ID, initState , maxState, nStates, maxOutTransitions,
    // wordEndMarker
    fwrite( (int *)id , sizeof(int) , 1 , fd ) ;
    fwrite( &initState , sizeof(int) , 1 , fd ) ;
@@ -1102,7 +1121,7 @@ void WFSTNetwork::writeBinary( const char *fname )
    fwrite( &nStates , sizeof(int) , 1 , fd ) ;
    fwrite( &maxOutTransitions , sizeof(int) , 1 , fd ) ;
    fwrite( &wordEndMarker , sizeof(int) , 1 , fd ) ;
-  
+
    // 2. Write states array
    int i ;
    for ( i=0 ; i<=maxState ; i++ )
@@ -1137,7 +1156,7 @@ void WFSTNetwork::writeBinary( const char *fname )
       fwrite( &haveAlphabet , sizeof(bool) , 1 , fd ) ;
       inputAlphabet->writeBinary( fd ) ;
    }
-      
+
    if ( outputAlphabet == NULL )
    {
       haveAlphabet = false ;
@@ -1154,7 +1173,7 @@ void WFSTNetwork::writeBinary( const char *fname )
    fwrite( (int *)id , sizeof(int) , 1 , fd ) ;
 
    fclose( fd ) ;
-   
+
    // If we have unscaled all transition weights for writing to binary file,
    //   re-scale them back to their original values.
    if ( transWeightScalingFactor != 1.0 )
@@ -1191,7 +1210,7 @@ void WFSTNetwork::readBinary( const char *fname )
       error("WFSTNetwork::readBinary - error reading maxOutTransitions") ;
    if ( fread( &wordEndMarker , sizeof(int) , 1 , fd ) != 1 )
       error("WFSTNetwork::readBinary - error reading wordEndMarker") ;
-   
+
    // 2. Allocate and read the states array
    nStatesAlloc = maxState + 1 ;
    states = new WFSTState[nStatesAlloc] ;
@@ -1213,7 +1232,7 @@ void WFSTNetwork::readBinary( const char *fname )
       else
          states[i].trans = NULL ;
    }
-      
+
    // 3. Read nFinalStates and finalStates array.
    if ( fread( &nFinalStates , sizeof(int) , 1 , fd ) != 1 )
       error("WFSTNetwork::readBinary - error reading nFinalStates") ;
@@ -1225,7 +1244,7 @@ void WFSTNetwork::readBinary( const char *fname )
    }
    else
       finalStates = NULL ;
-      
+
    // 4. Read nTransitions and transitions array.
    if ( fread( &nTransitions , sizeof(int) , 1 , fd ) != 1 )
       error("WFSTNetwork::readBinary - error reading nTransitions") ;
@@ -1249,7 +1268,7 @@ void WFSTNetwork::readBinary( const char *fname )
    }
    else
       inputAlphabet = NULL ;
-      
+
    if ( fread( &haveAlphabet , sizeof(bool) , 1 , fd ) != 1 )
       error("WFSTNetwork::readBinary - error reading outputAlphabet haveAlphabet") ;
    if ( haveAlphabet )
@@ -1270,7 +1289,7 @@ void WFSTNetwork::readBinary( const char *fname )
    fclose( fd ) ;
 
    fromBinFile = true ;
-   
+
    // Scaled all transition weights if a scaling factor is specified
    if ( transWeightScalingFactor != 1.0 )
    {
@@ -1286,7 +1305,7 @@ void WFSTNetwork::readBinary( const char *fname )
 void WFSTNetwork::printNumOutTransitions( const char *fname )
 {
    FILE *fptr ;
-   
+
    if ( (fptr = fopen( fname, "w" )) == NULL )
       error("WFSTNetwork::printNumOutTransitions - Cannot open file") ;
 
@@ -1305,7 +1324,7 @@ void WFSTNetwork::initWFSTState( WFSTState *state )
    if ( state == NULL )
       error("WFSTNetwork::initWFSTState - state is NULL") ;
 #endif
-   
+
    state->label = -1 ;
    state->finalInd = -1 ;
    state->nTrans = 0 ;
@@ -1328,14 +1347,14 @@ void WFSTNetwork::initWFSTTransition( WFSTTransition *transition )
 }
 
 // Changes Octavian 20060523
-// If any changes appear in this function, consider changing it in 
+// If any changes appear in this function, consider changing it in
 // removeAuxiliaryInputSymbols() as well.
 void WFSTNetwork::removeAuxiliarySymbols( bool markAux )
 {
-   // If markAux is true then auxiliary input and output labels are replaced 
+   // If markAux is true then auxiliary input and output labels are replaced
    // with wordEndMarker, which will indicate word-end to the decoding engine.
    if ( markAux && (wordEndMarker < 0) )
-      error("WFSTNetwork::removeAuxiliarySymbols - markAux true, but wordEndMarker < 0") ;   
+      error("WFSTNetwork::removeAuxiliarySymbols - markAux true, but wordEndMarker < 0") ;
 
    // Can only do this if we have input and output alphabets
    if ( inputAlphabet == NULL )
@@ -1344,15 +1363,15 @@ void WFSTNetwork::removeAuxiliarySymbols( bool markAux )
       error("WFSTNetwork::removeAuxiliarySymbols - outputAlphabet is NULL") ;
 
    // Iterate through all transitions.
-   // Whenever we encounter an input or output label that is an auxiliary 
+   // Whenever we encounter an input or output label that is an auxiliary
    // symbol, replace it with epsilon.
-   
+
    for ( int i=0 ; i<nTransitions ; i++ )
    {
       if ( inputAlphabet->isAuxiliary( transitions[i].inLabel ) ) {
          if ( markAux ) {
             transitions[i].inLabel = wordEndMarker ;
-         } else {      
+         } else {
             transitions[i].inLabel = WFST_EPSILON ;
          }
       }
@@ -1360,7 +1379,7 @@ void WFSTNetwork::removeAuxiliarySymbols( bool markAux )
       if ( outputAlphabet->isAuxiliary( transitions[i].outLabel ) ) {
          if ( markAux ) {
             transitions[i].outLabel = wordEndMarker ;
-         } else {      
+         } else {
             transitions[i].outLabel = WFST_EPSILON ;
          }
       }
@@ -1371,10 +1390,10 @@ void WFSTNetwork::removeAuxiliarySymbols( bool markAux )
 // This funciton will remove auxiliary input symbols only
 void WFSTNetwork::removeAuxiliaryInputSymbols( bool markAux )
 {
-   // If markAux is true then auxiliary input and output labels are replaced 
+   // If markAux is true then auxiliary input and output labels are replaced
    // with wordEndMarker, which will indicate word-end to the decoding engine.
    if ( markAux && (wordEndMarker < 0) )
-      error("WFSTNetwork::removeAuxiliaryInputSymbols - markAux true, but wordEndMarker < 0") ;   
+      error("WFSTNetwork::removeAuxiliaryInputSymbols - markAux true, but wordEndMarker < 0") ;
 
    // Can only do this if we have input and output alphabets
    if ( inputAlphabet == NULL )
@@ -1385,15 +1404,15 @@ void WFSTNetwork::removeAuxiliaryInputSymbols( bool markAux )
    */
 
    // Iterate through all transitions.
-   // Whenever we encounter an input or output label that is an auxiliary 
+   // Whenever we encounter an input or output label that is an auxiliary
    // symbol, replace it with epsilon.
-   
+
    for ( int i=0 ; i<nTransitions ; i++ )
    {
       if ( inputAlphabet->isAuxiliary( transitions[i].inLabel ) ) {
          if ( markAux ) {
             transitions[i].inLabel = wordEndMarker ;
-         } else {      
+         } else {
             transitions[i].inLabel = WFST_EPSILON ;
          }
       }
@@ -1402,7 +1421,7 @@ void WFSTNetwork::removeAuxiliaryInputSymbols( bool markAux )
       if ( outputAlphabet->isAuxiliary( transitions[i].outLabel ) ) {
          if ( markAux ) {
             transitions[i].outLabel = wordEndMarker ;
-         } else {      
+         } else {
             transitions[i].outLabel = WFST_EPSILON ;
          }
       }
@@ -1426,11 +1445,11 @@ WFSTLabelPushingNetwork::WFSTLabelPushingNetwork( real transWeightScalingFactor_
 }
 
 // Changes Octavian 20060523
-WFSTLabelPushingNetwork::WFSTLabelPushingNetwork( 
+WFSTLabelPushingNetwork::WFSTLabelPushingNetwork(
 		const char *wfstFilename , const char *inSymsFilename ,
 		const char *outSymsFilename , real transWeightScalingFactor_ ,
 		RemoveAuxOption removeAuxOption )
-                : WFSTNetwork(  wfstFilename , inSymsFilename , 
+                : WFSTNetwork(  wfstFilename , inSymsFilename ,
 				outSymsFilename , transWeightScalingFactor_ ,
 				removeAuxOption )
 {
@@ -1485,23 +1504,23 @@ int WFSTLabelPushingNetwork::getMaxOutLabels( const char *fname )
 
    //**********
    FILE *fptr = NULL ;
-   
+
    if ( fname != NULL )  {
       if ( (fptr = fopen( fname, "w")) == NULL )
 	 error("WFSTLabelPushingNetwork::getMaxOutLabels - cannot open file") ;
    }
    //**********
 
-   for ( iter = unique_outlabsets.begin() ; 
+   for ( iter = unique_outlabsets.begin() ;
 	 iter != unique_outlabsets.end() ;
 	 iter++ )  {
       int numLabels = (*iter).size() ;
-      
+
       //*******
       if ( fptr != NULL )
 	 fprintf( fptr, "%d, ", numLabels ) ;
       //*******
-      
+
       if ( maxLabels < numLabels )
 	 maxLabels = numLabels ;
    }
@@ -1522,7 +1541,7 @@ void WFSTLabelPushingNetwork::printLabelSet()
       for ( int i = 0 ; i < nTransitions ; i++ )  {
 	 const LabelSet *labSet = arc_outlabset_map[i] ;
 	 print("Trans: %d \n ", i ) ;
-	 
+
 	 if ( labSet != NULL )  {
 	    for ( LabelSet::iterator labSetIter = labSet->begin() ;
 		  labSetIter != labSet->end() ;
@@ -1530,7 +1549,7 @@ void WFSTLabelPushingNetwork::printLabelSet()
 	       print("%d ", (*labSetIter) ) ;
 	    }
 	 }
-	 
+
 	 print("\n*****************\n") ;
       }
    }
@@ -1556,20 +1575,20 @@ void WFSTLabelPushingNetwork::printLabelSet()
 void WFSTLabelPushingNetwork::assignOutlabsToTrans()
 {
    int i;
-   
+
    // Clear the output label sets
    unique_outlabsets.clear() ;
-   
+
    // Changes Octavian 20060325
    arc_outlabset_map = new const LabelSet *[nTransitions] ;
    for ( i = 0 ; i < nTransitions ; i++ )
       arc_outlabset_map[i] = NULL ;
-   
+
    int nInitTrans = states[initState].nTrans ;
    int *initTrans = states[initState].trans ;
    bool *hasVisited = new bool[nTransitions] ;
 
-   // First, determine labelset of each trans. 
+   // First, determine labelset of each trans.
    // Collect all those transitions which do not have a labelset
    for ( i = 0 ; i < nTransitions ; i++ )  {
       hasVisited[i] = false ;
@@ -1582,7 +1601,7 @@ void WFSTLabelPushingNetwork::assignOutlabsToTrans()
       findUndecidedTrans( initTrans[i], hasVisited, undecidedTrans ) ;
    }
 
-   // Second, find out a set of transitions which are the start of a loop. 
+   // Second, find out a set of transitions which are the start of a loop.
    // Iterate all undecided trans
    bool *hasReturned = new bool[nTransitions] ;
    for ( i = 0 ; i < nTransitions ; i++ )  {
@@ -1616,7 +1635,7 @@ void WFSTLabelPushingNetwork::assignOutlabsToTrans()
 	 currLoopStartTrans++ )  {
       loopStatesList.push_back( set<int>() ) ;
       set<int> &loopStates = loopStatesList.back() ;
-      
+
       for ( i = 0 ; i < nTransitions ; i++ )  {
 	 hasVisited[i] = false ;
       }
@@ -1636,7 +1655,7 @@ void WFSTLabelPushingNetwork::assignOutlabsToTrans()
 #endif
 
    }
-   
+
    // Fourth, combine loops
    combineLoop( loopStatesList ) ;
 
@@ -1649,7 +1668,7 @@ void WFSTLabelPushingNetwork::assignOutlabsToTrans()
    }
 
    set<int> finalUndecidedTrans ;
-   
+
    for ( set<int>::iterator iter = newUndecidedTrans.begin() ;
 	 iter != newUndecidedTrans.end() ;
 	 iter++ )  {
@@ -1669,16 +1688,16 @@ void WFSTLabelPushingNetwork::assignOutlabsToTrans()
 
    }
 #endif
-   
+
    delete [] hasVisited ;
    delete [] hasReturned ;
-   
+
 }
 
 // This function finds a set of undecided trans
 const WFSTLabelPushingNetwork::LabelSet* WFSTLabelPushingNetwork::findUndecidedTrans( int transIndex , bool *hasVisited , set<int>& undecidedTrans )
 {
-   // Check if the transitions has been visited before 
+   // Check if the transitions has been visited before
    if ( hasVisited[transIndex] == true )  {
       // Check if there is an output label set available
       // Changes 20060325
@@ -1698,40 +1717,40 @@ const WFSTLabelPushingNetwork::LabelSet* WFSTLabelPushingNetwork::findUndecidedT
    // LabelSet thisTransLabelSet ;
    // A pointer to a set which stores the output labels for this transition
    LabelSet *thisTransLabelSet = NULL ;
-   
+
    // If at least one of the successors return NULL set, set it to true
    bool isSuccNullSet = false ;
 
    // True if this transition is going to the final state
    bool toFinalState = transGoesToFinalState( transitions + transIndex ) ;
-   
-   // True if the returned label set of a successor has only the 
-   // NONPUSHING_OUTLABEL label 
+
+   // True if the returned label set of a successor has only the
+   // NONPUSHING_OUTLABEL label
    bool isSuccToFinalState = false ;
 
-   // Union all the label sets from successors   
+   // Union all the label sets from successors
    for ( int i = 0 ; i < nextNTrans ; i++ )  {
       // Find the the label set of the next transition
       succLabelSet = findUndecidedTrans( nextTrans[i] , hasVisited , undecidedTrans ) ;
-      
-      // Only need to union all labels if this transition has epsilon output 
+
+      // Only need to union all labels if this transition has epsilon output
       // label and not to a final state
       if (( transitions[transIndex].outLabel == WFST_EPSILON ) && ( !toFinalState ))  {
 	 if ( succLabelSet != NULL )  {
 	    if ( succLabelSet->find( NONPUSHING_OUTLABEL ) == succLabelSet->end() )  {
-	       // Only union the set if all the successors are not going to a 
+	       // Only union the set if all the successors are not going to a
 	       // final state and no dead trans has been encountered yet
 	       if (( isSuccToFinalState == false ) && ( isSuccNullSet == false ))    {
 		  // Changes Octavian 20060523
 		  //********
 		  if ( thisTransLabelSet == NULL )
 		     thisTransLabelSet = new LabelSet ;
-		  
+
 		  set_union(
-			thisTransLabelSet->begin(), thisTransLabelSet->end(), 
+			thisTransLabelSet->begin(), thisTransLabelSet->end(),
 			succLabelSet->begin(), succLabelSet->end(),
 			inserter( *thisTransLabelSet, thisTransLabelSet->begin()) ) ;
-		  /* set_union(	thisTransLabelSet.begin(), thisTransLabelSet.end(), 
+		  /* set_union(	thisTransLabelSet.begin(), thisTransLabelSet.end(),
 				succLabelSet->begin(), succLabelSet->end(),
 				inserter(thisTransLabelSet, thisTransLabelSet.begin()) ) ;
 				*/
@@ -1747,7 +1766,7 @@ const WFSTLabelPushingNetwork::LabelSet* WFSTLabelPushingNetwork::findUndecidedT
 	    }
 	 }
 	 else  {
-	    // If the outLabel is epsilon and this transition depends on one 
+	    // If the outLabel is epsilon and this transition depends on one
 	    // of the next transitions
 	    isSuccNullSet = true ;
 	 }
@@ -1844,23 +1863,23 @@ const WFSTLabelPushingNetwork::LabelSet* WFSTLabelPushingNetwork::findUndecidedT
 }
 
 
-// This function iterates all undecided trans and find the start trans of a 
+// This function iterates all undecided trans and find the start trans of a
 // loop and a new set of undecided trans.
 // newUndecidedTrans will store a set of undecided transitions.
-// loopStartTrans will store a set of transitions which is the start of 
+// loopStartTrans will store a set of transitions which is the start of
 // a loop.
-// If this transition has been visited but not returned from the 
+// If this transition has been visited but not returned from the
 // depth search yet, then it is LOOPEND. Otherwise, it is NOTLOOPEND.
-// If one of the next transition is the LOOPEND, then this transition is 
+// If one of the next transition is the LOOPEND, then this transition is
 // the start of a loop.
 WFSTLabelPushingNetwork::LoopStatus WFSTLabelPushingNetwork::findLoopStartTrans( int transIndex, bool *hasVisited, bool *hasReturned, const WFSTLabelPushingNetwork::LabelSet **returnLabelSet, set<int> &newUndecidedTrans, set<int> &loopStartTrans )
 {
    if ( arc_outlabset_map[transIndex] != NULL )  {
       *returnLabelSet = arc_outlabset_map[transIndex] ;
       return NOTLOOPEND ;
-   } 
+   }
    else if ( hasVisited[transIndex] == true )  {
-      // Has been visited before. If it has been returned, that transition 
+      // Has been visited before. If it has been returned, that transition
       // is not the end of a loop.
       // Otherwise, it is the end of a loop
       if ( hasReturned[transIndex] == true )  {
@@ -1874,30 +1893,30 @@ WFSTLabelPushingNetwork::LoopStatus WFSTLabelPushingNetwork::findLoopStartTrans(
    }
 
    hasVisited[transIndex] = true ;
-   
+
    int to = transitions[transIndex].toState ;
    int *nextTrans = states[to].trans ;
    int nextNTrans = states[to].nTrans ;
 
 #ifdef DEBUG
-   // Check. This transition should not have an output label and should not 
-   // go to a final state. Otherwise, it should have a label list already 
+   // Check. This transition should not have an output label and should not
+   // go to a final state. Otherwise, it should have a label list already
    // registered.
-   if (( transitions[transIndex].outLabel != WFST_EPSILON ) || 
+   if (( transitions[transIndex].outLabel != WFST_EPSILON ) ||
 	 ( transGoesToFinalState( transitions + transIndex ) ))  {
       error("WFSTLabelPushingNetwork::findLoopStartTrans - Trans having an outLabel or going towards a final state should have a label set") ;
    }
 #endif
-   
+
    // Use for collecting labels of successors
    const LabelSet *succLabelSet ;
    LabelSet thisTransLabelSet ;
-  
+
    // If at least one of the successors return NULL set, set it to true
    bool isSuccNullSet = false ;
-   
-   // True if the returned label set of a successor has only the 
-   // NONPUSHING_OUTLABEL label 
+
+   // True if the returned label set of a successor has only the
+   // NONPUSHING_OUTLABEL label
    bool isSuccToFinalState = false ;
 
    // True if this transition is the start a loop
@@ -1905,7 +1924,7 @@ WFSTLabelPushingNetwork::LoopStatus WFSTLabelPushingNetwork::findLoopStartTrans(
 
    // For each successor transition
    for ( int i = 0 ; i < nextNTrans ; i++ )  {
-      LoopStatus loopStatus = findLoopStartTrans( nextTrans[i], hasVisited, hasReturned, &succLabelSet, 
+      LoopStatus loopStatus = findLoopStartTrans( nextTrans[i], hasVisited, hasReturned, &succLabelSet,
 	    newUndecidedTrans, loopStartTrans ) ;
 
       // If the next transition is the end of a loop
@@ -1917,7 +1936,7 @@ WFSTLabelPushingNetwork::LoopStatus WFSTLabelPushingNetwork::findLoopStartTrans(
 	 if ( succLabelSet != NULL )  {
 	    if ( succLabelSet->find( NONPUSHING_OUTLABEL ) == succLabelSet->end() )  {
 	       if (( isSuccToFinalState == false ) && ( isSuccNullSet == false ))  {
-		  set_union(	thisTransLabelSet.begin(), thisTransLabelSet.end(), 
+		  set_union(	thisTransLabelSet.begin(), thisTransLabelSet.end(),
 				succLabelSet->begin(), succLabelSet->end(),
 				inserter(thisTransLabelSet, thisTransLabelSet.begin()) ) ;
 	       }
@@ -1977,7 +1996,7 @@ WFSTLabelPushingNetwork::LoopStatus WFSTLabelPushingNetwork::findLoopStartTrans(
 
 
 // This function finds all the loops and put it in a set
-// Return true if this trans is on the path of a loop starting at 
+// Return true if this trans is on the path of a loop starting at
 // currLoopStartTrans. Otherwise return false.
 // loopStartTransSet - a set of transitions which are the start of a loop
 // loopStatesSet - a set of states where they are all on the same loop
@@ -1987,14 +2006,14 @@ WFSTLabelPushingNetwork::LoopStatus WFSTLabelPushingNetwork::findLoopStartTrans(
 // transition is also inside the loop and put the "to" state of this
 // transition in loopStatesSet.
 // When checking one loop, it won't transverse into another loopStartTrans.
-// So it is like cutting all other loopStartTrans when checking a 
+// So it is like cutting all other loopStartTrans when checking a
 // particular loopStartTrans.
 bool WFSTLabelPushingNetwork::findLoop( int transIndex, bool *hasVisited, const int currLoopStart, const set<int> &loopStartTransSet, set<int> &loopStatesSet, const set<int> &undecidedTransSet )
 {
 #ifdef DEBUG
    const LabelSet *tmpLabelSet = arc_outlabset_map[transIndex] ;
 #endif
-   
+
    // Terminating case
    // First case: This trans has a label set.
    if ( undecidedTransSet.find( transIndex ) == undecidedTransSet.end() )  {
@@ -2011,7 +2030,7 @@ bool WFSTLabelPushingNetwork::findLoop( int transIndex, bool *hasVisited, const 
 	 error("WFSTLabelPushingNetwork::findLoop - should not have a label set for undecided trans") ;
    }
 #endif
-   
+
    int to = transitions[transIndex].toState ;
 
    // Second case: Has been visited before
@@ -2022,10 +2041,10 @@ bool WFSTLabelPushingNetwork::findLoop( int transIndex, bool *hasVisited, const 
 	 return false ;
    }
 
-   // Third case: Has not been visited before + it's one of the other loop 
+   // Third case: Has not been visited before + it's one of the other loop
    // start.
    // Only allow currLoopStart. Other loopStart are deactivated temporarily
-   // The first "if" is neccessary to allow currLoopStart to proceed since 
+   // The first "if" is neccessary to allow currLoopStart to proceed since
    // hasVisited is false for the first time
    if ( transIndex != currLoopStart )  {
       if ( loopStartTransSet.find( transIndex ) != loopStartTransSet.end() )
@@ -2036,15 +2055,15 @@ bool WFSTLabelPushingNetwork::findLoop( int transIndex, bool *hasVisited, const 
 
    // True if this trans is on the loop
    bool isThisTransOnTheLoop = false ;
-   
+
    int *nextTrans = states[to].trans ;
    int nextNTrans = states[to].nTrans ;
 
    for ( int i = 0 ; i < nextNTrans ; i++ )  {
-      bool isSuccOnTheLoop = findLoop( nextTrans[i], hasVisited, currLoopStart, 
+      bool isSuccOnTheLoop = findLoop( nextTrans[i], hasVisited, currLoopStart,
 	    loopStartTransSet, loopStatesSet, undecidedTransSet ) ;
 
-      if ( isSuccOnTheLoop ) 
+      if ( isSuccOnTheLoop )
 	 isThisTransOnTheLoop = true ;
    }
 
@@ -2066,7 +2085,7 @@ void WFSTLabelPushingNetwork::combineLoop( list< set<int> > &loopList )
    list< set<int> >::iterator currSet = loopList.begin() ;
    list< set<int> >::iterator nextSet ;
    LabelSet intersectionSet ;
-   
+
    while ( currSet != loopList.end() )  {
       nextSet = currSet ;
       nextSet++ ;
@@ -2077,9 +2096,9 @@ void WFSTLabelPushingNetwork::combineLoop( list< set<int> > &loopList )
 #endif
 	 // Find intersection
 	 intersectionSet.clear() ;
-	 set_intersection( (*currSet).begin(), (*currSet).end(), (*nextSet).begin(), (*nextSet).end(), 
+	 set_intersection( (*currSet).begin(), (*currSet).end(), (*nextSet).begin(), (*nextSet).end(),
 	       inserter( intersectionSet, intersectionSet.begin() ) ) ;
-	 
+
 	 if ( intersectionSet.empty() )  {
 	    nextSet++ ;
 	 }
@@ -2096,8 +2115,8 @@ void WFSTLabelPushingNetwork::combineLoop( list< set<int> > &loopList )
 }
 
 // This function assign a common label set for each transition in a loop.
-// Get a loop from the loop list. For each state of the loop, check if 
-// it is dependent to other loop. If all the states are not dependent 
+// Get a loop from the loop list. For each state of the loop, check if
+// it is dependent to other loop. If all the states are not dependent
 // on other loops, collect all the labels from all the set. Assign
 // the union to all the loop transitions.
 void WFSTLabelPushingNetwork::assignOutlabsToLoops( list< set<int> > &loopList , set<int> &undecidedTransSet )
@@ -2110,44 +2129,44 @@ void WFSTLabelPushingNetwork::assignOutlabsToLoops( list< set<int> > &loopList ,
 #ifdef DEBUG
       int numLoopsBefore = loopList.size() ;
 #endif
-     
+
       // Iterating all the loops
       while ( currLoop != loopList.end() )  {
 #ifdef DEBUG
 	 if ( (*currLoop).size() <= 0 )
 	    error("WFSTLabelPushingNetwork::_assignOutLabesToLoops - loop size == 0") ;
 #endif
-	 
+
 	 // Get one loop
 	 set<int>::iterator stateIter ;
 	 bool isDependent = false ;
-	 
+
 	 LabelSet thisLoopLabelSet ;
 	 const LabelSet *succLabelSet ;
-	 
+
 	 // For each state in the loop
 	 for ( stateIter = (*currLoop).begin() ; stateIter != (*currLoop).end() ; stateIter++ )  {
 	    int *nextTrans = states[*stateIter].trans ;
 	    int nextNTrans = states[*stateIter].nTrans ;
 
-	    // For each transition of a state 
+	    // For each transition of a state
 	    for ( int i = 0 ; i < nextNTrans ; i++ )  {
 	       isDependent = findOutlabsOfOneTransFromLoopState( nextTrans[i], currLoop, loopList, &succLabelSet, undecidedTransSet ) ;
-	      
+
 	       // One of the next transition depends on other loops
 	       if ( isDependent )
 		  break ;
-	      
-	       // succLabelSet can be NULL if nextTrans is pointing towards a 
+
+	       // succLabelSet can be NULL if nextTrans is pointing towards a
 	       // state of the currLoop
 	       if ( succLabelSet != NULL ) {
 		  set_union( thisLoopLabelSet.begin(), thisLoopLabelSet.end(),
-			succLabelSet->begin(), succLabelSet->end(), 
+			succLabelSet->begin(), succLabelSet->end(),
 			inserter( thisLoopLabelSet, thisLoopLabelSet.begin() ) ) ;
 	       }
 	    }
-	    
-	    // If one of the next transition depends on another loop, don't 
+
+	    // If one of the next transition depends on another loop, don't
 	    // need to iterate other states of the currLoop anymore
 	    if ( isDependent == true )
 	       break ;
@@ -2160,7 +2179,7 @@ void WFSTLabelPushingNetwork::assignOutlabsToLoops( list< set<int> > &loopList ,
 	 }
 	 else  {
 	    // If not dependent on the other loop
-	    // Assign all the union of output labels to all the states of the 
+	    // Assign all the union of output labels to all the states of the
 	    // loop
 #ifdef DEBUG
 	    if ( thisLoopLabelSet.empty() )
@@ -2170,9 +2189,9 @@ void WFSTLabelPushingNetwork::assignOutlabsToLoops( list< set<int> > &loopList ,
 	       thisLoopLabelSet.clear() ;
 	       thisLoopLabelSet.insert( NONPUSHING_OUTLABEL ) ;
 	    }
-	    
+
 	    pair<set<LabelSet>::iterator,bool> status = unique_outlabsets.insert( thisLoopLabelSet ) ;
-	    
+
 	    // For each state in the loop
 	    for ( stateIter = (*currLoop).begin() ; stateIter != (*currLoop).end() ; stateIter++ )  {
 
@@ -2181,10 +2200,10 @@ void WFSTLabelPushingNetwork::assignOutlabsToLoops( list< set<int> > &loopList ,
 	       int loopNTrans = states[*stateIter].nTrans ;
 	       for ( int i = 0 ; i < loopNTrans ; i++ )  {
 		  int to = transitions[loopTrans[i]].toState ;
-		  
+
 		  // If the transition is pointing into the loop
 		  if ( (*currLoop).find( to ) != (*currLoop).end() )  {
-		     arc_outlabset_map[ loopTrans[i] ] = &(*(status.first)) ; 
+		     arc_outlabset_map[ loopTrans[i] ] = &(*(status.first)) ;
 		     undecidedTransSet.erase( loopTrans[i] ) ;
 		  }
 #ifdef DEBUG
@@ -2195,7 +2214,7 @@ void WFSTLabelPushingNetwork::assignOutlabsToLoops( list< set<int> > &loopList ,
 #endif
 	       }
 	    }
-	    
+
 	    // Remove the loop from the list
 	    currLoop = loopList.erase( currLoop ) ;
 	 }
@@ -2211,7 +2230,7 @@ void WFSTLabelPushingNetwork::assignOutlabsToLoops( list< set<int> > &loopList ,
 }
 
 
-// Return true if this transition is dependent on the other loops. 
+// Return true if this transition is dependent on the other loops.
 // Otherwise return false.
 // returnLabelSet is the label set of this transition
 bool WFSTLabelPushingNetwork::findOutlabsOfOneTransFromLoopState( int transIndex, const list< set<int> >::iterator currLoop, list< set<int> > &loopList , const LabelSet **returnLabelSet , set<int> &undecidedTransSet )
@@ -2223,17 +2242,17 @@ bool WFSTLabelPushingNetwork::findOutlabsOfOneTransFromLoopState( int transIndex
       *returnLabelSet = arc_outlabset_map[transIndex] ;
       return false ;
    }
-   
+
    int to = transitions[transIndex].toState ;
    // No label set
    if ( (*currLoop).find( to ) != (*currLoop).end() )  {
-      // The toState is one of the states in the curr loop. Hence this 
+      // The toState is one of the states in the curr loop. Hence this
       // transition is not dependent
       *returnLabelSet = NULL ;
       return false ;
    }
    else  {
-      for ( list< set<int> >::iterator tmpLoop = loopList.begin() ; 
+      for ( list< set<int> >::iterator tmpLoop = loopList.begin() ;
 	    tmpLoop != loopList.end() ;
 	    tmpLoop++ )  {
 	 if ( tmpLoop != currLoop )  {
@@ -2245,7 +2264,7 @@ bool WFSTLabelPushingNetwork::findOutlabsOfOneTransFromLoopState( int transIndex
 	 }
       }
    }
-   
+
    // Search through next transitions of this transition
    int *nextTrans = states[to].trans ;
    int nextNTrans = states[to].nTrans ;
@@ -2260,14 +2279,14 @@ bool WFSTLabelPushingNetwork::findOutlabsOfOneTransFromLoopState( int transIndex
 
 #ifdef DEBUG
       if ( succLabelSet == NULL )  {
-	 // It means the next trans is pointing to currLoop, so this trans 
+	 // It means the next trans is pointing to currLoop, so this trans
 	 // should also be in the loop
 	 error("WFSTLabelPushingNetwork::findOutlabsOfOneTransFromLoopState - succLabelSet == NULL ") ;
       }
 #endif
 
       set_union( thisLabelSet.begin(), thisLabelSet.end(),
-	    succLabelSet->begin(), succLabelSet->end(), 
+	    succLabelSet->begin(), succLabelSet->end(),
 	    inserter( thisLabelSet, thisLabelSet.begin() ) ) ;
    }
 
@@ -2276,16 +2295,16 @@ bool WFSTLabelPushingNetwork::findOutlabsOfOneTransFromLoopState( int transIndex
       return true ;
    }
 
-   // This transition is not independent on other loops and it is not 
+   // This transition is not independent on other loops and it is not
    // pointing towards the loop i.e. it can be registered
    if ( thisLabelSet.find( NONPUSHING_OUTLABEL ) != thisLabelSet.end() )  {
       thisLabelSet.clear() ;
       thisLabelSet.insert( NONPUSHING_OUTLABEL ) ;
    }
-   
+
    pair<set<LabelSet>::iterator,bool> status = unique_outlabsets.insert( thisLabelSet ) ;
-  
-   arc_outlabset_map[transIndex] = &(*(status.first)) ; 
+
+   arc_outlabset_map[transIndex] = &(*(status.first)) ;
    undecidedTransSet.erase( transIndex ) ;
    *returnLabelSet = &(*(status.first)) ;
    return false ;
@@ -2306,12 +2325,12 @@ WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork( const char *wfstFilename , c
 
    if ( (fd = fopen( wfstFilename , "rb" )) == NULL )
       error("WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork - error opening wfstFilename") ;
-   
+
    int cnt , i ;
    int from , to , in , out , final , maxOutLab=-1 , maxInLab=-1;
    float weight ;
    char *line ;
-   
+
    line = new char[10000] ;
    while ( fgets( line , 10000 , fd ) != NULL )
    {
@@ -2329,7 +2348,7 @@ WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork( const char *wfstFilename , c
                else
                   weight = 0.0 ;
             }
-            
+
             // Final state line
             if ( nFinalStates == nFinalStatesAlloc )
             {
@@ -2349,10 +2368,10 @@ WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork( const char *wfstFilename , c
 
       if ( (from < 0) || (to < 0) || (in < 0) || (out < 0) )
          error("WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork - something < 0. %d %d %d %d",from,to,in,out) ;
-         
+
       if ( initState < 0 )
          initState = from ;   // init state is source state in first line of file
-         
+
       if ( from > maxState )
          maxState = from ;
       if ( to > maxState )
@@ -2375,19 +2394,19 @@ WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork( const char *wfstFilename , c
       transitions[nTransitions].toState = to ;
       transitions[nTransitions].inLabel = in ;
       transitions[nTransitions].outLabel = out ;
-      
+
       // FSM weights are -ve log
-      transitions[nTransitions].weight = (real)(-weight * transWeightScalingFactor ) ; 
+      transitions[nTransitions].weight = (real)(-weight * transWeightScalingFactor ) ;
       ++nTransitions ;
- 
+
       if ( in > maxInLab ) {
          maxInLab = in;
       }
       if ( out > maxOutLab ) {
          maxOutLab = out;
       }
- 
-      // Make sure we have state entries for both from and to states in the 
+
+      // Make sure we have state entries for both from and to states in the
       // new transition.
       if ( maxState >= nStatesAlloc )
       {
@@ -2402,22 +2421,22 @@ WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork( const char *wfstFilename , c
          states[from].label = from ;
       else if ( states[from].label != from )
          error("WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork - from state %d label mismatch" , from ) ;
-      
+
       if ( states[to].label < 0 )
          states[to].label = to ;
       else if ( states[to].label != to )
          error("WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork - to state %d label mismatch" , to ) ;
-      
+
       // Add the new transition index to the list in the from state
       // int ind = (states[from].nTrans)++ ;
       (states[from].nTrans)++ ;
-            
+
       states[from].trans = (int *)realloc( states[from].trans , states[from].nTrans*sizeof(int) ) ;
       // Changes by Octavian
       int *insPtr = binarySearchInLabel( states[from].trans, states[from].nTrans-1, transitions[nTransitions-1].inLabel ) ;
       for (int *i = states[from].trans + states[from].nTrans - 1 ; i > insPtr ; i-- )  {
 	 *i = *(i-1) ;
-      } 
+      }
       *insPtr = nTransitions - 1 ;
       //states[from].trans[ind] = nTransitions - 1 ;
       //**************************
@@ -2430,24 +2449,24 @@ WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork( const char *wfstFilename , c
    if ( nTransitionsAlloc > nTransitions )  {
       transitions = (WFSTTransition *)realloc( transitions ,
 	       nTransitions * sizeof(WFSTTransition) ) ;
-      
+
       if ( transitions == NULL )
 	 error("WFSTSortedInLableNetwork::WFSTSortedInLabelNetwork - transitions realloc failed") ;
 
       nTransitionsAlloc = nTransitions ;
    }
    //**************
-  
+
    for ( i=0 ; i<nFinalStates ; i++ )
    {
       if ( (finalStates[i].id < 0) || (finalStates[i].id > maxState) )
          error("WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork - finalState[%d].id out of range" , i ) ;
       if ( states[finalStates[i].id].label < 0 )
          error("WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork - finalState[%d] state label < 0" , i ) ;
-      
+
       states[finalStates[i].id].finalInd = i ;
    }
-  
+
    // Now create the input and/or output alphabets
    if ( inSymsFilename != NULL )
    {
@@ -2456,7 +2475,7 @@ WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork( const char *wfstFilename , c
          error("WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork - maxInLab > inputAlphabet->getMaxLabel()");
       maxInLab = inputAlphabet->getMaxLabel();
    }
-   if ( outSymsFilename != NULL ) 
+   if ( outSymsFilename != NULL )
    {
       outputAlphabet = new WFSTAlphabet( outSymsFilename ) ;
       if ( maxOutLab > outputAlphabet->getMaxLabel() ) {
@@ -2465,7 +2484,7 @@ WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork( const char *wfstFilename , c
       }
       maxOutLab = outputAlphabet->getMaxLabel();
    }
-   
+
    wordEndMarker = maxInLab + 1;
    if ( wordEndMarker <= maxOutLab ) {
       wordEndMarker = maxOutLab + 1;
@@ -2485,7 +2504,7 @@ WFSTSortedInLabelNetwork::WFSTSortedInLabelNetwork( const char *wfstFilename , c
 	 if ( inputAlphabet != NULL )
 	 {
 	    removeAuxiliaryInputSymbols( true ) ;
-	 }	    
+	 }
 	 break ;
       case NOTREMOVE:
 	 break ;
@@ -2524,7 +2543,7 @@ void WFSTSortedInLabelNetwork::getStatesOnEpsPath( const int currGState, const r
    if ( outLabelArray == NULL )
       error("WFSTSortedInLabelNetwork::getStatesOnEpsPath - outLabelArray == NULL") ;
 #endif
-   
+
    if ( *nGState < 0 )
       error("WFSTSortedInLabelNetwork::getStatesOnEpsPath - nGState < 0") ;
    if ( *nGState >= maxNGState )
@@ -2540,7 +2559,7 @@ void WFSTSortedInLabelNetwork::getStatesOnEpsPath( const int currGState, const r
    gStateArray[*nGState] = currGState ;
    epsWeightArray[*nGState] = currEpsWeight ;
    outLabelArray[*nGState] = currOutLabel ;
-   
+
    (*nGState)++ ;
 
    // Changes
@@ -2549,7 +2568,7 @@ void WFSTSortedInLabelNetwork::getStatesOnEpsPath( const int currGState, const r
       real nextWeight ;
       int nextOutLabel ;
       int inLabel = getInfoOfOneTransition( currGState, 0, &nextWeight, &nextGState, &nextOutLabel) ;
-      
+
       if ( inLabel == WFST_EPSILON )
 	 getStatesOnEpsPath( nextGState, nextWeight, nextOutLabel, gStateArray, epsWeightArray, outLabelArray, nGState, maxNGState ) ;
    }
@@ -2574,12 +2593,12 @@ int WFSTSortedInLabelNetwork::getNextStateOnEpsPath( int gState, real *backoffWe
 	 return nextGState ;
       }
    }
-   
+
    return -1 ;
 }
 
 
-// A function which does binary search for inLabel on the array which 
+// A function which does binary search for inLabel on the array which
 // contains transitions coming from the same state.
 // The return pointer is the insertion point.
 int *WFSTSortedInLabelNetwork::binarySearchInLabel( int *start, const int length, const int inLabel )
@@ -2619,7 +2638,7 @@ int *WFSTSortedInLabelNetwork::binarySearchInLabel( int *start, const int length
       }
       else if ( inLabel == middleInLabel )  {
 	 error("WFSTSortedInLabelNetwork::binarySearchInLabel - inLabel == middleInLabel") ;
-	 return NULL ;      
+	 return NULL ;
       }
       else  {
 	 if ( length == 2 )

@@ -82,7 +82,7 @@ public:
    void write( FILE *fd , bool outputAux ) ;
    void writeBinary( FILE *fd ) ;
    void readBinary( FILE *fd ) ;
-   
+
 private:
    int   maxLabel ;
    int   nLabels ;
@@ -109,16 +109,16 @@ public:
     WFSTNetwork() ;
     WFSTNetwork( real transWeightScalingFactor_, real insPenalty_ ) ;
     // Changes Octavian 20060523
-    WFSTNetwork( 
-        const char *wfstFilename , const char *inSymsFilename=NULL , 
-        const char *outSymsFilename=NULL , 
+    WFSTNetwork(
+        const char *wfstFilename , const char *inSymsFilename=NULL ,
+        const char *outSymsFilename=NULL ,
         real transWeightScalingFactor_=1.0 , real insPenalty_=0.0 ,
         RemoveAuxOption removeAuxOption=REMOVEBOTH
     ) ;
     virtual ~WFSTNetwork() ;
-   
+
    int getInitState() { return initState ; } ;
-   void getTransitions( 
+   void getTransitions(
 	 WFSTTransition *prev , int *nNext , WFSTTransition **next ) ;
     int getTransitions(
         WFSTTransition *prev, WFSTTransition **next
@@ -128,28 +128,28 @@ public:
    int getNumStates() { return nStates ; } ;
    int getWordEndMarker() { return wordEndMarker ; } ;
    int getNumTransitionsOfOneState ( int state )  {
-       return states[state].nTrans ;   
+       return states[state].nTrans ;
    }
    // Changes Octavian 20050325
    int getNumOutLabels() { return outputAlphabet->getNumLabels() ; } ;
- 
+
    // Changes by Octavian
    bool isFinalState( int stateIndex ) {
-       return states[stateIndex].finalInd >= 0; 
+       return states[stateIndex].finalInd >= 0;
    }
    real getFinalStateWeight( int stateIndex ) {
       return finalStates[states[stateIndex].finalInd].weight ;
    }
    const int *getTransitions( const WFSTTransition *prev , int *nNext ) ;
    WFSTTransition *getOneTransition( int transIndex ) ;
-   int getInfoOfOneTransition( 
-	 const int gState, const int n, real *weight, int *toState, 
+   int getInfoOfOneTransition(
+	 const int gState, const int n, real *weight, int *toState,
 	 int *outLabel ) ;
    // Changes Octavian 20060616
    int getInLabelOfOneTransition( const int gState , const int n ) ;
-   
+
    // Changes Octavian 20060430
-   int getTransID( int stateIndex, int nth ) { 
+   int getTransID( int stateIndex, int nth ) {
       return states[stateIndex].trans[nth] ; } ;
 
    bool transGoesToFinalState( WFSTTransition *trans ) {
@@ -159,17 +159,21 @@ public:
    real getFinalStateWeight( WFSTTransition *trans ) {
        return finalStates[states[trans->toState].finalInd].weight ;
    }
-   
+
    void outputText( int type=0 ) ;
    void generateSequences( int maxSeqs=0 , bool logBase10=false ) ;
-   void writeFSM( 
-	 const char *fsmFName , const char *inSymsFName , 
+   void writeFSM(
+	 const char *fsmFName , const char *inSymsFName ,
 	 const char *outSymsFName ) ;
    virtual void writeBinary( const char *fname ) ;
    virtual void readBinary( const char *fname ) ;
 
    // Changes Octavian 20060616
    void printNumOutTransitions( const char *fname ) ;
+
+   int               silMarker ;
+   int               spMarker ;
+
 
 protected:
    WFSTAlphabet      *inputAlphabet ;
@@ -178,7 +182,7 @@ protected:
 
    int               initState ;
    int               maxState ;
-   
+
    int               nStates ;
    int               nStatesAlloc ;
    WFSTState         *states ;
@@ -197,6 +201,7 @@ protected:
    real              insPenalty ;
    int               wordEndMarker ;
 
+
    void initWFSTState( WFSTState *state ) ;
    void initWFSTTransition( WFSTTransition *transition ) ;
    void removeAuxiliarySymbols( bool markAuxOutputs=false ) ;
@@ -214,15 +219,15 @@ class WFSTLabelPushingNetwork : public WFSTNetwork
 public:
    // Changes Octavian
    typedef set<int> LabelSet ;
-   
+
    WFSTLabelPushingNetwork() ;
    WFSTLabelPushingNetwork( real transWeightScalingFactor_ ) ;
 
    // Changes Octavian 20060523
-   WFSTLabelPushingNetwork( 
-	 const char *wfstFilename , const char *inSymsFilename=NULL , 
-	 const char *outSymsFilename=NULL , 
-	 real transWeightScalingFactor_=1.0 , 
+   WFSTLabelPushingNetwork(
+	 const char *wfstFilename , const char *inSymsFilename=NULL ,
+	 const char *outSymsFilename=NULL ,
+	 real transWeightScalingFactor_=1.0 ,
 	 RemoveAuxOption removeAuxOption=REMOVEBOTH ) ;
    virtual ~WFSTLabelPushingNetwork() ;
    virtual void writeBinary( const char *fname ) ;
@@ -246,11 +251,11 @@ protected:
 
    // Data structure for storing output symbol label set
    // unique_outlabsets - a set of unique label sets
-   // arc_outlabset_map - array which maps the transition index 
+   // arc_outlabset_map - array which maps the transition index
    // to the label set
    // An output label set is a set of anticipated output symbols
    // If the transition has epsilon output and there is no non-eps
-   // transitions on the path to the final state, the label set 
+   // transitions on the path to the final state, the label set
    // will have just one label - NONPUSHING_OUTLABEL
    set<LabelSet> unique_outlabsets ;
    ArcToLabelSetMap arc_outlabset_map ;
@@ -263,51 +268,51 @@ protected:
    // Find a set of transitions in which we cannot decide its label set
    // Starting to do depth-first search from transIndex. Put "undecided"
    // transitions in undecidedTrans set
-   const LabelSet* findUndecidedTrans( 
+   const LabelSet* findUndecidedTrans(
 	 int transIndex, bool *hasVisited, set<int>& undecidedTrans ) ;
-   
+
    // This function iterates all undecided trans and find the start trans of
    // a loop and a new set of undecided trans.
    // newUndecidedTrans will store a set of undecided transitions.
-   // loopStartTrans will store a set of transitions which is the start of 
+   // loopStartTrans will store a set of transitions which is the start of
    // a loop.
-   LoopStatus findLoopStartTrans( 
-	 int transIndex, bool *hasVisited, bool *hasReturned, 
-	 const LabelSet **returnLabelSet, set<int> &newUndecidedTrans, 
+   LoopStatus findLoopStartTrans(
+	 int transIndex, bool *hasVisited, bool *hasReturned,
+	 const LabelSet **returnLabelSet, set<int> &newUndecidedTrans,
 	 set<int> &loopStartTrans ) ;
-   
+
    // This function starts transversing from the start of a loop and collects
    // all states within the loop into loopStatesSet. See the cpp file.
    bool findLoop(
-	 int transIndex, bool *hasVisited, const int currLoopStart, 
-	 const set<int> &loopStartTransSet, set<int> &loopStatesSet, 
+	 int transIndex, bool *hasVisited, const int currLoopStart,
+	 const set<int> &loopStartTransSet, set<int> &loopStatesSet,
 	 const set<int> &undecidedTransSet ) ;
 
    // This function combines loops that share some same states into one loop
    void combineLoop( list< set<int> > &loopList ) ;
-   
+
    // This function assign a common label set for each transition in a loop.
-   // Get a loop from the loop list. For each state of the loop, check if 
-   // it is dependent to other loop. If all the states are not dependent 
+   // Get a loop from the loop list. For each state of the loop, check if
+   // it is dependent to other loop. If all the states are not dependent
    // on other loops, collect all the labels from all the set. Assign
    // the union to all the loop transitions.
-   void assignOutlabsToLoops( 
+   void assignOutlabsToLoops(
 	 list< set<int> > &loopList , set<int> &undecidedTransSet ) ;
 
-   // Return true if this transition is dependent on the other loops. 
+   // Return true if this transition is dependent on the other loops.
    // Otherwise return false.
    // returnLabelSet is the label set of this transition
-   bool findOutlabsOfOneTransFromLoopState( 
-	 int transIndex, const list< set<int> >::iterator currLoop, 
-	 list< set<int> > &loopList , const LabelSet **returnLabelSet , 
+   bool findOutlabsOfOneTransFromLoopState(
+	 int transIndex, const list< set<int> >::iterator currLoop,
+	 list< set<int> > &loopList , const LabelSet **returnLabelSet ,
 	 set<int> &undecidedTransSet ) ;
-  
+
 };
 
 
 // Changes by Octavian
 /**
- * A network in which the input label is sorted 
+ * A network in which the input label is sorted
  */
 class WFSTSortedInLabelNetwork : public WFSTNetwork
 {
@@ -315,27 +320,27 @@ public:
    WFSTSortedInLabelNetwork() ;
    WFSTSortedInLabelNetwork( real transWeightScalingFactor_ ) ;
    // Changes Octavian 20060523
-   WFSTSortedInLabelNetwork( 
-	 const char *wfstFilename , const char *inSymsFilename=NULL , 
-	 const char *outSymsFilename=NULL , 
-	 real transWeightScalingFactor_=1.0 , 
+   WFSTSortedInLabelNetwork(
+	 const char *wfstFilename , const char *inSymsFilename=NULL ,
+	 const char *outSymsFilename=NULL ,
+	 real transWeightScalingFactor_=1.0 ,
 	 RemoveAuxOption removeAuxOption=REMOVEBOTH ) ;
    virtual ~WFSTSortedInLabelNetwork() {} ;
-  
+
     /**
      * Searching for all states on an eps-only path with the accumuated weight
      */
-   void getStatesOnEpsPath( 
-	 const int currGState, const real currEpsWeight, 
-	 const int currOutLabel, int *gStateArray, real *epsWeightArray, 
+   void getStatesOnEpsPath(
+	 const int currGState, const real currEpsWeight,
+	 const int currOutLabel, int *gStateArray, real *epsWeightArray,
 	 int *outLabelArray, int *nGState, const int maxNGState ) ;
-   
+
    // Changes Octavian 20060508
    int getNextStateOnEpsPath( int gState, real *backoffWeight );
-   
-   virtual void writeBinary( const char *fname ) { 
+
+   virtual void writeBinary( const char *fname ) {
       WFSTNetwork::writeBinary(fname) ; return ; };
-   virtual void readBinary( const char *fname ) { 
+   virtual void readBinary( const char *fname ) {
       WFSTNetwork::readBinary(fname) ; return ; };
 
 protected:
