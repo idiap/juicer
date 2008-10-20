@@ -785,8 +785,9 @@ void WFSTDecoder::processActiveModelsEndStates()
         if ( endHyp->score > LOG_ZERO )
         {
             // VW - word based pruning
-            // Use a different purning threshold when a word is emitted
-            if ( model->trans->inLabel == network->silMarker || model->trans->inLabel == network->spMarker )
+            // Use a different purning threshold at word ends (sil and sp phones mark these)
+            if ( model->trans->inLabel == network->silMarker ||
+                 model->trans->inLabel == network->spMarker )
             {
                 if ( endHyp->score > currWordPruneThresh )
                 {
@@ -1120,19 +1121,42 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans ,
                             nextModel->currHyps->lmScore
                         ) ;
 
-                        if (newScore > currEndPruneThresh)
+                        // VW - word based pruning
+                        // Use a different purning threshold at word ends (sil and sp phones mark these)
+                        if ( nextModel->trans->inLabel == network->silMarker ||
+                             nextModel->trans->inLabel == network->spMarker )
                         {
+                            if ( newScore > currWordPruneThresh )
+                            {
 #ifdef TRANS_OPT
-                            extendModelEndState(
-                                nextModel->currHyps + finalState,
-                                &nextTrans[i] , NULL
-                            ) ;
+                                extendModelEndState(
+                                    nextModel->currHyps + finalState,
+                                    &nextTrans[i] , NULL
+                                ) ;
 #else
-                            extendModelEndState(
-                                nextModel->currHyps + finalState,
-                                nextTransBuf[i] , NULL
-                            ) ;
+                                extendModelEndState(
+                                    nextModel->currHyps + finalState,
+                                    nextTransBuf[i] , NULL
+                                ) ;
 #endif
+                            }
+                        }
+                        else
+                        {
+                            if (newScore > currEndPruneThresh)
+                            {
+#ifdef TRANS_OPT
+                                extendModelEndState(
+                                    nextModel->currHyps + finalState,
+                                    &nextTrans[i] , NULL
+                                ) ;
+#else
+                                extendModelEndState(
+                                    nextModel->currHyps + finalState,
+                                    nextTransBuf[i] , NULL
+                                ) ;
+#endif
+                            }
                         }
 
                         // Reset the end hyp
@@ -1177,7 +1201,7 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans ,
 #else
                 extendModelEndState( &tmp , nextTransBuf[i] , NULL ) ;
 #endif
-            }
+			}
 
             // Reset the temp hypothesis before it goes out of scope.
             resetDecHyp( &tmp ) ;
