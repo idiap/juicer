@@ -111,9 +111,7 @@ namespace Juicer
         int getNumSuccessors(int hmmInd, int stateInd) ;
         int getSuccessor(int hmmInd, int stateInd, int sucInd) ;
         real getSuccessorLogProb(int hmmInd, int stateInd, int sucInd) ;
-#ifdef OPTIMISE_TEEMODEL
-        real getTeeWeight(int hmmInd) { return 0; }
-#endif
+        real getTeeLogProb(int hmmInd) { return 0; }
 
     private:
     	/*

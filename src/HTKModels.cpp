@@ -568,7 +568,7 @@ int HTKModels::addHMM( HTKHMM *hmm )
          error("HTKModels::addHMM - curr->nStates != hmm->transmat->n_states") ;
       curr->transMatrixInd = addTransMatrix( NULL , curr->nStates , hmm->transmat->transp ) ;
    }
-#ifdef OPTIMISE_TEEMODEL
+
     // set teeWeight for tee model
     curr->teeWeight = LOG_ZERO;
     int t;
@@ -582,7 +582,6 @@ int HTKModels::addHMM( HTKHMM *hmm )
             // printf("HMM %s with tee weight: %f\n", curr->name, curr->teeWeight);
         }
     }
-#endif
 
    nHMMs++ ;
    return ( nHMMs - 1 ) ;
@@ -1290,10 +1289,8 @@ void HTKModels::outputHMM( int ind , bool outputBinary )
       // Write the index of the transition matrix
       fwrite( &(curr->transMatrixInd) , sizeof(int) , 1 , outFD ) ;
 #if 0
-#ifdef OPTIMISE_TEEMODEL
       // Write the teeWeight
       fwrite( &(curr->teeWeight) , sizeof(real) , 1 , outFD ) ;
-#endif
 #endif
    }
 }
@@ -1348,7 +1345,6 @@ void HTKModels::readBinaryHMM()
    if ( fread( &(curr->transMatrixInd) , sizeof(int) , 1 , inFD ) != 1 )
       error("HTKModels::readBinaryHMM - error reading transMatrixInd") ;
 
-#ifdef OPTIMISE_TEEMODEL
     // set teeWeight for tee model
     curr->teeWeight = LOG_ZERO;
     int t;
@@ -1362,7 +1358,6 @@ void HTKModels::readBinaryHMM()
             // printf("HMM %s with tee weight: %f\n", curr->name, curr->teeWeight);
         }
     }
-#endif
    nHMMs++ ;
 }
 

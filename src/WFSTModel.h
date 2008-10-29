@@ -34,15 +34,10 @@ namespace Juicer
         WFSTTransition    *trans ;
         int hmmIndex;
         DecHyp			  *hyps1 ;
-// HARDCODE #ifndef LOCAL_HYPS // Commented because of SWIG compatibility issue
         DecHyp			  *hyps2 ;
         DecHyp			  *prevHyps ; // Current and previous hypotheses for each
-// HARDCODE #endif // Commented because of SWIG compatibility issue
         DecHyp			  *currHyps ; //   state in the phone model.
         int				  nActiveHyps ;
-#ifdef MIRROR_SCORE0
-        real score0;
-#endif
 
         // We also have a straight linked list of all active WFSTModel
         // elements.

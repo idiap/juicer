@@ -136,24 +136,16 @@ void WFSTModelPool::allocPool( int poolInd )
 	// Allocate the currHyps and prevHyps fields of the new WFSTModel
 	// elements in one big block.
 	tmp = pool->allocs[pool->nAllocs] ;
-#ifdef LOCAL_HYPS
-	tmp[0].hyps1 = new DecHyp[ pool->reallocAmount * pool->nStates ] ;
-#else
 	tmp[0].hyps1 = new DecHyp[ pool->reallocAmount * pool->nStates * 2 ] ;
     //printf("new DecHyp[%d] %d\n", pool->reallocAmount * pool->nStates * 2, pool->nStates);
 	tmp[0].hyps2 = tmp[0].hyps1 + pool->nStates ;
-#endif
 	initElem( tmp , pool->nStates ) ;
 	pool->freeElems[0] = tmp ;
     //pool->freeElems[pool->reallocAmount-1] = tmp ; // Allocate from beginning
 	for ( i=1 ; i<pool->reallocAmount ; i++ )
 	{
-#ifdef LOCAL_HYPS
-		tmp[i].hyps1 = tmp[i-1].hyps1 + pool->nStates ;
-#else
 		tmp[i].hyps1 = tmp[i-1].hyps2 + pool->nStates ;
 		tmp[i].hyps2 = tmp[i].hyps1 + pool->nStates ;
-#endif
 		initElem( tmp + i , pool->nStates ) ;
 		pool->freeElems[i] = tmp + i ;
         //pool->freeElems[pool->reallocAmount-1-i] = tmp + i ; // Allocate from beginning
@@ -241,21 +233,14 @@ void WFSTModelPool::initElem( WFSTModel *elem , int nStates )
 
 	elem->trans = NULL ;
 	elem->currHyps = elem->hyps1 ;
-#ifndef LOCAL_HYPS
 	elem->prevHyps = elem->hyps2 ;
-#endif
 	for ( i=0 ; i<nStates ; i++ )
 	{
 		DecHypHistPool::initDecHyp( elem->currHyps + i , i ) ;
-#ifndef LOCAL_HYPS
 		DecHypHistPool::initDecHyp( elem->prevHyps + i , i ) ;
-#endif
 	}
 	elem->nActiveHyps = 0 ;
 	elem->next = NULL ;
-#ifdef MIRROR_SCORE0
-    elem->score0 = LOG_ZERO;
-#endif
 }
 
 
@@ -267,15 +252,10 @@ void WFSTModelPool::resetElem( WFSTModel *elem , int nStates )
 	for ( i=0 ; i<nStates ; i++ )
 	{
 		decHypHistPool->resetDecHyp( elem->currHyps + i ) ;
-#ifndef LOCAL_HYPS
 		decHypHistPool->resetDecHyp( elem->prevHyps + i ) ;
-#endif
 	}
 	elem->nActiveHyps = 0 ;
 	elem->next = NULL ;
-#ifdef MIRROR_SCORE0
-    elem->score0 = LOG_ZERO;
-#endif
 }
 
 
@@ -289,11 +269,9 @@ void WFSTModelPool::checkActive( WFSTModel *elem )
 		if ( (elem->currHyps[i].score > LOG_ZERO) ||
              (elem->currHyps[i].hist != NULL) )
 			error("WFSTModel::checkActive - elem->currHyps[%d] is ACTIVE",i) ;
-#ifndef LOCAL_HYPS
 		if ( (elem->prevHyps[i].score > LOG_ZERO) ||
              (elem->prevHyps[i].hist != NULL) )
 			error("WFSTModel::checkActive - elem->prevHyps[%d] is ACTIVE",i) ;
-#endif
 	}
 }
 

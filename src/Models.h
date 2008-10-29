@@ -50,9 +50,7 @@ namespace Juicer
         virtual real getSuccessorLogProb(
             int hmmInd, int stateInd, int sucInd
         ) = 0;
-#ifdef OPTIMISE_TEEMODEL
-        virtual real getTeeWeight(int hmmInd) = 0;
-#endif
+        virtual real getTeeLogProb(int hmmInd) = 0;
     };
 }
 

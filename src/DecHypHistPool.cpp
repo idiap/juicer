@@ -247,7 +247,6 @@ bool DecHypHistPool::isActiveHyp( DecHyp *hyp )
 	return false ;
 }
 
-#ifdef OPTIMISE_INLINE_RESET_DECHYP
 void DecHypHistPool::resetDecHypHist(DecHypHist* hist )
 {
     assert(hist);
@@ -271,17 +270,13 @@ void DecHypHistPool::resetDecHypHist(DecHypHist* hist )
 
     // hist = NULL ; // set by caller
 }
-#endif
-// Changes
+
+
 void DecHypHistPool::resetDecHyp( DecHyp *hyp )
 {
     // PNG: Minimise writing for deactivation as they're all cache
     // misses and deactivation happens a lot
-
-    //hyp->nLabelsNR = 0;
     hyp->score = LOG_ZERO ;
-    //hyp->acousticScore = LOG_ZERO ;
-    //hyp->lmScore = LOG_ZERO ;
 
     if ( hyp->hist != NULL )
     {

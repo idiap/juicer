@@ -69,9 +69,7 @@ namespace Juicer
         int   nStates ;
         int   *gmmInds ;
         int   transMatrixInd ;
-#ifdef OPTIMISE_TEEMODEL
         real teeWeight;
-#endif
     };
 
 
@@ -117,9 +115,7 @@ namespace Juicer
             int transMatrixInd = hMMs[hmmInd].transMatrixInd;
             return transMats[transMatrixInd].logProbs[stateInd][sucInd];
         }
-#ifdef OPTIMISE_TEEMODEL
-        real getTeeWeight(int hmmInd) { return hMMs[hmmInd].teeWeight; }
-#endif
+        real getTeeLogProb(int hmmInd) { return hMMs[hmmInd].teeWeight; }
 
     protected:
 
