@@ -1,4 +1,10 @@
 /*
+ * Copyright 2008 by The University of Sheffield
+ *
+ * See the file COPYING for the licence associated with this software.
+ */
+
+/*
  * HModels.cpp:
  *
  * This is the adapter class that connects HTK to Juicer via the API

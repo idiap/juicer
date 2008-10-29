@@ -2,6 +2,10 @@
  * Copyright 2004,2008 by IDIAP Research Institute
  *                        http://www.idiap.ch
  *
+ * Copyright 2008 by The University of Sheffield
+ *
+ * Copyright 2008 by The University of Edinburgh
+ *
  * See the file COPYING for the licence associated with this software.
  */
 

@@ -2,6 +2,8 @@
  * Copyright 2005 by IDIAP Research Institute
  *                   http://www.idiap.ch
  *
+ * Copyright 2008 by The University of Edinburgh
+ *
  * See the file COPYING for the licence associated with this software.
  */
 
@@ -416,7 +418,6 @@ void DecHypHistPool::registerLabel( DecHyp *hyp , int label )
 #endif
  
    hyp->labelsNR[(int)(hyp->nLabelsNR)++] = label;
-
 }
 
 // Changes

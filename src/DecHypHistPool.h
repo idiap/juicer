@@ -2,6 +2,8 @@
  * Copyright 2005 by IDIAP Research Institute
  *                   http://www.idiap.ch
  *
+ * Copyright 2008 by The University of Edinburgh
+ *
  * See the file COPYING for the licence associated with this software.
  */
 
@@ -146,10 +148,10 @@ class DecHyp
 public:
     DecHypHist *hist ;
     int state;
-	char nLabelsNR;
     real	score ;
     real	acousticScore ;	// just acoustic score
     real	lmScore ;		// just lm score
+    char nLabelsNR;
     int labelsNR[MAXNUMDECHYPNRLABELS];
     DecHyp() {
         state = -1 ;

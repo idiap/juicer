@@ -1,4 +1,10 @@
 /*
+ * Copyright 2008 by The University of Edinburgh
+ *
+ * See the file COPYING for the licence associated with this software.
+ */
+
+/*
  * vi:ts=4:tw=78:shiftwidth=4:expandtab
  * vim600:fdm=marker
  *
