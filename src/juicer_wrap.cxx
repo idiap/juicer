@@ -293,7 +293,8 @@ SWIGEXPORT jboolean JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_FrontEnd
   arg3 = (int)jarg3;
   result = (bool)(arg1)->GetArray(*arg2,arg3);
   jresult = (jboolean)result;
-  printf(".%d.", result); return jresult;
+  //printf(".%d.", result);
+  return jresult;
 }
 
 
@@ -312,6 +313,42 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_FrontEnd_1Se
   }
   (arg1)->SetSource(arg2);
   if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+}
+
+
+SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_FrontEnd_1TimeStamp(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+  jlong jresult = 0 ;
+  Juicer::FrontEnd *arg1 = (Juicer::FrontEnd *) 0 ;
+  long arg2 ;
+  long long result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(Juicer::FrontEnd **)&jarg1; 
+  arg2 = (long)jarg2; 
+  result = (long long)(arg1)->TimeStamp(arg2);
+  jresult = (jlong)result; 
+  //printf(".%d.", result);
+  return jresult;
+}
+
+
+SWIGEXPORT jstring JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_FrontEnd_1GetSpeakerID(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+  jstring jresult = 0 ;
+  Juicer::FrontEnd *arg1 = (Juicer::FrontEnd *) 0 ;
+  int arg2 ;
+  char *result = 0 ;
+
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(Juicer::FrontEnd **)&jarg1;
+  arg2 = (int)jarg2;
+  result = (char *)(arg1)->GetSpeakerID(arg2);
+  if(result) jresult = jenv->NewStringUTF((const char *)result);
+  //printf(".%d.", result);
+  return jresult;
 }
 
 
@@ -12717,6 +12754,109 @@ SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_DecoderSing
   result = (Juicer::DSTResultWord **) ((arg1)->resultWords);
   *(Juicer::DSTResultWord ***)&jresult = result;
   printf(".%d.", result); return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_DecoderSingleTest_1startTimeStamp_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+  Juicer::DecoderSingleTest *arg1 = (Juicer::DecoderSingleTest *) 0 ;
+  long long arg2 ;
+
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(Juicer::DecoderSingleTest **)&jarg1;
+  arg2 = (long long)jarg2;
+  if (arg1) (arg1)->startTimeStamp = arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_DecoderSingleTest_1startTimeStamp_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  Juicer::DecoderSingleTest *arg1 = (Juicer::DecoderSingleTest *) 0 ;
+  long long result;
+
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(Juicer::DecoderSingleTest **)&jarg1;
+  result = (long long) ((arg1)->startTimeStamp);
+  jresult = (jlong)result;
+  printf(".%d.", result); return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_DecoderSingleTest_1frameTime(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+  jlong jresult = 0 ;
+  Juicer::DecoderSingleTest *arg1 = (Juicer::DecoderSingleTest *) 0 ;
+  int arg2 ;
+  long long result;
+
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(Juicer::DecoderSingleTest **)&jarg1;
+  arg2 = (int)jarg2;
+  result = (long long)(arg1)->frameTime(arg2);
+  jresult = (jlong)result;
+  //printf(".%d.", result);
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_DecoderSingleTest_1mSpeakerID_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+  Juicer::DecoderSingleTest *arg1 = (Juicer::DecoderSingleTest *) 0 ;
+  char *arg2 = (char *) 0 ;
+
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(Juicer::DecoderSingleTest **)&jarg1;
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return ;
+  }
+  {
+    if (arg2) {
+      arg1->mSpeakerID = (char const *) (new char[strlen((const char *)arg2)+1]);
+      strcpy((char *)arg1->mSpeakerID, (const char *)arg2);
+    } else {
+      arg1->mSpeakerID = 0;
+    }
+  }
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+}
+
+
+SWIGEXPORT jstring JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_DecoderSingleTest_1mSpeakerID_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jstring jresult = 0 ;
+  Juicer::DecoderSingleTest *arg1 = (Juicer::DecoderSingleTest *) 0 ;
+  char *result = 0 ;
+
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(Juicer::DecoderSingleTest **)&jarg1;
+  result = (char *) ((arg1)->mSpeakerID);
+  if(result) jresult = jenv->NewStringUTF((const char *)result);
+  //printf(".%d.", result);
+  return jresult;
+}
+
+
+SWIGEXPORT jstring JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_DecoderSingleTest_1speakerID(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jstring jresult = 0 ;
+  Juicer::DecoderSingleTest *arg1 = (Juicer::DecoderSingleTest *) 0 ;
+  char *result = 0 ;
+
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(Juicer::DecoderSingleTest **)&jarg1;
+  result = (char *)(arg1)->speakerID();
+  if(result) jresult = jenv->NewStringUTF((const char *)result);
+  //printf(".%d.", result);
+  return jresult;
 }
 
 
