@@ -55,6 +55,9 @@ DecoderSingleTest::DecoderSingleTest()
    dataFName = NULL ;
    extStartFrame = -1 ;
    extEndFrame = -1 ;
+
+   startTimeStamp = 0;
+   mSpeakerID = 0;
 }
 
 
@@ -198,6 +201,7 @@ void DecoderSingleTest::run(
     // Connect to the source
     assert(dataFName);
     frontend->SetSource(dataFName);
+    startTimeStamp = frontend->TimeStamp(0);
 
     // Timer for the decoding
     startTime = clock() ;
@@ -216,6 +220,8 @@ void DecoderSingleTest::run(
     DecHyp* hyp = decoder->finish() ;
     endTime = clock() ;
     decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
+
+    mSpeakerID = frontend->GetSpeakerID(offset / 2);
 
     // post-process the decoding result
     if ( hyp == NULL )
@@ -263,6 +269,9 @@ void DecoderSingleTest::decodeUtterance(
         error("DecoderSingleTest::decodeUtterance - incompatible mode") ;
 #endif
 
+    // Time stamp
+    startTimeStamp = frontend->TimeStamp(0);
+
     // Timer for the decoding
     startTime = clock() ;
 
@@ -275,6 +284,8 @@ void DecoderSingleTest::decodeUtterance(
     DecHyp* hyp = decoder->finish() ;
     endTime = clock() ;
     decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
+
+    mSpeakerID = frontend->GetSpeakerID(nFrames / 2);
 
     // post-process the decoding result
     if ( hyp == NULL )

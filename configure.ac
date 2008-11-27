@@ -15,44 +15,56 @@ AC_SUBST(TRACTER_CFLAGS)
 AC_SUBST(TRACTER_LIBS)
 
 
-# Check for Torch3
-AC_ARG_WITH([torch-cflags],
-	[AS_HELP_STRING([--with-torch-cflags=</path/to/torch/cflags>],
-			[Mandatory Torch3 library])],
-	[torch_cflags=$withval])
-AC_ARG_WITH([torch-libs],
-	[AS_HELP_STRING([--with-torch-libs=</path/to/torch/libs>],
-			[Mandatory Torch3 library])],
-	[torch_libs=$withval])
+# Check for Torch3 first using an explicit --with-torch3
+AC_MSG_CHECKING([whether to use Torch3])
+AC_ARG_WITH(torch3,
+  [AS_HELP_STRING(
+    [--with-torch3=DIR],
+    [Use Torch3 in DIR]
+  )],
+  [],
+  [with_torch3=yes]
+)
+AS_IF( [test "$with_torch3" = yes],
 
-if test x"$torch_cflags" = "x"
-then
-  TORCH_CFLAGS=`pkg-config --cflags torch`
-else
-  TORCH_CFLAGS=$torch_cflags
-fi
+  # yes is default, but not informative; Try via pkgconfig (at Idiap)
+  [PKG_CHECK_MODULES(TORCH, torch >= 3.1, pkg_torch3=1, pkg_torch3=0)
+   AS_IF( [test "$pkg_torch3" = 1],
+     [AC_DEFINE([HAVE_TORCH3], [1], [Define if you have TORCH3.])
+      AC_SUBST([TORCH3_INCLUDES], [$TORCH_CFLAGS])
+      AC_SUBST([TORCH3_LIBS], [$TORCH_LIBS])],
+     [with_torch3=no]
+   )],
 
-if test x"$TORCH_CFLAGS" = "x"
+  # There is an explicit --with-torch3=dir
+  [AS_IF( [test "$with_torch3" != no],
+    [AS_IF( [test -d "$with_torch3"],
+      [AC_DEFINE([HAVE_TORCH3], [1], [Define if you have Torch3.])
+       AC_SUBST(
+         [TORCH3_INCLUDES],
+         ["-I$with_torch3/core \
+           -I$with_torch3/speech \
+           -I$with_torch3/datasets \
+           -I$with_torch3/distributions \
+           -I$with_torch3/gradients"]
+       )
+       AC_SUBST(
+         [TORCH3_LIBS],
+         ["-L$with_torch3/libs/Linux_opt_float -ltorch"]
+       )],
+      [AC_MSG_ERROR([Can't find directory $with_torch3])
+       with_torch3=no]
+     )]
+   )
+   AC_MSG_RESULT([$with_torch3])]
+)
+AM_CONDITIONAL([WITH_TORCH3], [test "$with_torch3" != no])
+
+if test "$with_torch3" = "no"
 then
   echo Torch not found
   exit 1
 fi
-
-if test x"$torch_libs" = "x"
-then
-  TORCH_LIBS=`pkg-config --libs torch`
-else
-  TORCH_LIBS=$torch_libs
-fi
-
-if test x"$TORCH_LIBS" = "x"
-then
-  echo Torch not found
-  exit 1
-fi
-
-AC_SUBST(TORCH_CFLAGS)
-AC_SUBST(TORCH_LIBS)
 
 
 # HTK

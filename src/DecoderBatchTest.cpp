@@ -431,6 +431,8 @@ void DecoderBatchTest::outputResult( DecoderSingleTest *test )
       }
       
       LogFile::puts("\nRecognition result:\n\n") ;
+      LogFile::printf("\nSpeaker: %s\n\n", test->speakerID()) ;
+      LogFile::printf("\nStart time %lld ns\n\n", test->frameTime(0)) ;
       for ( int j=0 ; j<test->nResultWords ; j++ )
       {
          LogFile::printf( "    %s  start=%d end=%d " , vocab->words[test->resultWords[0][j].index] ,
@@ -438,6 +440,10 @@ void DecoderBatchTest::outputResult( DecoderSingleTest *test )
          LogFile::printf( "acousticScore=%.4f lmScore=%.4f\n" , 
                           test->resultWords[0][j].acousticScore , test->resultWords[0][j].lmScore );
       }
+      LogFile::printf(
+          "\nEnd time %lld ns\n\n",
+          test->frameTime( test->resultWords[0][test->nResultWords-1].endTime)
+      ) ;
 
       LogFile::printf("\ntotal scores: lm=%.3f ac=%.3f\n\n" , 
                       test->getTotalLMScore() , test->getTotalAcousticScore() ) ;

@@ -68,29 +68,33 @@ LEX_OUTPUT_ROOT = lex.htk
 
 bin_PROGRAMS = juicer gramgen cdgen lexgen genwfstseqs
 
-libjuicer_la_CPPFLAGS = $(OPT) @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
+libjuicer_la_CPPFLAGS = \
+	$(OPT) \
+	@TORCH3_INCLUDES@ \
+	@TRACTER_CFLAGS@ \
+	@HTK_INCLUDES@
 libjuicer_la_LIBADD = @TRACTER_LIBS@
 
-LDADD = libjuicer.la @TORCH_LIBS@
+LDADD = libjuicer.la @TORCH3_LIBS@
 
 if WITH_HTK
 JUICER_SOURCES += HModels.cpp
 endif
 
 juicer_SOURCES = juicer.cpp
-juicer_CPPFLAGS = $(OPT) @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
+juicer_CPPFLAGS = $(OPT) @TORCH3_INCLUDES@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 
 # juicer_htk_SOURCES = juicer-htk.cpp
-# juicer_htk_CPPFLAGS = @TORCH_CFLAGS@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
+# juicer_htk_CPPFLAGS = @TORCH3_INCLUDES@ @TRACTER_CFLAGS@ @HTK_INCLUDES@
 
 gramgen_SOURCES = gramgen.cpp
-gramgen_CPPFLAGS = $(OPT) @TORCH_CFLAGS@
+gramgen_CPPFLAGS = $(OPT) @TORCH3_INCLUDES@
 
 cdgen_SOURCES = cdgen.cpp
-cdgen_CPPFLAGS = $(OPT) @TORCH_CFLAGS@
+cdgen_CPPFLAGS = $(OPT) @TORCH3_INCLUDES@
 
 lexgen_SOURCES = lexgen.cpp
-lexgen_CPPFLAGS = $(OPT) @TORCH_CFLAGS@
+lexgen_CPPFLAGS = $(OPT) @TORCH3_INCLUDES@
 
 genwfstseqs_SOURCES = genwfstseqs.cpp
-genwfstseqs_CPPFLAGS = $(OPT) @TORCH_CFLAGS@
+genwfstseqs_CPPFLAGS = $(OPT) @TORCH3_INCLUDES@

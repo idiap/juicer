@@ -79,6 +79,21 @@ public:
   int                           nResultLevels ;
   int                           nResultWords ;
   DSTResultWord                 **resultWords ;
+    Tracter::TimeType startTimeStamp;
+
+    Tracter::TimeType frameTime(int iFrame)
+    {
+        Tracter::TimeType nsPerFrame = 1000000000 / framesPerSec; // Nine zeros
+        Tracter::TimeType ns = startTimeStamp + (nsPerFrame * iFrame);
+        return ns;
+    }
+
+    const char* mSpeakerID;
+
+    const char* speakerID()
+    {
+        return mSpeakerID;
+    }
 
   // Constructors / destructor
   DecoderSingleTest() ;

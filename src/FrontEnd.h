@@ -85,6 +85,17 @@ namespace Juicer
             mSink->Reset();
         }
 
+        TimeType TimeStamp(IndexType iIndex)
+        {
+            return mSink->TimeStamp(iIndex);
+        }
+
+        const char* GetSpeakerID(int iIndex)
+        {
+            // Ignore iIndex for now.
+            return "xxx";
+        }
+
     private:
         Tracter::Source* mSource;
         ArraySink<float>* mSink;
