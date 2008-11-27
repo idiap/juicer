@@ -40,22 +40,19 @@ JUICER_SOURCES = \
 	LogFile.cpp \
 	WordPairLM.cpp \
 	ARPALM.cpp \
-	string_stuff.cpp
+	string_stuff.cpp \
+	juicer_wrap.cxx
 
 # Ignore until somebody wants the on the fly decoder
 #	WFSTModelOnTheFly.cpp
 #	WFSTOnTheFlyDecoder.cpp
 #	WFSTLatticeOnTheFly.cpp
 
-
 # These sources have no corresponding header file
 libjuicer_la_SOURCES = $(JUICER_SOURCES) \
 	FrontEnd.h \
 	htkparse.y.ypp \
 	htkparse.l.lpp
-
-# Whilst the interface is in flux
-#	juicer_wrap.cxx
 
 pkginclude_HEADERS = $(JUICER_SOURCES:.cpp=.h) \
 	htkparse.h \
