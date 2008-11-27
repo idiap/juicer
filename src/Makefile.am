@@ -40,8 +40,7 @@ JUICER_SOURCES = \
 	LogFile.cpp \
 	WordPairLM.cpp \
 	ARPALM.cpp \
-	string_stuff.cpp \
-	juicer_wrap.cxx
+	string_stuff.cpp
 
 # Ignore until somebody wants the on the fly decoder
 #	WFSTModelOnTheFly.cpp
@@ -76,6 +75,11 @@ LDADD = libjuicer.la @TORCH3_LIBS@
 
 if WITH_HTK
 JUICER_SOURCES += HModels.cpp
+endif
+
+if WITH_SWIG
+JUICER_SOURCES += juicer_wrap.cxx
+libjuicer_la_CPPFLAGS += -fno-strict-aliasing
 endif
 
 juicer_SOURCES = juicer.cpp

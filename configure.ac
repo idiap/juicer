@@ -92,6 +92,18 @@ AC_SUBST([HTK_LIBS], [$with_htk_libs])
 AM_CONDITIONAL([WITH_HTK], [test "$with_htk_includes" != ""])
 
 
+# SWIG interface
+AC_ARG_ENABLE(swig,
+  [AS_HELP_STRING(
+    [--enable-swig],
+    [Enable compilation of swig generated JNI interface]
+  )]
+)
+AC_MSG_CHECKING([whether to use swig JNI interface])
+AC_MSG_RESULT([$enableval])
+AM_CONDITIONAL([WITH_SWIG], [test "$enableval" = "yes"])
+
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
@@ -139,9 +151,9 @@ AC_OUTPUT
 
 AC_MSG_RESULT([
  Juicer Configured
- TORCH_CFLAGS   = $TORCH_CFLAGS
- TORCH_LIBS     = $TORCH_LIBS
- TRACTER_CFLAGS = $TRACTER_CFLAGS
- TRACTER_LIBS   = $TRACTER_LIBS
- CXXFLAGS       = $CXXFLAGS
+ TORCH3_INCLUDES = $TORCH3_INCLUDES
+ TORCH3_LIBS     = $TORCH3_LIBS
+ TRACTER_CFLAGS  = $TRACTER_CFLAGS
+ TRACTER_LIBS    = $TRACTER_LIBS
+ CXXFLAGS        = $CXXFLAGS
 ])

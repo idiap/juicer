@@ -269,9 +269,6 @@ void DecoderSingleTest::decodeUtterance(
         error("DecoderSingleTest::decodeUtterance - incompatible mode") ;
 #endif
 
-    // Time stamp
-    startTimeStamp = frontend->TimeStamp(0);
-
     // Timer for the decoding
     startTime = clock() ;
 
@@ -285,6 +282,9 @@ void DecoderSingleTest::decodeUtterance(
     endTime = clock() ;
     decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
 
+    // Time stamp and speaker ID
+    // time stamp must be after the first frame of decode 
+    startTimeStamp = frontend->TimeStamp(0);
     mSpeakerID = frontend->GetSpeakerID(nFrames / 2);
 
     // post-process the decoding result

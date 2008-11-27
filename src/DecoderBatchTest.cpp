@@ -431,8 +431,8 @@ void DecoderBatchTest::outputResult( DecoderSingleTest *test )
       }
       
       LogFile::puts("\nRecognition result:\n\n") ;
-      LogFile::printf("\nSpeaker: %s\n\n", test->speakerID()) ;
-      LogFile::printf("\nStart time %lld ns\n\n", test->frameTime(0)) ;
+      LogFile::printf("Speaker: %s\n", test->speakerID()) ;
+      LogFile::printf("Start time %lld ns\n\n", test->frameTime(0)) ;
       for ( int j=0 ; j<test->nResultWords ; j++ )
       {
          LogFile::printf( "    %s  start=%d end=%d " , vocab->words[test->resultWords[0][j].index] ,
