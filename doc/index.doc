@@ -1,9 +1,75 @@
-/** \mainpage
+/** \mainpage The Juicer Home Page
 
-This is the documentation for the Juicer decoder.
+\section intro Introduction
 
-@author Darren Moore <moore@idiap.ch>.  Original WFST decoder and tools.
-@author Octavian Cheng <ocheng@idiap.ch>.  On the fly decoder.
-@author Phil Garner <Phil.Garner@idiap.ch>.  We'll see...
- 
+Juicer is a Weighted Finite State Transducer (WFST) based decoder
+for Automatic Speech Recognition (ASR).  It has been developed at
+Idiap under the <a href="http://www.amiproject.org/">AMI and AMIDA</a>
+projects in collaboration with the universities of Sheffield and
+Edinburgh.
+
+Juicer has been successfully used in the AMI consortium entries in
+the recent NIST RT evaluations.  It is used as a real-time
+demonstration engine in AMIDA, and increasingly as the main research
+engine in other projects at Idiap.
+
+\section pubs Publications involving Juicer
+
+A <a
+href="http://publications.idiap.ch/index.php/publications/show/318">user
+guide</a>, will be updated soon.
+
+<a
+href="http://publications.idiap.ch/index.php/publications/show/1389">Silence
+modelling in WFSTs</a> at Interspeech 2008.
+
+A <a
+href="http://publications.idiap.ch/index.php/publications/show/279">paper
+about Juicer</a> from MLMI 2006.
+
+A presentation by Thomas Hain on the <a
+href="http://www.itl.nist.gov/iad/894.01/tests/rt/2006-spring/pdfs/hain.pdf">RT06
+system</a>.
+
+Another <a
+href="http://publications.idiap.ch/index.php/publications/show/241">paper
+about dynamic composition of WFSTs</a>.
+
+A <a
+href="http://publications.idiap.ch/index.php/publications/show/144">tutorial
+about WFSTs</a>.
+
+Note that the static WFST decoder in juicer has been improved
+significantly since most of these documents were written.  In
+particular, it is as fast as third party LVSR engines.
+
+\section download Obtaining the source code
+
+Juicer is available <a
+href="http://www.idiap.ch/software/juicer/sources">here</a>.  It is
+released under a BSD license, which is quite permissive.  Further
+information is in the README in the distribution.
+
+In order to build juicer, you need these two dependencies:
+
+ - <a href="http://www.torch.ch/">Torch3</a>.  The distribution that
+comes with <a href="http://torch3vision.idiap.ch/">Torch3vision</a>
+probably works too.
+ - <a href="http://www.idiap.ch/software/tracter">Tracter</a>
+ .
+
+\section authors Authors
+
+Juicer was originally written by <a
+href="http://www.ict.csiro.au/staff/Darren.Moore/">Darren Moore</a>.
+Dynamic composition (on-the-fly) was added by Octavian Cheng (although
+this is not currently maintained).  <a
+href="http://www.idiap.ch/~dines">John Dines</a> also contributed.
+
+More recently, the package has been overhauled by, and is maintained
+by, <a href="http://www.idiap.ch/~pgarner">Phil Garner</a>.
+Significant contributions have been (and are being) made by <a
+href="http://www.dcs.shef.ac.uk/~vinny">Vinny Wan</a> and Zhang Le.
+
+
 */

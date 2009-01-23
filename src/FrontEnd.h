@@ -54,15 +54,16 @@ namespace Juicer
             }
             case FRONTEND_FACTORY:
             {
-                ASRFactory factory;
-                source = factory.CreateSource(mSource);
-                source = factory.CreateFrontend(source);
+                source = mFactory.CreateSource(mSource);
+                source = mFactory.CreateFrontend(source);
                 break;
             }
             default:
                 assert(0);
             }
             mSink = new ArraySink<float>(source);
+            mSpeakerIDSink = 0;
+            printf("iInputVecSize %d GetArraySize %d\n", iInputVecSize, mSink->GetArraySize());
             assert(iInputVecSize == mSink->GetArraySize());
         }
 
@@ -92,13 +93,31 @@ namespace Juicer
 
         const char* GetSpeakerID(int iIndex)
         {
-            // Ignore iIndex for now.
-            return "xxx";
+            printf("GetSpeakerID for index %d\n", iIndex);
+            if (!mSpeakerIDSink)
+            {
+                Plugin<float>* p = mFactory.GetSpeakerIDSource();
+                if (p)
+                {
+                    mSpeakerIDSink = new ArraySink<float>(p);
+                    mSpeakerIDSink->Reset();
+                }
+                else
+                    return "xxx";
+            }
+            assert(mSpeakerIDSink);
+            float* data;
+            int get = mSpeakerIDSink->GetArray(data, iIndex);
+            if (get)
+                return (char*)data;
+            return "yyy";
         }
 
     private:
         Tracter::Source* mSource;
         ArraySink<float>* mSink;
+        ArraySink<float>* mSpeakerIDSink;
+        ASRFactory mFactory;
     };
 }
 

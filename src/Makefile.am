@@ -55,6 +55,7 @@ libjuicer_la_SOURCES = $(JUICER_SOURCES) \
 
 pkginclude_HEADERS = $(JUICER_SOURCES:.cpp=.h) \
 	htkparse.h \
+	Models.h \
 	WFSTGeneral.h
 
 BUILT_SOURCES = htkparse.y.h

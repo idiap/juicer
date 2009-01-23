@@ -2,13 +2,26 @@ Ronan Collobert
 - Parts taken from Torch
 
 Darren Moore
-- Original decoder up to version 0.5.0
+- Original decoder and WFST framework up to version 0.5.0
 
 John Dines
 - LNA 16 bit support
+- Torch MLP and VAD
 
 Octavian Cheng
 - On The Fly decoder
 
 Phil Garner
-- Maintainer since April 2007 
+- Maintainer since April 2007
+- Composition enhancements
+- Tracter interface
+- Decoder enhancements
+
+Vincent Wan
+- Decoder enhancements, HModels interface
+
+Zhang Le
+- Decoder enhancements, HTKFlatModels
+
+Danil Korchagin
+- SWIG / JNI interface

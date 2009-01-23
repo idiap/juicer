@@ -1,3 +1,10 @@
+0.9.0
+	Many performance enhancements.
+	HTKFlatModels for faster access.
+	Fix decoder behaviour for tee models.
+	Add more phone and word pruning options.
+	Remove some unused code.
+
 0.8.1
 	Support re-enabled for HTK extended filenames.
 	DecodingHMM and some other files removed

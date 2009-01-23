@@ -2,10 +2,18 @@
 # ...and manually buggered up by Phil Garner
 
 AC_PREREQ(2.59)
-AC_INIT([Juicer], [0.8.1])
+AC_INIT([Juicer], [0.9.0])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_SRCDIR([src/juicer.cpp])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
+
+# Checks for programs.
+AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_YACC
+AC_PROG_LEX
+AC_PROG_LIBTOOL
 
 # Check for Tracter
 PKG_CHECK_MODULES(
@@ -103,13 +111,6 @@ AC_MSG_CHECKING([whether to use swig JNI interface])
 AC_MSG_RESULT([$enableval])
 AM_CONDITIONAL([WITH_SWIG], [test "$enableval" = "yes"])
 
-
-# Checks for programs.
-AC_PROG_CXX
-AC_PROG_CC
-AC_PROG_YACC
-AC_PROG_LEX
-AC_PROG_LIBTOOL
 
 #
 # Many of these were added by autoscan, then removed by me (Phil).

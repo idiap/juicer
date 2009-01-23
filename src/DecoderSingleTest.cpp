@@ -201,7 +201,6 @@ void DecoderSingleTest::run(
     // Connect to the source
     assert(dataFName);
     frontend->SetSource(dataFName);
-    startTimeStamp = frontend->TimeStamp(0);
 
     // Timer for the decoding
     startTime = clock() ;
@@ -221,7 +220,9 @@ void DecoderSingleTest::run(
     endTime = clock() ;
     decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
 
-    mSpeakerID = frontend->GetSpeakerID(offset / 2);
+    startTimeStamp = frontend->TimeStamp(0);
+    int seconds = (int)((double)startTimeStamp / 1e9);
+    mSpeakerID = frontend->GetSpeakerID(seconds);
 
     // post-process the decoding result
     if ( hyp == NULL )
@@ -285,7 +286,8 @@ void DecoderSingleTest::decodeUtterance(
     // Time stamp and speaker ID
     // time stamp must be after the first frame of decode 
     startTimeStamp = frontend->TimeStamp(0);
-    mSpeakerID = frontend->GetSpeakerID(nFrames / 2);
+    int seconds = (int)((double)startTimeStamp / 1e9);
+    mSpeakerID = frontend->GetSpeakerID(seconds);
 
     // post-process the decoding result
     if ( hyp == NULL )

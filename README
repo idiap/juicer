@@ -17,10 +17,17 @@ several parallel builds that don't mess up the source directory:
 
  mkdir build
  cd build
- ../configure CXXFLAGS='-Wall -Os -g'
+ ../configure CXXFLAGS='-Wall -Os -g' --with-torch3=/path/to/Torch3
  make
 
 The executables will appear in build/src
+
+To use the raw HTK model mechanism, add these options, with text to
+suit your site, to configure:
+
+  --with-htk-includes="-I/path/to/HTK/HTK_V3.4/include"
+  --with-htk-libs="-L/path/to/HTK/HTK_V3.4/lib -lhtk"
+
 
 Documentation is provided in doxygen form.  From the build directory,
 type
@@ -31,3 +38,4 @@ You can then point a browser at html/index.html
 
 Phil Garner
 December 2007
+January 2009
