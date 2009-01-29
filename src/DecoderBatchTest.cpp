@@ -33,7 +33,7 @@ DecoderBatchTest::DecoderBatchTest(
 	DSTDataFileFormat inputFormat_ , 
 	int inputVecSize_ , const char *outputFName_ ,
 	DBTOutputFormat outputFormat_ , 
-	const char *expResultsFName_ , bool removeSil_ , int framesPerSec_
+    const char *expResultsFName_ , bool removeSil_ , int framesPerSec_
 )
 {
 
@@ -59,6 +59,8 @@ DecoderBatchTest::DecoderBatchTest(
 
 	init( inputFName_ , inputFormat_ , inputVecSize_ , outputFName_ , outputFormat_ , 
 			expResultsFName_ , removeSil_ , framesPerSec_ ) ;
+
+    loop = false;
 }
 
 
@@ -689,8 +691,8 @@ void DecoderBatchTest::run()
 	// open the output file and output format-specific header info
 	openOutputFile() ;
 
-    // Not a great test, but it'll do for the moment
-    if ((nTests == 1) && (inputFormat == DST_FEATS_FACTORY))
+    // loop is public - bit of a hack
+    if (loop)
     {
         LogFile::printf( "Single test file with factory: looping\n" ) ;
         LogFile::printf( "File: %s\n" , tests[0]->getTestFName() ) ;

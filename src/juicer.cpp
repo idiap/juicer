@@ -106,6 +106,9 @@ char           *pauseMonophone=NULL ;
 char           *tiedListFName=NULL ;
 char           *cdSepChars=NULL ;
 
+// Hacks
+bool dbtLoop;
+
 void checkConsistency() ;
 
 void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
@@ -205,6 +208,8 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
                         "the file containing the (tied) model list" ) ;
     cmd->addSCmdOption( "-cdSepChars" , &cdSepChars , "" ,
                         "the characters that separate monophones in context-dependent phone names (in order)") ;
+    cmd->addBCmdOption( "-loop" , &dbtLoop , false ,
+                        "Loops around the first file / device" ) ;
 
     cmd->read( argc , argv ) ;
 
@@ -563,6 +568,7 @@ int main( int argc , char *argv[] )
         vocab , phoneLookup , frontend , decoder , inputFName , inputFormat ,
         models->getInputVecSize() , outputFName , outputFormat , refFName ,
         removeSentMarks , framesPerSec ) ;
+    tester->loop = dbtLoop;
 
     if ( latticeGeneration )
     {

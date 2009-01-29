@@ -21,6 +21,10 @@ PKG_CHECK_MODULES(
 )
 AC_SUBST(TRACTER_CFLAGS)
 AC_SUBST(TRACTER_LIBS)
+AS_IF(
+  [test "$ac_cv_tracter" = 0],
+  [AC_ERROR([Required library TRACTER not found])]
+)
 
 
 # Check for Torch3 first using an explicit --with-torch3
@@ -68,11 +72,10 @@ AS_IF( [test "$with_torch3" = yes],
 )
 AM_CONDITIONAL([WITH_TORCH3], [test "$with_torch3" != no])
 
-if test "$with_torch3" = "no"
-then
-  echo Torch not found
-  exit 1
-fi
+AS_IF(
+  [test "$with_torch3" = "no"],
+  [AC_ERROR([Required library TORCH3 not found])]
+)
 
 
 # HTK

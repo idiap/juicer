@@ -29,13 +29,13 @@ namespace Juicer {
 
 typedef enum
 {
-	DBT_OUTPUT_VERBOSE=0 ,
-	DBT_OUTPUT_TRANS ,
-	DBT_OUTPUT_REF ,
-	DBT_OUTPUT_MLF ,
+    DBT_OUTPUT_VERBOSE=0 ,
+    DBT_OUTPUT_TRANS ,
+    DBT_OUTPUT_REF ,
+    DBT_OUTPUT_MLF ,
     DBT_OUTPUT_XMLF ,
     DBT_OUTPUT_HUB ,
-	DBT_OUTPUT_INVALID
+    DBT_OUTPUT_INVALID
 } DBTOutputFormat ;
 
 
@@ -69,6 +69,8 @@ public:
    void activateLatticeGeneration( const char *latticeDir_ ) ;
 	void run() ;
 	void outputText() ;
+
+    bool loop;  // public for now as a quick hack
 
 private:
 	// Private member variables
