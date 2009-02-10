@@ -87,8 +87,8 @@ public:
 
    // Public Methods
    virtual void init() ;
-   void processFrame( real *inputVec, int currFrame_ ) ;
-   DecHyp *finish() ;
+   virtual void processFrame( real *inputVec, int currFrame_ ) ;
+   virtual DecHyp *finish() ;
 
    bool modelLevelOutput() { return doModelLevelOutput ; } ;
    bool latticeGeneration() { return doLatticeGeneration ; } ;

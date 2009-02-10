@@ -28,6 +28,9 @@
 # endif
 #endif
 
+#ifdef OPTIMISE_DECODER_LITE
+#include "WFSTDecoderLite.h"
+#endif
 #ifdef WITH_ONTHEFLY
 # include "WFSTOnTheFlyDecoder.h"
 #endif
@@ -46,6 +49,9 @@
 
 using namespace Torch ;
 using namespace Juicer ;
+
+// decoding core selection
+bool useNewCore = false;
 
 // General parameters
 char           *logFName=NULL ;
@@ -115,6 +121,10 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
 {
     // General Parameters
     cmd->addText("\nGeneral Options:") ;
+#ifdef OPTIMISE_DECODER_LITE
+    cmd->addBCmdOption( "-fast" , &useNewCore , false ,
+                        "turn on the faster token-passing based decoding core" ) ;
+#endif
     cmd->addSCmdOption( "-logFName" , &logFName , "" ,
                         "the name of the log file" ) ;
     cmd->addICmdOption( "-framesPerSec" , &framesPerSec , 100 ,
@@ -527,6 +537,14 @@ int main( int argc , char *argv[] )
     LogFile::puts( "creating WFSTDecoder .... " ) ;
     WFSTDecoder *decoder = NULL ;
     if ( !onTheFlyComposition )  {
+#ifdef OPTIMISE_DECODER_LITE
+        if (useNewCore) {
+            decoder = new WFSTDecoderLite(
+            network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
+                maxHyps);
+        } else 
+#endif
+
         decoder = new WFSTDecoder(
 	    network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
             maxHyps , modelLevelOutput , latticeGeneration ) ;

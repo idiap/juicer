@@ -35,11 +35,18 @@ public:
     void *getElem() ;
     void returnElem( void *elem ) ;
 
+
     // Changes Octavian
     bool isAllFreed()
     {
         return (nFree == nTotal);
     }
+
+    // ZL: malloc, free & purge_memory interface for compatibility with boost lib's pool interface
+    // and it seems this realloc based implementation is slightly faster than boost::pool
+    void* malloc() { return getElem(); }
+    void free(void* elem) { returnElem(elem); }
+    void purge_memory();
 
 private:
     int elemByteLen ;

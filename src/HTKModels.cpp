@@ -278,6 +278,8 @@ void HTKModels::Load(
    // Clean up parse result & close HTK models file
    cleanHTKDef() ;
    fclose( fd ) ;
+   createTrP();
+   createSEIndex();
 }
 
 
@@ -320,6 +322,13 @@ HTKModels::~HTKModels()
       {
          delete [] transMats[i].name ;
          delete [] transMats[i].nSucs ;
+         SEIndex* se = transMats[i].seIndexes;
+         ++se; /* remember we index from 1 */
+         delete[] se;
+         int n = transMats[i].nStates;
+         for (int j = 0; j < n; ++j)
+             delete[] transMats[i].trP[j];
+         delete[] transMats[i].trP;
          if ( transMats[i].sucs != NULL )
          {
             delete [] transMats[i].sucs[0] ;
@@ -1236,6 +1245,8 @@ void HTKModels::readBinary( const char *fName )
    }
 
    fromBinFile = true ;
+   createTrP();
+   createSEIndex();
 }
 
 
@@ -1884,6 +1895,24 @@ void HTKModels::outputTransMat( int ind , bool isRef , bool outputBinary )
                }
                fprintf( outFD , "\n" ) ;
             }
+               fprintf(outFD, "<trP> %d\n", mat->nStates);
+               for (int i = 0; i < mat->nStates; ++i) {
+                   for (int j = 0; j < mat->nStates; ++j) {
+                       real x =  mat->trP[i][j];
+                       if (x == LOG_ZERO)
+                           fprintf(outFD, "0.0 ");
+                       else
+                           fprintf(outFD, "%f ", exp(x));
+                   }
+                   fprintf(outFD, "\n");
+               }
+               fprintf(outFD, "\n");
+               fprintf(outFD, "<SEIndex> %d\n", mat->nStates);
+               for (int i = 1; i < mat->nStates; ++i) {
+                   SEIndex* se = mat->seIndexes;
+                   fprintf(outFD, "state %d, [%d, %d)\n", i, se[i].start, se[i].end);
+               }
+               fprintf(outFD, "\n");
          }
       }
       else
@@ -2306,5 +2335,51 @@ void testModelsIO( const char *htkModelsFName , const char *phonesListFName ,
    }
 }
 
+void HTKModels::createTrP() {
+    // adhoc function, maybe better integerated later
+    for (int i = 0; i < nTransMats; ++i) {
+        TransMatrix& tm = transMats[i];
+        int n = tm.nStates;
+        real** trP = new real*[n];
+        for (int j = 0; j < n; ++j) {
+            trP[j] = new real[n];
+            for (int k = 0; k < n; ++k)
+                trP[j][k] = LOG_ZERO;
+        }
+
+        for (int j = 0; j < n; ++j) {
+            for (int sucId = 0; sucId < tm.nSucs[j]; ++sucId) {
+                trP[j][tm.sucs[j][sucId]] = tm.logProbs[j][sucId];
+            }
+        }
+        tm.trP = trP;
+    }
+}
+
+void HTKModels::createSEIndex() {
+    real** trP;
+    SEIndex* se;
+    int N, min, max;
+    for (int i = 0; i < nTransMats; ++i) {
+        TransMatrix& tm = transMats[i];
+        trP = tm.trP;
+        assert(trP);
+        N = tm.nStates;
+        se = new SEIndex[N-1];
+        --se; /* we index from 1, as state 0 does not need a SEIndex */
+        for (int j = 1; j < N; ++j) {
+            int min, max;
+            for (min = (j == N-1?1:0); min < N-1; ++min) /* tee transition is not dealt with here */
+                if (trP[min][j] > LOG_ZERO)
+                    break;
+            for (max = N-1; max >= 1; --max)
+                if (trP[max][j] > LOG_ZERO)
+                    break;
+            se[j].start = min;
+            se[j].end = max+1;
+        }
+        tm.seIndexes = se;
+    }
+}
 
 }

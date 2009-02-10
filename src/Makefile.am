@@ -11,14 +11,16 @@
 
 OPT = # add flags as you wish
 OPT += -DOPTIMISE_FLATMODEL
-OPT += -DOPTIMISE_ALIGN4
-OPT += -DNO_BEST_END
-OPT += -DNO_BEST_START
+OPT += -DOPTIMISE_DECODER_LITE # this turns on the new core based by token-passing
+#OPT += -DOPTIMISE_ALIGN4
+#OPT += -DNO_BEST_END
+#OPT += -DNO_BEST_START
 
 lib_LTLIBRARIES = libjuicer.la
 
 JUICER_SOURCES = \
 	WFSTDecoder.cpp \
+	WFSTDecoderLite.cpp \
 	WFSTNetwork.cpp \
 	WFSTModel.cpp \
 	WFSTLattice.cpp \

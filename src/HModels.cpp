@@ -1,5 +1,6 @@
 /*
- * Copyright 2008 by The University of Sheffield
+ * Copyright 2008,2009 by The University of Sheffield
+ * and The University of Edinburgh
  *
  * See the file COPYING for the licence associated with this software.
  */
@@ -71,6 +72,13 @@ HModels::~HModels()
         delete[] stateProbCache;
         for( int i=0;i<hSet.numTransP;i++ )
         {
+             SEIndex* se = transMats[i].seIndexes;
+             ++se; /* remember we index from 1 */
+             delete[] se;
+             int n = transMats[i].nStates;
+             for (int j = 0; j < n; ++j)
+                 delete[] transMats[i].trP[j];
+             delete[] transMats[i].trP;
             for( int j=0;j<maxStates;j++ )
             {
                 delete[] transMats[i].logProbs[j];
@@ -158,6 +166,8 @@ void HModels::Load( const char *htkModelsFName , bool removeInitialToFinalTransi
 	 * HTK is now initialised
 	 */
 	isHTKinitialised = true;
+    createTrP();
+    createSEIndex();
 }
 
 /**
@@ -282,6 +292,9 @@ void HModels::InitialiseHMMSet()
 	if (noAlias) ZapAliases();
 	if(LoadHMMSet(&hSet,hmmDir,hmmExt)<SUCCESS)
 		HError(2628,"Initialise: LoadHMMSet failed");
+    /* INVDIAGC is much faster than DIAGC, due to use * instead of / */
+    ConvDiagC(hset,TRUE);
+
 	/*
 	 * Make the Observation structure for storing feature vectors.
 	 */
@@ -325,6 +338,7 @@ void HModels::InitialiseHModels( bool removeInitialToFinalTransitions )
 			transMats[i].logProbs[j] = new real[ maxStates ];
 		}
 	}
+
 	/*
 	 * Now scan through hset creating a look up table of pointers to the HMMs (HLink)
 	 * and reordering the transition matrices data for faster lookup.
@@ -614,6 +628,53 @@ void HModels::ZapAliases(void)
             NewMacro(hset,fidx,'l',q->id,hmm);
             hmm->nUse=1;
          }
+}
+
+void HModels::createTrP() {
+    // adhoc function, maybe better integerated later
+    for (int i = 0; i < hSet.numTransP; ++i) {
+        HModelsTransMatrix& tm = transMats[i];
+        int n = tm.nStates;
+        real** trP = new real*[n];
+        for (int j = 0; j < n; ++j) {
+            trP[j] = new real[n];
+            for (int k = 0; k < n; ++k)
+                trP[j][k] = LOG_ZERO;
+        }
+
+        for (int j = 0; j < n; ++j) {
+            for (int sucId = 0; sucId < tm.nSucs[j]; ++sucId) {
+                trP[j][tm.sucs[j][sucId]] = tm.logProbs[j][sucId];
+            }
+        }
+        tm.trP = trP;
+    }
+}
+
+void HModels::createSEIndex() {
+    real** trP;
+    SEIndex* se;
+    int N, min, max;
+    for (int i = 0; i < hSet.numTransP; ++i) {
+        HModelsTransMatrix& tm = transMats[i];
+        trP = tm.trP;
+        assert(trP);
+        N = tm.nStates;
+        se = new SEIndex[N-1];
+        --se; /* we index from 1, as state 0 does not need a SEIndex */
+        for (int j = 1; j < N; ++j) {
+            int min, max;
+            for (min = (j == N-1?1:0); min < N-1; ++min) /* tee transition is not dealt with here */
+                if (trP[min][j] > LOG_ZERO)
+                    break;
+            for (max = N-1; max >= 1; --max)
+                if (trP[max][j] > LOG_ZERO)
+                    break;
+            se[j].start = min;
+            se[j].end = max+1;
+        }
+        tm.seIndexes = se;
+    }
 }
 
 }

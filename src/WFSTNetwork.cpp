@@ -475,6 +475,7 @@ WFSTNetwork::WFSTNetwork(
       transitions[nTransitions].toState = to ;
       transitions[nTransitions].inLabel = in ;
       transitions[nTransitions].outLabel = out ;
+      transitions[nTransitions].hook = NULL;
 
       // FSM weights are -ve log
       transitions[nTransitions].weight = (real)(-weight * transWeightScalingFactor ) ;

@@ -1257,7 +1257,8 @@ void WFSTDecoder::reset()
    }
 
    // Reset the bestFinalHyp
-   resetDecHyp( bestFinalHyp ) ;
+   if (bestFinalHyp)
+       resetDecHyp( bestFinalHyp ) ;
 
 }
 

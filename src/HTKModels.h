@@ -44,6 +44,8 @@ namespace Juicer
         int   **sucs ;
         real  **probs ;
         real  **logProbs ;
+        SEIndex *seIndexes; /* N-1 entries: seIndexes[1,..,N-1] */
+        real **trP;
     };
 
     struct Mixture
@@ -120,6 +122,14 @@ namespace Juicer
             return transMats[transMatrixInd].logProbs[stateInd][sucInd];
         }
         real getTeeLogProb(int hmmInd) { return hMMs[hmmInd].teeWeight; }
+        real** getTransMat(int hmmInd) {
+            int transMatrixInd = hMMs[hmmInd].transMatrixInd;
+            return transMats[transMatrixInd].trP;
+        }
+        SEIndex* getSEIndex(int hmmInd) {
+            int transMatrixInd = hMMs[hmmInd].transMatrixInd;
+            return transMats[transMatrixInd].seIndexes;
+        }
 
     protected:
 
@@ -161,6 +171,9 @@ namespace Juicer
         real           *logPriors ;
 
         void initFromHTKParseResult() ;
+
+        void createSEIndex();
+        void createTrP();
 
         int addHMM( HTKHMM *hmm ) ;
         int addGMM( HTKHMMState *st ) ;

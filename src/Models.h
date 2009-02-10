@@ -19,6 +19,13 @@ namespace Juicer
      * Models interface.
      * Models such as HTK MMFs should implement this interface.
      */
+
+    /* SEIndex defines the range of possible incoming states within an HMM [start, end) */
+    typedef struct SEIndex_ {
+        short start;
+        short end;
+    } SEIndex;
+
     class Models
     {
     public:
@@ -53,6 +60,9 @@ namespace Juicer
             int hmmInd, int stateInd, int sucInd
         ) = 0;
         virtual real getTeeLogProb(int hmmInd) = 0;
+        // not every implementation should implement these:
+        virtual real** getTransMat(int hmmInd) { return NULL; }
+        virtual SEIndex* getSEIndex(int hmmInd) { return NULL; }
     };
 }
 

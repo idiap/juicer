@@ -39,17 +39,29 @@ BlockMemPool::BlockMemPool( int elemByteLen_ , int reallocAmount_ )
 
 BlockMemPool::~BlockMemPool()
 {
+    purge_memory();
+}
+
+void BlockMemPool::purge_memory() {
 	if ( allocs != NULL )
 	{
 		for ( int i=0 ; i<nAllocs ; i++ )
 			delete [] allocs[i] ;
-		free( allocs ) ;
+		::free( allocs ) ;
 	}
 
 	if ( freeElems != NULL )
-		free( freeElems ) ;
-}
+		::free( freeElems ) ;
 
+	nTotal = 0 ;
+	nFree = 0 ;
+	nUsed = 0 ;
+	nAllocs = 0 ;
+    getCnt = 0 ;
+    retCnt = 0 ;
+	allocs = NULL ;
+	freeElems = NULL ;
+}
 
 void *BlockMemPool::getElem()
 {

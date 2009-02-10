@@ -47,6 +47,9 @@ struct WFSTTransition
     real     weight ;
     int      inLabel ;
     int      outLabel ;
+
+    // add by zl for use in WFSTDecoderLite to store NetInst instance
+    void*    hook;
 };
 
 

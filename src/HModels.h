@@ -38,6 +38,7 @@
 #define HMODELS_INC
 
 #include "Models.h"
+#include "log_add.h" // for LOG_ZERO returned by getTeeLogProb()
 
 namespace Juicer
 {
@@ -63,6 +64,9 @@ namespace Juicer
 		int   *nSucs ;
 		int   **sucs ;
 		real  **logProbs ;
+
+        SEIndex *seIndexes; /* N-1 entries: seIndexes[1,..,N-1] */
+        real **trP;
 	};
 
 	/**
@@ -117,7 +121,17 @@ namespace Juicer
         int getNumSuccessors(int hmmInd, int stateInd) ;
         int getSuccessor(int hmmInd, int stateInd, int sucInd) ;
         real getSuccessorLogProb(int hmmInd, int stateInd, int sucInd) ;
-        real getTeeLogProb(int hmmInd) { return 0; }
+        real getTeeLogProb(int hmmInd) { return LOG_ZERO; }
+        real** getTransMat(int hmmInd) {
+
+            return HMMtransMat[hmmInd]->trP;
+        }
+        SEIndex* getSEIndex(int hmmInd) {
+
+            return HMMtransMat[hmmInd]->seIndexes;
+        }
+            void createSEIndex();
+            void createTrP();
 
     private:
     	/*
