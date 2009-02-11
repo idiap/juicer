@@ -12,15 +12,6 @@
 
 #include <cassert>
 
-// TODO: remove later
-#if 0
-#include <algorithm>
-#include <vector>
-#include <string>
-#include <itemmap.hpp>
-#include "hash_map.hpp"
-#endif
-
 #include <log_add.h>
 #include "LogFile.h"
 #include "WFSTDecoderLite.h"
@@ -117,7 +108,7 @@ void WFSTDecoderLite::recognitionStart() {
 
     //  <<Free per-utterance memory>>
     {
-        // as destoryNetInst() is not used to free instances,
+        // as destroyNetInst() is not used to free instances,
         // need to manually reset trans->hook
         for(list<NetInst*>::iterator it = netInstList.begin(); it != netInstList.end(); ++it) {
             (*it)->trans->hook = NULL;
@@ -184,9 +175,6 @@ void WFSTDecoderLite::recognitionStart() {
 
 DecHyp* WFSTDecoderLite::recognitionFinish() {
     Token best = nullToken;
-    //printf("%03d, best token in final transitions: %f\n", currFrame, best.score);
-    //printf("%03d, bestFinalToken: %f\n", currFrame, bestFinalToken.score);
-    //if (bestFinalToken.score > best.score)
      LogFile::printf(
         "\nStatistics:\n  nFrames=%d\n  avgActiveEmitHyps=%.2f\n"
         "  avgActiveEndHyps=%.2f\n  avgActiveModels=%.2f\n"
@@ -236,9 +224,6 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
                if (oldHist != NULL) {
                    oldHist->prev = tmp;
                } else {
-                    // printf("tmp score: %f, best score:%f\n", tmp->score, best.score);
-                    // printf("tmp lmScore: %f, best lmScore:%f\n", tmp->lmScore, best.lmScore);
-                    // printf("tmp acousticScore: %f, best acousticScore:%f\n", tmp->acousticScore, best.acousticScore);
                     // need to update the last hypothesis as the best hypothesis can contain
                     // added final transition weights
                     tmp->lmScore = best.lmScore;
@@ -263,6 +248,7 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
     // fprintf(stderr, "processing frame %d\n", frame_);
 
     currFrame = frame_;
+
     // TODO: a better caching mechanism
     hmmModels->newFrame(currFrame, inputVec); // clear GMM cache
     bestFinalToken = nullToken; 
@@ -374,7 +360,7 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
             NetInst* inst = *it;
             WFSTTransition* trans = inst->trans;
             Token* exit_tok = inst->states + inst->nStates - 1;
-            if (exit_tok->score > LOG_ZERO) {//TODO: profile how often exit_tok->score is LOG_ZERO
+            if (exit_tok->score > LOG_ZERO) {
                 // VW - word based pruning
                 // Use a different purning threshold when a word is emitted
                 if (inst->trans->outLabel == WFST_EPSILON) {
@@ -420,7 +406,6 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
     // separate pass.
     {
         assert(nPath >= 0);
-        //printf("%03d, nPath=%d\n", nPath);
         real pathRatio = ((real)nPath)/nPathNew; /* # of newly created paths / # of last remained paths */
 
         if (pathRatio > 10. && nPath > 4096 || (currFrame - lastPathCollectFrame > 100)) {
@@ -428,7 +413,6 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
             // printf("%03d, %d paths since last collection\n", currFrame, nPath - nPathNew);
             collectPaths();
             lastPathCollectFrame = currFrame;
-            // printf("%03d, %d paths remain\n", currFrame, nPath);
         }
     }
 }
@@ -443,7 +427,6 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
     real** trP = hmmModels->getTransMat(inst->hmmIndex);
     SEIndex* se = hmmModels->getSEIndex(inst->hmmIndex);
     
-    inst->maxScore = LOG_ZERO;
     // <<Token propagation of emitting states>>
     {
         // scan emitting states first
@@ -455,18 +438,13 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
             
             // assume a transition from i to j
             *res = *cur;
-            real oldScore = res->score;
             
             res->score += trP[i][j];
             res->acousticScore += trP[i][j];
             
-            //printf("DEBUG_INFO, HMM[%s] %d->%d: %f\n",  network->inputAlphabet->getLabel(inst->hmmIndex+1), i, j, trP[i][j]);
-            
             // then compare with all other possible incoming transitions
             for (++i, ++cur; i < endi; ++i, ++cur) {
                 double tmpScore = cur->score + trP[i][j];
-              //  if (trP[i][j] > LOG_ZERO)
-            //printf("DEBUG_INFO, HMM[%s] %d->%d: %f\n",  network->inputAlphabet->getLabel(inst->hmmIndex+1), i, j, trP[i][j]);
                 if (tmpScore > res->score) {
                     *res = *cur;
                     res->score = tmpScore;
@@ -479,19 +457,16 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
             if (res->score > currEmitPruneThresh) {
                 ++nEmitHypsProcessed;
                 real outp = hmmModels->calcOutput(inst->hmmIndex, j);
-                // real outp = -0.5;
                 res->score += outp;
                 res->acousticScore += outp;
                 if (emitHypsHistogram) {
-                    // printf("%03d, addScore %f\n", currFrame, res->score);
-                    emitHypsHistogram->addScore(res->score, LOG_ZERO /*oldScore*/);
+                    emitHypsHistogram->addScore(res->score, LOG_ZERO);
                 }
-                if (res->score > inst->maxScore)
-                    inst->maxScore = res->score;
+                if (res->score > bestEmitScore)
+                    bestEmitScore = res->score;
     
             } else {
                 // pruned away
-                //printf("DEBUG_ACTION %03d, setting tok[%d] (%f) currEmitPruneThresh (%f) to NULL\n", currFrame, j, res->score, currEmitPruneThresh);
                 *res = nullToken;
             }
         }
@@ -508,8 +483,6 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
         }
         nActiveEmitHyps += inst->nActiveHyps;
         
-        if (inst->maxScore > bestEmitScore)
-            bestEmitScore = inst->maxScore;
     } // end of <<Token propagation of emitting states>>
 
     // <<Token propagation of exit states>>
@@ -527,7 +500,6 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
         
         res->score += trP[i][N-1];
         res->acousticScore += trP[i][N-1];
-        //printf("DEBUG_INFO, HMM[%s] %d->%d: %f\n",  network->inputAlphabet->getLabel(inst->hmmIndex+1), i, N-1, trP[i][N-1]);
         
         // compare with all other possible to-exit transitions
         for (++i, ++cur; i < endi; ++i, ++cur) {
@@ -537,14 +509,13 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
                 res->score = tmpScore;
                 res->acousticScore += trP[i][N-1];
     
-                // non-emit states can not have higher score so no need to compare with inst->maxScore
+                // non-emit states can not have higher score so no need to compare with bestEmitScore
             }
         }
         
         // pruning?
         if (res->score <= LOG_ZERO) {
             *res = nullToken;
-            //printf("DEBUG_ACTION %03d, setting exit_tok[%d] to NULL\n", currFrame, N-1);
        } else {
             if (res->score > bestEndScore)
                 bestEndScore = res->score;
@@ -648,14 +619,12 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
                     *res = *tok;
                     res->score = newScore;
                     res->lmScore += trans->weight;
-                    if (newScore > inst->maxScore) {
-                        inst->maxScore = newScore;
-                        if (newScore > bestEmitScore)
-                            bestEmitScore = newScore;
-                    }
+
+                    if (newScore > bestEmitScore)
+                        bestEmitScore = newScore;
+
                     if (newScore > bestStartScore)
                         bestStartScore = newScore;
-
                 }
             }
         }
@@ -803,7 +772,6 @@ void WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
     inst->states = (Token*)stateNPools[n]->malloc();
     for (int i = 0; i < n; ++i)
         inst->states[i] = nullToken;
-    inst->maxScore = LOG_ZERO;
     trans->hook = inst;
     inst->trans = trans;
     inst->nActiveHyps = 0;
