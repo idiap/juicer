@@ -12,7 +12,7 @@
  * computation, derived from HTKModels.
  * by Zhang Le
  * Begin       : 02-Oct-2008
- * Last Change : 15-Oct-2008.
+ * Last Change : 11-Feb-2009.
  * 
  */
 
@@ -24,7 +24,7 @@
 #include <cstdlib>
 #include "log_add.h"
 
-#ifdef OPTIMISE_INTEL_IPP
+#ifdef HAVE_INTEL_IPP
 #include <ippcore.h>
 #include <ipps.h>
 #include <ippsr.h>
@@ -121,7 +121,7 @@ void HTKFlatModels::init() {
         }
     }
 
-#ifdef OPTIMISE_INTEL_IPP
+#ifdef HAVE_INTEL_IPP
     ippStaticInit();
     int cpuMhz;
     ippGetCpuFreqMhz(&cpuMhz);
@@ -188,7 +188,7 @@ real HTKFlatModels::calcGMMOutput( int gmmInd )
         real *dets=fDet(gmmInd);
         int nMix = fMixtures[gmmInd].compNum;
 
-#ifdef OPTIMISE_INTEL_IPP
+#ifdef HAVE_INTEL_IPP
         ippsLogGaussMixture_32f_D2(currInput,means,vars,nMix,fvecSize4, vecSize, dets, &logProb);
 #else
         for (int i = 0; i < nMix; ++i) {

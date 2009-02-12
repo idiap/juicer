@@ -102,6 +102,38 @@ AC_SUBST([HTK_INCLUDES], [$with_htk_includes])
 AC_SUBST([HTK_LIBS], [$with_htk_libs])
 AM_CONDITIONAL([WITH_HTK], [test "$with_htk_includes" != ""])
 
+# use GMM computation routines from Intel Integrated Performance Primitives (IPP)
+AC_ARG_WITH(ipproot,
+  [AS_HELP_STRING(
+    [--with-ipproot=DIR],
+    [Root directory of Intel Integrated Performance Primitives lib, usually defined as IPPROOT]
+  )]
+)
+AC_MSG_CHECKING([whether to use Intel IPP lib])
+AS_IF(
+  [test "$with_ipproot" != ""],
+  [AC_DEFINE([HAVE_INTEL_IPP], [1], [Define if you have Intel IPP lib installed.])
+   AC_MSG_RESULT(yes)],
+  [AC_MSG_RESULT(no)]
+)
+AS_IF(
+  [test "$with_ipproot" != ""],
+    [AC_SUBST([INTEL_IPP_INCLUDES], ["-I$with_ipproot/include"])],
+    [AC_SUBST([INTEL_IPP_INCLUDES], [""])],
+) 
+AS_IF(
+  [test "$with_ipproot" != ""],
+    [AC_SUBST([INTEL_IPP_LIBS], ["-L$with_ipproot/lib \
+              -L$with_ipproot/sharedlib \
+              -lirc \
+              -lippcore \
+              -lippsemerged \
+              -lippsremerged \
+              -lippsrmerged \
+              -lippsmerged"])],
+    [AC_SUBST([INTEL_IPP_LIBS], [""])]
+)
+AM_CONDITIONAL([WITH_INTEL_IPP], [test "$with_ipproot" != ""])
 
 # SWIG interface
 AC_ARG_ENABLE(swig,
@@ -113,7 +145,6 @@ AC_ARG_ENABLE(swig,
 AC_MSG_CHECKING([whether to use swig JNI interface])
 AC_MSG_RESULT([$enableval])
 AM_CONDITIONAL([WITH_SWIG], [test "$enableval" = "yes"])
-
 
 #
 # Many of these were added by autoscan, then removed by me (Phil).
@@ -155,9 +186,13 @@ AC_OUTPUT
 
 AC_MSG_RESULT([
  Juicer Configured
- TORCH3_INCLUDES = $TORCH3_INCLUDES
- TORCH3_LIBS     = $TORCH3_LIBS
- TRACTER_CFLAGS  = $TRACTER_CFLAGS
- TRACTER_LIBS    = $TRACTER_LIBS
- CXXFLAGS        = $CXXFLAGS
+ TORCH3_INCLUDES    = $TORCH3_INCLUDES
+ TORCH3_LIBS        = $TORCH3_LIBS
+ TRACTER_CFLAGS     = $TRACTER_CFLAGS
+ TRACTER_LIBS       = $TRACTER_LIBS
+ HTK_INCLUDES       = $HTK_INCLUDES
+ HTK_LIBS           = $HTK_LIBS
+ INTEL_IPP_INCLUDES = $INTEL_IPP_INCLUDES
+ INTEL_IPP_LIBS     = $INTEL_IPP_LIBS
+ CXXFLAGS           = $CXXFLAGS
 ])

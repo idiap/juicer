@@ -54,7 +54,6 @@ namespace Juicer {
         int hmmIndex;
         int nStates;
         WFSTTransition* trans;  /* the transition this inst is attached to */
-        real maxScore;    /* max score in the inst, for pruning, TODO: may be removed later */
         Token* states;    /* states[nStates] including non-emitting entry and exit states */
         
         int nActiveHyps;
