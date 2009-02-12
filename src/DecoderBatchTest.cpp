@@ -442,10 +442,14 @@ void DecoderBatchTest::outputResult( DecoderSingleTest *test )
          LogFile::printf( "acousticScore=%.4f lmScore=%.4f\n" , 
                           test->resultWords[0][j].acousticScore , test->resultWords[0][j].lmScore );
       }
-      LogFile::printf(
-          "\nEnd time %lld ns\n\n",
-          test->frameTime( test->resultWords[0][test->nResultWords-1].endTime)
-      ) ;
+
+      if (test->resultWords)
+          LogFile::printf(
+              "\nEnd time %lld ns\n\n",
+              test->frameTime( test->resultWords[0][test->nResultWords-1].endTime)
+          ) ;
+      else
+          LogFile::printf("\nEnd time unknown\n\n") ;
 
       LogFile::printf("\ntotal scores: lm=%.3f ac=%.3f\n\n" , 
                       test->getTotalLMScore() , test->getTotalAcousticScore() ) ;
