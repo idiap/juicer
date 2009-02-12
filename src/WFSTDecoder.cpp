@@ -339,7 +339,6 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
 
    totalActiveEmitHyps += nActiveEmitHyps ;
    totalActiveEndHyps += nActiveEndHyps ;
-   totalActiveModels += nActiveModels ;
    totalProcEmitHyps += nEmitHypsProcessed ;
 
    //printf("PHN(%d): nActPhn=%d nActiveEmit=%d nActiveEnd=%d nEmitProc=%d ",currFrame,nActiveModels,nActiveEmitHyps,nActiveEndHyps,nEmitHypsProcessed);fflush(stdout);
@@ -350,6 +349,7 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
     // Process phone-end hyps and calculate the new pronun-end pruning threshold
     processActiveModelsEndStates() ;
     totalProcEndHyps += nEndHypsProcessed ;
+    totalActiveModels += nActiveModels ;
 //printf("nEndProc=%d\n",nEndHypsProcessed);fflush(stdout);
 
 //lattice->printLogInfo() ;
