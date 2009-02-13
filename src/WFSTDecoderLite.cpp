@@ -261,6 +261,7 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
         if (emitHypsHistogram) {
 
             currEmitPruneThresh = emitHypsHistogram->calcThresh(maxEmitHyps);
+            // printf("%03d, emitHypsHistogram->calcThresh(%d) = %f\n", currFrame, maxEmitHyps, currEmitPruneThresh);
             currEmitPruneThresh -= normaliseScore;
             if (emitPruneWin > 0.0 && currEmitPruneThresh < -emitPruneWin)
                 currEmitPruneThresh = -emitPruneWin;

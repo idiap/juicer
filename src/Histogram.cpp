@@ -147,8 +147,13 @@ real Histogram::calcThresh( int maxN )
 	for ( int i=(nBins-1) ; i>=0 ; i-- )
 	{
 		total += bins[i].cnt ;
-		if ( total >= maxN )
+		if ( total >= maxN ) {
+#ifdef LINEAR_INTERPOLATION_HISTOGRAM
+            return 0.5*(bins[i].best+bins[i].worst);
+#else
 			return (real)( (real)( bins[i].min ) - 0.5 ) ;
+#endif
+        }
 	}
 
 	// If we make it here then there is a problem.
