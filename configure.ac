@@ -119,18 +119,18 @@ AS_IF(
 AS_IF(
   [test "$with_ipproot" != ""],
     [AC_SUBST([INTEL_IPP_INCLUDES], ["-I$with_ipproot/include"])],
-    [AC_SUBST([INTEL_IPP_INCLUDES], [""])],
-) 
+    [AC_SUBST([INTEL_IPP_INCLUDES], [""])]
+)
 AS_IF(
   [test "$with_ipproot" != ""],
     [AC_SUBST([INTEL_IPP_LIBS], ["-L$with_ipproot/lib \
               -L$with_ipproot/sharedlib \
               -lirc \
-              -lippcore \
-              -lippsemerged \
-              -lippsremerged \
-              -lippsrmerged \
-              -lippsmerged"])],
+              -lippcore$POSTFIX \
+              -lippsemerged$POSTFIX \
+              -lippsremerged$POSTFIX \
+              -lippsrmerged$POSTFIX \
+              -lippsmerged$POSTFIX"])],
     [AC_SUBST([INTEL_IPP_LIBS], [""])]
 )
 AM_CONDITIONAL([WITH_INTEL_IPP], [test "$with_ipproot" != ""])
