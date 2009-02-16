@@ -322,7 +322,7 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
 
         for(list<NetInst*>::iterator it = netInstList.begin(); it != netInstList.end();++it) {
             NetInst* inst = *it;
-            for (int i = 0; i < inst->nStates; ++i) {
+            for (int i = 0; i < inst->nStates-1; ++i) {
                 if ((inst->states[i]).score > LOG_ZERO)
                     ++nActiveTokens;
             }
@@ -595,23 +595,6 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
                 Token* res = inst->states;
                 double newScore = tok->score + trans->weight;
 
-                real teeWeight = hmmModels->getTeeLogProb(inst->hmmIndex);
-                //teeWeight = LOG_ZERO;
-                if (teeWeight > LOG_ZERO) {
-                    // if there is a tee transition, pass token to exit state
-                    // and propagate it to next transitions
-                    //newScore += teeWeight;
-                    Token* exit = inst->states + inst->nStates - 1;
-                    Token tmp = *tok;
-                    tmp.score = newScore + teeWeight;
-                    tmp.acousticScore += teeWeight;
-                    tmp.lmScore += trans->weight;
-                    if (newScore > currEndPruneThresh) {
-                        propagateToken(&tmp, trans);
-                    }
-
-                }
-
                 if (newScore > res->score) {
 
                     if (res->score <= LOG_ZERO)
@@ -627,6 +610,26 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
                     if (newScore > bestStartScore)
                         bestStartScore = newScore;
                 }
+
+                real teeWeight = hmmModels->getTeeLogProb(inst->hmmIndex);
+                //teeWeight = LOG_ZERO;
+                if (teeWeight > LOG_ZERO) {
+                    newScore += teeWeight;
+                    // if there is a tee transition, pass the token on
+                    // and propagate it to next transitions
+                    Token tmp = *tok;
+                    tmp.score = newScore;
+                    tmp.acousticScore += teeWeight;
+                    tmp.lmScore += trans->weight;
+                    if (trans->inLabel == network->silMarker || trans->inLabel == network->spMarker ) {
+                        if ( newScore > currWordPruneThresh )
+                            propagateToken(&tmp, trans);
+                    } else {
+                        if (newScore > currEndPruneThresh) 
+                            propagateToken(&tmp, trans);
+                    }
+                } // handle teeWeight
+
             }
         }
     } // end <<Pass |tok| to each |trans| in |transList|>>

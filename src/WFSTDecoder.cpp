@@ -944,9 +944,10 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans)
             if (nextModel == NULL)
                 nextModel = getNewModel(&nextTrans[i]) ;
             real newScore = endHyp->score + nextTrans[i].weight ;
+
             if ( newScore > nextModel->currHyps[0].score )
             {
-                // Extend this hypothesis into the new model
+                // Extend this hypothesis into the entry state of the new model
                 if ( nextModel->currHyps[0].score <= LOG_ZERO )
                     nextModel->nActiveHyps++ ;
 
@@ -964,60 +965,41 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans)
                     bestStartScore = newScore;
 #endif
 
-                // In addition, there might be a tee transition.
-                real teeWeight = models->getTeeLogProb(nextModel->hmmIndex);
-                if (teeWeight > LOG_ZERO)
+            }
+
+            // In addition, there might be a tee transition to be passed on
+            real teeWeight = models->getTeeLogProb(nextModel->hmmIndex);
+            if (teeWeight > LOG_ZERO)
+            {
+                // zl: tee model is supposed to be passed directly and it should not 
+                // be extended to the final state of nextModel
+                newScore += teeWeight;
+                DecHyp tmpHyp ;
+                decHypHistPool->extendDecHyp(endHyp,
+                        &tmpHyp,
+                        newScore,
+                        endHyp->acousticScore + teeWeight,
+                        endHyp->lmScore + nextTrans[i].weight);
+
+
+                // VW - word based pruning
+                // Use a different purning threshold at word ends (sil and sp phones mark these)
+                if ( nextModel->trans->inLabel == network->silMarker ||
+                        nextModel->trans->inLabel == network->spMarker )
                 {
-                    int finalState =
-                        models->getNumStates(nextModel->hmmIndex) - 1;
-                    newScore += teeWeight;
-                    if (newScore > nextModel->currHyps[finalState].score)
+                    if ( newScore > currWordPruneThresh )
                     {
-                        // Extend the tee into the final state
-                        if (nextModel->currHyps[finalState].score <= LOG_ZERO)
-                        {
-                            nextModel->nActiveHyps++ ;
-                            nActiveEndHyps++;
-                        }
-
-                        decHypHistPool->extendDecHyp(
-                            nextModel->currHyps,
-                            nextModel->currHyps + finalState,
-                            newScore,
-                            nextModel->currHyps->acousticScore + teeWeight,
-                            nextModel->currHyps->lmScore
-                        ) ;
-
-                        // VW - word based pruning
-                        // Use a different purning threshold at word ends (sil and sp phones mark these)
-                        if ( nextModel->trans->inLabel == network->silMarker ||
-                             nextModel->trans->inLabel == network->spMarker )
-                        {
-                            if ( newScore > currWordPruneThresh )
-                            {
-                                extendModelEndState(
-                                    nextModel->currHyps + finalState,
-                                    &nextTrans[i]
-                                ) ;
-                            }
-                        }
-                        else
-                        {
-                            if (newScore > currEndPruneThresh)
-                            {
-                                extendModelEndState(
-                                    nextModel->currHyps + finalState,
-                                    &nextTrans[i]
-                                ) ;
-                            }
-                        }
-
-                        // Reset the end hyp
-                        resetDecHyp(nextModel->currHyps + finalState);
-                        nextModel->nActiveHyps--;
+                        extendModelEndState( &tmpHyp, &nextTrans[i]) ;
                     }
                 }
-            }
+                else
+                {
+                    if (newScore > currEndPruneThresh)
+                    {
+                        extendModelEndState(&tmpHyp, &nextTrans[i]) ;
+                    }
+                }
+            } // end of teeWeight
         }
         else
         {

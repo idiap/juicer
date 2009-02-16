@@ -148,11 +148,7 @@ real Histogram::calcThresh( int maxN )
 	{
 		total += bins[i].cnt ;
 		if ( total >= maxN ) {
-#ifdef LINEAR_INTERPOLATION_HISTOGRAM
-            return 0.5*(bins[i].best+bins[i].worst);
-#else
 			return (real)( (real)( bins[i].min ) - 0.5 ) ;
-#endif
         }
 	}
 
