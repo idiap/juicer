@@ -42,7 +42,11 @@ HTKFlatModels::HTKFlatModels() {
 }
 
 HTKFlatModels::~HTKFlatModels() {
+#ifdef HAVE_INTEL_IPP
+    ippFree(fBuffer);
+#else
     free(fBuffer);
+#endif
 }
 
 void HTKFlatModels::readBinary( const char *fName ) {
@@ -54,7 +58,17 @@ void HTKFlatModels::Load( const char *htkModelsFName , bool removeInitialToFinal
     init();
 }
 
-void HTKFlatModels::init() {
+void HTKFlatModels::init()
+{
+#ifdef HAVE_INTEL_IPP
+    ippStaticInit();
+    int cpuMhz;
+    ippGetCpuFreqMhz(&cpuMhz);
+    const IppLibraryVersion* version = ippsGetLibVersion();
+    printf("Optimised code using INTEL Performance Primitives Lib [%s, %s]\n", version->Name, version->Version);
+    printf("CPU runs at %d Mhz\n", cpuMhz);
+#endif
+
     // now create our own GMM parameter structure from loaded structures from
     // HTKModels
     int nMaxGmmComp = 0;
@@ -77,7 +91,11 @@ void HTKFlatModels::init() {
     int model_len=sizeof(FMixture)*fnMixtures4+sizeof(real)*(fnGaussians4+ 
             fnGaussians*fvecSize4+fnGaussians*fvecSize4);
     printf("HTKFlatModels allocated %.2f MB for flat parameters\n", model_len/(1024.*1024));
+#ifdef HAVE_INTEL_IPP
+    fBuffer = ippMalloc(model_len);
+#else
     fBuffer = malloc(model_len);
+#endif
     if (!fBuffer)
         error("fail to allocate memory for HTKFlatModels");
     fMixtures     = (FMixture*)fBuffer;
@@ -85,6 +103,7 @@ void HTKFlatModels::init() {
     fMeans      = fDets+fnGaussians4;
     fVars       = fMeans+fnGaussians*fvecSize4;
 
+    printf("%lx\n%lx\n%lx\n%lx\n", (long)fMixtures, (long)fDets, (long)fMeans, (long)fVars);
 
     for (int i = 0; i < nMixtures; ++i) {
         fMixtures[i].compNum = mixtures[i].nComps;
@@ -121,14 +140,6 @@ void HTKFlatModels::init() {
         }
     }
 
-#ifdef HAVE_INTEL_IPP
-    ippStaticInit();
-    int cpuMhz;
-    ippGetCpuFreqMhz(&cpuMhz);
-    const IppLibraryVersion* version = ippsGetLibVersion();
-    printf("Optimised code using INTEL Performance Primitives Lib [%s, %s]\n", version->Name, version->Version);
-    printf("CPU runs at %d Mhz\n", cpuMhz);
-#endif
 }
 
 real HTKFlatModels::calcOutput( int hmmInd , int stateInd )
