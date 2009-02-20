@@ -1140,13 +1140,22 @@ void WFSTNetwork::writeBinary( const char *fname )
 
    // 3. Write nFinalStates and finalStates array.
    fwrite( &nFinalStates , sizeof(int) , 1 , fd ) ;
-   if ( nFinalStates > 0 )
-      fwrite( finalStates , sizeof(WFSTFinalState) , nFinalStates , fd ) ;
+   for (i=0; i<nFinalStates; i++)
+   {
+       fwrite( &(finalStates[i].id) , sizeof(int) , 1 , fd ) ;
+       fwrite( &(finalStates[i].weight) , sizeof(real) , 1 , fd ) ;
+   }
 
    // 4. Write nTransitions and transitions array.
    fwrite( &nTransitions , sizeof(int) , 1 , fd ) ;
-   if ( nTransitions > 0 )
-      fwrite( transitions , sizeof(WFSTTransition) , nTransitions , fd ) ;
+   for (i=0; i<nTransitions; i++)
+   {
+       fwrite( &(transitions[i].id) , sizeof(int) , 1 , fd ) ;
+       fwrite( &(transitions[i].toState) , sizeof(int) , 1 , fd ) ;
+       fwrite( &(transitions[i].weight) , sizeof(real) , 1 , fd ) ;
+       fwrite( &(transitions[i].inLabel) , sizeof(int) , 1 , fd ) ;
+       fwrite( &(transitions[i].outLabel) , sizeof(int) , 1 , fd ) ;
+   }
 
    // 5. Write inputAlphabet and outputAlphabet
    bool haveAlphabet ;
@@ -1244,8 +1253,13 @@ void WFSTNetwork::readBinary( const char *fname )
    if ( nFinalStates > 0 )
    {
       finalStates = new WFSTFinalState[nFinalStates] ;
-      if ( (int)fread( finalStates, sizeof(WFSTFinalState), nFinalStates, fd ) != nFinalStates )
-         error("WFSTNetwork::readBinary - error reading finalStates array") ;
+      for (i=0; i<nFinalStates; i++)
+      {
+          if ( fread( &(finalStates[i].id) , sizeof(int) , 1 , fd ) != 1 )
+              error("WFSTNetwork::readBinary - error reading finalStates id");
+          if ( fread( &(finalStates[i].weight) , sizeof(real) , 1 , fd ) != 1 )
+              error("WFSTNetwork::readBinary - error reading finalStates wt");
+      }
    }
    else
       finalStates = NULL ;
@@ -1256,8 +1270,20 @@ void WFSTNetwork::readBinary( const char *fname )
    if ( nTransitions > 0 )
    {
       transitions = new WFSTTransition[nTransitions] ;
-      if ( (int)fread( transitions, sizeof(WFSTTransition), nTransitions, fd ) != nTransitions )
-         error("WFSTNetwork::readBinary - error reading transitions array") ;
+      for (i=0; i<nTransitions; i++)
+      {
+          if ( fread( &(transitions[i].id) , sizeof(int) , 1 , fd ) != 1 )
+              error("WFSTNetwork::readBinary - error reading transitions id");
+          if ( fread( &(transitions[i].toState) , sizeof(int) , 1 , fd ) != 1 )
+              error("WFSTNetwork::readBinary - error reading transitions ts");
+          if ( fread( &(transitions[i].weight) , sizeof(int) , 1 , fd ) != 1 )
+              error("WFSTNetwork::readBinary - error reading transitions wt");
+          if ( fread( &(transitions[i].inLabel) , sizeof(int) , 1 , fd ) != 1 )
+              error("WFSTNetwork::readBinary - error reading transitions il");
+          if ( fread( &(transitions[i].outLabel) , sizeof(int) , 1 , fd ) != 1)
+              error("WFSTNetwork::readBinary - error reading transitions id");
+          transitions[i].hook = 0;
+      }
    }
    else
       transitions = NULL ;
