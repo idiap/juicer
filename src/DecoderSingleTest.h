@@ -83,7 +83,7 @@ public:
 
     Tracter::TimeType frameTime(int iFrame)
     {
-        Tracter::TimeType nsPerFrame = 1000000000 / framesPerSec; // Nine zeros
+        Tracter::TimeType nsPerFrame = ONEe9 / framesPerSec;
         Tracter::TimeType ns = startTimeStamp + (nsPerFrame * iFrame);
         return ns;
     }
