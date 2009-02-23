@@ -350,6 +350,7 @@ HTKModels::~HTKModels()
       {
          delete [] mixtures[i].name ;
          delete [] mixtures[i].meanVecInds ;
+         delete [] mixtures[i].currCompOutputs ;
       }
       if ( fromBinFile )
          delete [] mixtures ;

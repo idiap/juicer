@@ -106,8 +106,8 @@ WFSTAlphabet::WFSTAlphabet( const char *symbolsFilename )
    }
 
    delete [] line ;
+   delete [] symStr ;
    fclose( fd ) ;
-
    fromBinFile = false ;
 }
 
