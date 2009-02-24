@@ -20,11 +20,6 @@
 
 using namespace Torch;
 
-int n_outp_called = 0;
-int n_moutp_called = 0;
-int n_real_moutp_called = 0;
-int n_ladd_called = 0;
-
 namespace Juicer {
 
 
@@ -471,7 +466,6 @@ void HTKModels::newFrame( int frame , const real *input )
 
 real HTKModels::calcOutput( int hmmInd , int stateInd )
 {
-    n_outp_called++;
 #ifdef DEBUG
    if ( (hmmInd < 0) || (hmmInd >= nHMMs) )
       error("HTKModels::calcOutput - hmmInd out of range") ;
@@ -496,7 +490,6 @@ real HTKModels::calcOutput( int hmmInd , int stateInd )
 
 real HTKModels::calcOutput( int gmmInd )
 {
-    n_outp_called++;
 #ifdef DEBUG
    if ( hybridMode )
    {
@@ -2118,14 +2111,12 @@ real HTKModels::calcMixtureOutput( int mixInd , const real *logCompWeights )
 
    Mixture *mix = mixtures + mixInd ;
    int i ;
-   n_moutp_called++;
 
    if ( mix->currCompOutputsValid == false )
    {
       real *means , *mhovs , xmu , sumxmu ;
       const real *x ;
       int j ;
-      n_real_moutp_called++;
       for ( i=0 ; i<mix->nComps ; i++ )
       {
          // calculate the mixture output
@@ -2150,7 +2141,6 @@ real HTKModels::calcMixtureOutput( int mixInd , const real *logCompWeights )
    real logProb = LOG_ZERO ;
    for ( i=0 ; i<mix->nComps ; i++ )
    {
-       n_ladd_called++;
       logProb = logAdd( logProb , mix->currCompOutputs[i] + logCompWeights[i] ) ;
    }
 
