@@ -174,6 +174,7 @@ void HTKModels::Load(
       hmm->gmmInds[0] = -1 ;
       hmm->gmmInds[statesPerModel-1] = -1 ;
       hmm->transMatrixInd = 0 ;
+      hmm->teeWeight = LOG_ZERO;
       logPriors[nHMMs] = log( prior ) ;
       nHMMs++ ;
    }
@@ -211,6 +212,9 @@ void HTKModels::Load(
 
    vecSize = nHMMs ;
    hybridMode = true ;
+
+   createTrP();
+   createSEIndex();
 }
 
 
@@ -345,6 +349,7 @@ HTKModels::~HTKModels()
       {
          delete [] mixtures[i].name ;
          delete [] mixtures[i].meanVecInds ;
+         delete [] mixtures[i].currCompOutputs ;
       }
       if ( fromBinFile )
          delete [] mixtures ;

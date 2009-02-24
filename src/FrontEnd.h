@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 2007,2008 by IDIAP Research Institute
  *                        http://www.idiap.ch
  *
@@ -70,6 +70,8 @@ namespace Juicer
         ~FrontEnd()
         {
             delete mSink;
+            if (mSpeakerIDSink)
+                delete mSpeakerIDSink;
         }
 
         bool GetArray(float*& ioData, int iIndex)
@@ -93,7 +95,7 @@ namespace Juicer
 
         const char* GetSpeakerID(int iIndex)
         {
-            printf("GetSpeakerID for index %d\n", iIndex);
+            //printf("GetSpeakerID for index %d\n", iIndex);
             if (!mSpeakerIDSink)
             {
                 Plugin<float>* p = mFactory.GetSpeakerIDSource();

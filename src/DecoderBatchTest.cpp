@@ -434,7 +434,8 @@ void DecoderBatchTest::outputResult( DecoderSingleTest *test )
       
       LogFile::puts("\nRecognition result:\n\n") ;
       LogFile::printf("Speaker: %s\n", test->speakerID()) ;
-      LogFile::printf("Start time %lld ns\n\n", test->frameTime(0)) ;
+      TimeType ft = test->frameTime(0);
+      LogFile::printf("Start time %lld ns = %.3f s\n\n", ft, (double)ft/ONEe9);
       for ( int j=0 ; j<test->nResultWords ; j++ )
       {
          LogFile::printf( "    %s  start=%d end=%d " , vocab->words[test->resultWords[0][j].index] ,
@@ -444,10 +445,13 @@ void DecoderBatchTest::outputResult( DecoderSingleTest *test )
       }
 
       if (test->resultWords)
-          LogFile::printf(
-              "\nEnd time %lld ns\n\n",
-              test->frameTime( test->resultWords[0][test->nResultWords-1].endTime)
-          ) ;
+      {
+          ft = test->frameTime(
+              test->resultWords[0][test->nResultWords-1].endTime
+          );
+          LogFile::printf("\nEnd time %lld ns = %.3f s\n\n",
+                          ft, (double)ft/ONEe9);
+      }
       else
           LogFile::printf("\nEnd time unknown\n\n") ;
 
@@ -727,8 +731,10 @@ void DecoderBatchTest::run()
             decodeTime += decTime ;
             speechTime += uttTime ;
 
-            LogFile::printf( "CPU time %.3f  speech time %.3f  RT factor %.3f\n" ,
-                             decTime , uttTime , decTime / uttTime ) ;
+            LogFile::printf(
+                "CPU time %.3f  speech time %.3f  RT factor %.3f\n" ,
+                decTime , uttTime , decTime / uttTime
+            ) ;
         }
     }
 
@@ -768,8 +774,11 @@ void DecoderBatchTest::run()
                        decTime , uttTime , decTime / uttTime ) ;
 	}
 
-   LogFile::printf( "\n\nTotal CPU time %.3f  Total speech time %.3f  Avg. RT factor %.3f\n" ,
-                    decodeTime , speechTime , decodeTime / speechTime ) ;
+    LogFile::printf(
+        "\n\n"
+        "Total CPU time %.3f  Total speech time %.3f  Avg. RT factor %.3f\n" ,
+        decodeTime , speechTime , decodeTime / speechTime
+    ) ;
          
 	// output any format-specific footer information and close the output file
 	closeOutputFile() ;	

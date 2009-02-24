@@ -190,59 +190,9 @@ void DecoderSingleTest::run(
     WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
 )
 {
-    clock_t startTime , endTime ;
-
-#ifdef DEBUG
-    if ( (mode != DBT_MODE_WFSTDECODE_WORDS) &&
-         (mode != DBT_MODE_WFSTDECODE_PHONES) )
-        error("DecoderSingleTest::run - incompatible mode") ;
-#endif
-
-    // Connect to the source
-    assert(dataFName);
-    frontend->SetSource(dataFName);
-
-    // Timer for the decoding
-    startTime = clock() ;
-
-    // Run the decoder over the whole available input
-    decoder->init() ;
-    nFrames = 0;
-    float* array;
-    int offset = extStartFrame < 0 ? 0 : extStartFrame;
-    while(frontend->GetArray(array, nFrames+offset))
-    {
-        decoder->processFrame(array, nFrames++);
-        if ((extEndFrame >= 0) && (nFrames+offset > extEndFrame))
-            break;
-    }
-    DecHyp* hyp = decoder->finish() ;
-    endTime = clock() ;
-    decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
-
-    startTimeStamp = frontend->TimeStamp(0);
-    int seconds = (int)((double)startTimeStamp / 1e9);
-    mSpeakerID = frontend->GetSpeakerID(seconds);
-
-    // post-process the decoding result
-    if ( hyp == NULL )
-    {
-        nResultLevels = 0 ;
-        nResultWords = 0 ;
-        resultWords = NULL ;
-    }
-    else
-    {
-        extractResultsFromHyp( hyp , vocab ) ;
-    }
-
-    //if ( removeSentMarks )
-    //   removeSentMarksFromActual( vocab ) ;
-
-    decoderInput = NULL ;
-    vecSize = 0 ;
+    openSource(frontend);
+    decodeUtterance(decoder, frontend, vocab);
 }
-
 
 /**
  * Opens the file for decoding.  No need to call if this is actually a
@@ -277,16 +227,21 @@ void DecoderSingleTest::decodeUtterance(
     decoder->init() ;
     nFrames = 0;
     float* array;
-    while(frontend->GetArray(array, nFrames))
+    int offset = extStartFrame < 0 ? 0 : extStartFrame;
+    while(frontend->GetArray(array, nFrames+offset))
+    {
         decoder->processFrame(array, nFrames++);
+        if ((extEndFrame >= 0) && (nFrames+offset > extEndFrame))
+            break;
+    }
     DecHyp* hyp = decoder->finish() ;
     endTime = clock() ;
     decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
 
     // Time stamp and speaker ID
-    // time stamp must be after the first frame of decode 
+    // time stamp must be after the first frame of decode
     startTimeStamp = frontend->TimeStamp(0);
-    int seconds = (int)((double)startTimeStamp / 1e9);
+    int seconds = (int)((double)startTimeStamp / ONEe9);
     mSpeakerID = frontend->GetSpeakerID(seconds);
 
     // post-process the decoding result
