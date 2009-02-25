@@ -42,8 +42,9 @@ public:
         return (nFree == nTotal);
     }
 
-    // ZL: malloc, free & purge_memory interface for compatibility with boost lib's pool interface
-    // and it seems this realloc based implementation is slightly faster than boost::pool
+    // ZL: malloc, free & purge_memory interface for compatibility
+    // with boost lib's pool interface and it seems this realloc based
+    // implementation is slightly faster than boost::pool
     void* malloc() { return getElem(); }
     void free(void* elem) { returnElem(elem); }
     void purge_memory();
@@ -51,11 +52,11 @@ public:
 private:
     int elemByteLen ;
     int reallocAmount ;
-    int	reallocByteLen ;
-    int	nTotal ;
-    int	nFree ;
-    int	nUsed ;
-    int	nAllocs ;
+    int reallocByteLen ;
+    int nTotal ;
+    int nFree ;
+    int nUsed ;
+    int nAllocs ;
     int getCnt ;
     int retCnt ;
 

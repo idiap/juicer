@@ -95,8 +95,6 @@ void HTKFlatModels::init()
     fMeans      = fDets+fnGaussians4;
     fVars       = fMeans+fnGaussians*fvecSize4;
 
-    printf("%lx\n%lx\n%lx\n%lx\n", (long)fMixtures, (long)fDets, (long)fMeans, (long)fVars);
-
     for (int i = 0; i < nMixtures; ++i) {
         fMixtures[i].compNum = mixtures[i].nComps;
         fMixtures[i].compInd = i*nMaxGmmComp;

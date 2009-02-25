@@ -251,8 +251,8 @@ void WFSTModelPool::resetElem( WFSTModel *elem , int nStates )
     elem->trans = NULL ;
 	for ( i=0 ; i<nStates ; i++ )
 	{
-		decHypHistPool->resetDecHyp( elem->currHyps + i ) ;
-		decHypHistPool->resetDecHyp( elem->prevHyps + i ) ;
+        decHypHistPool->resetDecHyp( elem->currHyps + i ) ;
+        decHypHistPool->resetDecHyp( elem->prevHyps + i ) ;
 	}
 	elem->nActiveHyps = 0 ;
 	elem->next = NULL ;

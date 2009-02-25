@@ -975,6 +975,7 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans)
                 // be extended to the final state of nextModel
                 newScore += teeWeight;
                 DecHyp tmpHyp ;
+                DecHypHistPool::initDecHyp( &tmpHyp, -1 );
                 decHypHistPool->extendDecHyp(endHyp,
                         &tmpHyp,
                         newScore,
@@ -1013,7 +1014,7 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans)
             // extend temp hypothesis into transitions that follow the
             // one with epsilon input label.
             DecHyp tmp ;
-            tmp.hist = NULL;
+            DecHypHistPool::initDecHyp( &tmp, -1 );
             decHypHistPool->extendDecHyp(
                 endHyp , &tmp ,
                 endHyp->score + epsWeight,
@@ -1061,22 +1062,26 @@ DecHyp *WFSTDecoder::finish()
 
     if ( DecHypHistPool::isActiveHyp( bestFinalHyp ) )
     {
-        // This seems to be something like number of remaining labels
-        // that do not have timing information
+        // If labels are remaining to be written, something is wrong
         if ( bestFinalHyp->nLabelsNR > 0 )
             //error("WFSTDecoder::finish - bestFinalHyp.nLabelsNR > 0");
             LogFile::printf(
                 "WFSTDecoder::finish - bestFinalHyp.nLabelsNR > 0\n"
             );
-        if ( bestFinalHyp->hist != NULL ) {
+        if ( bestFinalHyp->hist != NULL )
+        {
+            // walk the hyp back until the first DHHTYPE with score information
+            DecHypHist* hist = bestFinalHyp->hist;
+            while (hist->type != DHHTYPE)
+            {
+                hist = hist->prev;
+                if (!hist)
+                    error("WFSTDecoder::finish - failed to find DHHTYPE");
+            }
 
-#ifdef DEBUG
-         if ( bestFinalHyp->hist->type != DHHTYPE )
-            error("WFSTDecoder::finish - bestFinalHyp.hist->type != DHHTYPE");
-#endif
-         bestFinalHyp->hist->score = bestFinalHyp->score;
-         bestFinalHyp->hist->lmScore = bestFinalHyp->lmScore;
-         bestFinalHyp->hist->acousticScore = bestFinalHyp->acousticScore;
+            hist->score = bestFinalHyp->score;
+            hist->lmScore = bestFinalHyp->lmScore;
+            hist->acousticScore = bestFinalHyp->acousticScore;
         }
         return bestFinalHyp ;
     }
