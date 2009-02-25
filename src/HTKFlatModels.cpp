@@ -2,18 +2,10 @@
  * Copyright 2008 by The University of Edinburgh
  *
  * See the file COPYING for the licence associated with this software.
- */
-
-/*
- * vi:ts=4:tw=78:shiftwidth=4:expandtab
- * vim600:fdm=marker
  *
  * HTKFlatModels.cpp  -  store GMM parameters in flat arrays for fast
  * computation, derived from HTKModels.
  * by Zhang Le
- * Begin       : 02-Oct-2008
- * Last Change : 11-Feb-2009.
- * 
  */
 
 #ifdef HAVE_CONFIG_H

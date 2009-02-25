@@ -12,6 +12,7 @@
 OPT = # add flags as you wish
 OPT += -DOPTIMISE_FLATMODEL
 OPT += -DOPTIMISE_DECODER_LITE # this turns on the new core based by token-passing
+OPT += -DOPT_LINKED_LIST
 #OPT += -DOPTIMISE_ALIGN4
 #OPT += -DNO_BEST_END
 #OPT += -DNO_BEST_START
