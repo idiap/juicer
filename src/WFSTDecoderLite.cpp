@@ -78,12 +78,9 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
 
     resetPathLists();
 
-#ifdef OPT_LINKED_LIST
     activeNetInstList = NULL;
     newActiveNetInstList = NULL;
     newActiveNetInstListLastElem = NULL;
-    printf("OPT_LINKED_LIST is on\n");
-#endif
 }
 
 WFSTDecoderLite::~WFSTDecoderLite() {
@@ -114,9 +111,8 @@ void WFSTDecoderLite::recognitionStart() {
 
     //  <<Free per-utterance memory>>
     {
-        // as destroyNetInst() is not used to free instances,
-        // need to manually reset trans->hook
-#ifdef OPT_LINKED_LIST
+        // need to manually reset trans->hook as returnNetInst() is not used
+        // for freeing memory
         NetInst* inst = activeNetInstList;
         while (inst) {
             inst->trans->hook = NULL;
@@ -124,12 +120,7 @@ void WFSTDecoderLite::recognitionStart() {
         }
         activeNetInstList = NULL;
         assert(newActiveNetInstList == NULL);
-#else
-        for(list<NetInst*>::iterator it = netInstList.begin(); it != netInstList.end(); ++it) {
-            (*it)->trans->hook = NULL;
-        }
-        netInstList.clear();
-#endif
+
         netInstPool->purge_memory();
 
         // free all paths
@@ -187,9 +178,7 @@ void WFSTDecoderLite::recognitionStart() {
     tmp.lmScore = 0.0;
     tmp.path = NULL;
     propagateToken(&tmp, NULL);
-#ifdef OPT_LINKED_LIST
     joinNewActiveInstList();
-#endif
 }
 
 DecHyp* WFSTDecoderLite::recognitionFinish() {
@@ -306,7 +295,6 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
         bestEmitScore = LOG_ZERO; /* bestEmitScore & bestEndScore will be updated in HMMInternalPropagation() */
         bestEndScore = LOG_ZERO;
 
-#ifdef OPT_LINKED_LIST
         NetInst* prevInst = NULL;
         NetInst* inst = activeNetInstList;
         while (inst) {
@@ -328,31 +316,6 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
                 inst = inst->next;
             }
         }
-#else
-        int nInst = netInstList.size();
-        list<NetInst*>::iterator endOfOldList = netInstList.end();
-        for(list<NetInst*>::iterator it = netInstList.begin(); it != endOfOldList;) {
-            NetInst* inst = *it;
-
-            // language model pruning
-            Token* entry = inst->states;
-            if (entry->score > LOG_ZERO && entry->score < currStartPruneThresh) {
-                *entry = nullToken;
-                --inst->nActiveHyps;
-            }
-
-            HMMInternalPropagation(inst);
-
-            // post-emitting pruning
-            assert(inst->nActiveHyps >= 0);
-            if (inst->nActiveHyps == 0) {
-                it = netInstList.erase(it); 
-                destroyNetInst(inst);
-            } else {
-                ++it;
-            }
-        }
-#endif
 
         totalActiveEmitHyps += nActiveEmitHyps;
         totalActiveEndHyps += nActiveEndHyps;
@@ -394,7 +357,6 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
         nEndHypsProcessed = 0;
         bestStartScore = LOG_ZERO; /* bestStartScore will be updated in propagateToken */
 
-#ifdef OPT_LINKED_LIST
         NetInst* prevInst = NULL;
         NetInst* inst = activeNetInstList;
         while (inst) {
@@ -428,53 +390,11 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
                 inst = inst->next;
             }
         }
-#else
-        list<NetInst*>::iterator endOfOldList = netInstList.end();
-        for(list<NetInst*>::iterator it = netInstList.begin(); it != endOfOldList; ) {
-            NetInst* inst = *it;
-            WFSTTransition* trans = inst->trans;
-            Token* exit_tok = inst->states + inst->nStates - 1;
-            if (exit_tok->score > LOG_ZERO) {
-                // VW - word based pruning
-                // Use a different purning threshold when a word is emitted
-                if (inst->trans->outLabel == WFST_EPSILON) {
-                    if (exit_tok->score > currEndPruneThresh) {
-                        ++nEndHypsProcessed;
-                        propagateToken(exit_tok, trans);
-                    }
-                } else {
-                    if (exit_tok->score > currWordPruneThresh) {
-                        ++nEndHypsProcessed;
-                        propagateToken(exit_tok, trans);
-                    }
-                }
-
-                *exit_tok = nullToken; // de-active exit_tok
-                assert(inst->nActiveHyps >= 0);
-                if (--inst->nActiveHyps == 0) {
-                    it = netInstList.erase(it); 
-                    destroyNetInst(inst);
-                } else {
-                    ++it;
-                }
-            } else
-                ++it;
-        }
-#endif
-
-
-        //printf("%03d, nEnd1=%d, nEnd2=%d\n", currFrame, nEnd1, nEnd2);
-        // printf("%03d, nPruned=%d\n", currFrame, nPruned);
 
         totalProcEndHyps += nEndHypsProcessed;
-#ifdef OPT_LINKED_LIST
-        joinNewActiveInstList();
-#endif
-    }
 
-    //printf("%03d, nEndHypsProcessed = %d\n", currFrame, nEndHypsProcessed);
-    // printf("%03d, nActiveModels = %d\n", currFrame, totalActiveModels);
-    // totalActiveModels += netInstList.size();
+        joinNewActiveInstList();
+    }
 
     // path collection
     // To speed up token assginment, the unused paths are collocted in a 
@@ -795,13 +715,8 @@ void WFSTDecoderLite::collectPaths() {
     // before each collection, the directlyUsedByToken of each path should be false
     
     // first scan all tokens in all instances and mark the directly referred paths
-#ifdef OPT_LINKED_LIST
         NetInst* inst = activeNetInstList;
         while (inst) {
-#else
-    for(list<NetInst*>::iterator it = netInstList.begin(); it != netInstList.end(); ++it) {
-        NetInst* inst = *it;
-#endif
         int n = inst->nStates;
         Token* tok = inst->states;
         for (int i = 0; i < n; ++tok, ++i) {
@@ -812,9 +727,7 @@ void WFSTDecoderLite::collectPaths() {
                     movePathYesRefList(path); // force move the path to the front of the yes list
             }
         }
-#ifdef OPT_LINKED_LIST
         inst = inst->next;
-#endif
     }
     
 
@@ -861,29 +774,14 @@ void WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
     trans->hook = inst;
     inst->trans = trans;
     inst->nActiveHyps = 0;
-#ifdef OPT_LINKED_LIST
     inst->next = newActiveNetInstList;
     newActiveNetInstList = inst;
     if (newActiveNetInstListLastElem == NULL)
         newActiveNetInstListLastElem = inst;
     ++totalActiveModels;
-#else
-    netInstList.push_front(inst);
-#endif
-    
-    //push_back to the end of netInstList will give slightly different result, not clear why
-    //netInstList.push_back(inst);
 }
 
-// path is not freed here, and will be freed in collectPath()
-void WFSTDecoderLite::destroyNetInst(NetInst* inst) {
-    inst->trans->hook = NULL;
-    stateNPools[inst->nStates]->free(inst->states);
-    netInstPool->free(inst);
-    --totalActiveModels;
-}
 
-#ifdef OPT_LINKED_LIST
 NetInst* WFSTDecoderLite::returnNetInst(NetInst* inst, NetInst* prevInst) {
     // Return the model to the pool and remove it from the linked list of
     //   active models.
@@ -916,7 +814,6 @@ void WFSTDecoderLite::joinNewActiveInstList() {
     activeNetInstList = newActiveNetInstList;
     newActiveNetInstList = newActiveNetInstListLastElem = NULL;
 }
-#endif
 
 };
 

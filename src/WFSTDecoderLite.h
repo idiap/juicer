@@ -15,7 +15,6 @@
 #include "general.h"
 
 #include <vector>
-#include <list>
 
 #include "WFSTNetwork.h"
 #include "Models.h"
@@ -58,12 +57,7 @@ namespace Juicer {
         
         int nActiveHyps;
         
-#ifdef OPT_LINKED_LIST
-//        struct NetInst_* link;
-//        struct NetInst_* knil;  
         struct NetInst_* next;  
-#endif
-        
     } NetInst;
     
     
@@ -98,20 +92,16 @@ namespace Juicer {
             Path noRefListTail;   
             Path yesRefList;      /* Path with refCount > 0 */
             Path yesRefListTail;  
-            list<NetInst*> netInstList; /* list of active NetInstances */
+
+            NetInst* activeNetInstList;
+            NetInst* newActiveNetInstList;
+            NetInst* newActiveNetInstListLastElem;
             
             int currFrame;
             int nPath;           /* # of all paths in lists */
             int nPathNew;        /* # of all paths since last collection */
             Token bestFinalToken; /* store best token as there may be no inst (hence token) attached to a final epsilon transition */
 
-#ifdef OPT_LINKED_LIST
-            NetInst* activeNetInstList;
-            NetInst* newActiveNetInstList;
-            NetInst* newActiveNetInstListLastElem;
-            void joinNewActiveInstList();
-            NetInst* returnNetInst(NetInst* inst, NetInst* prevInst);
-#endif
             
             // pruning resources
             Histogram    *emitHypsHistogram;
@@ -175,6 +165,8 @@ namespace Juicer {
             void propagateToken(Token* tok, WFSTTransition* trans);
             void attachNetInst(WFSTTransition* trans);
             void destroyNetInst(NetInst* inst);
+            void joinNewActiveInstList();
+            NetInst* returnNetInst(NetInst* inst, NetInst* prevInst);
 
     };
 };
