@@ -26,6 +26,8 @@ using namespace std;
 
 namespace Juicer {
 
+    typedef double score_t;
+
     typedef struct Path_ {
         struct Path_* prev; /* previous path */
         
@@ -33,7 +35,7 @@ namespace Juicer {
         struct Path_* knil;
         
         int frame;
-        double score;  /* use double for higher precision, will be normalised (-bestEmitScore) at each frame  */
+        score_t score;  /* use score_t for higher precision, will be normalised (-bestEmitScore) at each frame  */
         real acousticScore; /* un-normalised acoustic score */
         real lmScore;
         int label;          /* output symbol id */
@@ -42,22 +44,22 @@ namespace Juicer {
     } Path;
 
     typedef struct Token_ {
-        double score;  /* use double for higher precision, will be normalised (-bestEmitScore) at each frame  */
-        double acousticScore; /* un-normalised real acoustic score */
+        score_t score;  /* use score_t for higher precision, will be normalised (-bestEmitScore) at each frame  */
+        score_t acousticScore; /* un-normalised real acoustic score */
         real lmScore; 
         Path* path; 
     } Token;
 
     /* a NetInst is attached to each non-eplison transition */
     typedef struct NetInst_ {
+        struct NetInst_* next;
+
         int hmmIndex;
         int nStates;
-        WFSTTransition* trans;  /* the transition this inst is attached to */
-        Token* states;    /* states[nStates] including non-emitting entry and exit states */
-        
         int nActiveHyps;
-        
-        struct NetInst_* next;  
+        WFSTTransition* trans;  ///< the transition this inst is attached to
+        Token states[];         ///< states[nStates] including
+                                ///non-emitting entry and exit states
     } NetInst;
     
     
@@ -75,7 +77,7 @@ namespace Juicer {
 
             // compatipable with WFSTDecoder interface
             void init() {recognitionStart();}
-            DecHyp* finish() {recognitionFinish();}
+            DecHyp* finish() {return recognitionFinish();}
 
             void recognitionStart();
             void processFrame(real* inputVec, int frame_);
@@ -144,7 +146,6 @@ namespace Juicer {
             
             // memory resources
             BlockMemPool* pathPool;
-            BlockMemPool* netInstPool;
             BlockMemPool** stateNPools;
             
             int nStatePools;

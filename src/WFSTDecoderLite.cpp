@@ -63,11 +63,13 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
         nStatePools = maxNStates;
 
         pathPool = new BlockMemPool(sizeof(Path), MEMORY_POOL_REALLOC_AMOUNT);
-        netInstPool = new BlockMemPool(sizeof(NetInst), MEMORY_POOL_REALLOC_AMOUNT/2);
         stateNPools = new BlockMemPool*[maxNStates];
         --stateNPools; /* address from 1 to maxNStates */
         for (int i = 1; i <= maxNStates; ++i)
-            stateNPools[i] = new BlockMemPool(sizeof(Token)*i, MEMORY_POOL_REALLOC_AMOUNT/2);
+            stateNPools[i] = new BlockMemPool(
+                sizeof(NetInst)  + sizeof(Token)*i,
+                MEMORY_POOL_REALLOC_AMOUNT/2
+            );
 
         dhhPool = NULL;   
         bestDecHyp = NULL;
@@ -90,7 +92,6 @@ WFSTDecoderLite::~WFSTDecoderLite() {
     ++stateNPools;
     delete[] stateNPools;
     delete pathPool;
-    delete netInstPool;
 
     delete dhhPool;
     delete bestDecHyp;
@@ -120,8 +121,6 @@ void WFSTDecoderLite::recognitionStart() {
         }
         activeNetInstList = NULL;
         assert(newActiveNetInstList == NULL);
-
-        netInstPool->purge_memory();
 
         // free all paths
         pathPool->purge_memory();
@@ -213,7 +212,6 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
             bestDecHyp = new DecHyp();
             DecHypHist* oldHist = NULL;
             Path* p = best.path;
-            int i = 0;
             while (p != NULL) {
                 DecHypHist *tmp ;
             
@@ -361,7 +359,7 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
         NetInst* inst = activeNetInstList;
         while (inst) {
             WFSTTransition* trans = inst->trans;
-            Token* exit_tok = inst->states + inst->nStates - 1;
+            Token* exit_tok = &inst->states[inst->nStates - 1];
             if (exit_tok->score > LOG_ZERO) {
                 // VW - word based pruning
                 // Use a different purning threshold when a word is emitted
@@ -418,7 +416,6 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
     int N = inst->nStates;
     Token* res;
     Token* cur;
-    Token tmp;
     real** trP = hmmModels->getTransMat(inst->hmmIndex);
     SEIndex* se = hmmModels->getSEIndex(inst->hmmIndex);
     
@@ -429,7 +426,7 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
         for (int j = 1 ; j < N-1; ++j, ++res) {
             int i = se[j].start;
             int endi = se[j].end;
-            cur = inst->states + i;
+            cur = &inst->states[i];
             
             // assume a transition from i to j
             *res = *cur;
@@ -439,7 +436,7 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
             
             // then compare with all other possible incoming transitions
             for (++i, ++cur; i < endi; ++i, ++cur) {
-                double tmpScore = cur->score + trP[i][j];
+                score_t tmpScore = cur->score + trP[i][j];
                 if (tmpScore > res->score) {
                     *res = *cur;
                     res->score = tmpScore;
@@ -487,8 +484,8 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
         int i = se[N-1].start;
         int endi = se[N-1].end;
         
-        res = inst->states + N-1;
-        cur = inst->states + i;
+        res = &inst->states[N-1];
+        cur = &inst->states[i];
         
         // assume a transition from i to exit
         *res = *cur;
@@ -498,7 +495,7 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
         
         // compare with all other possible to-exit transitions
         for (++i, ++cur; i < endi; ++i, ++cur) {
-            double tmpScore = cur->score + trP[i][N-1];
+            score_t tmpScore = cur->score + trP[i][N-1];
             if (tmpScore > res->score) {
                 *res = *cur;
                 res->score = tmpScore;
@@ -587,7 +584,7 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
 
                 // pass token to entry state
                 Token* res = inst->states;
-                double newScore = tok->score + trans->weight;
+                score_t newScore = tok->score + trans->weight;
 
                 if (newScore > res->score) {
 
@@ -764,11 +761,10 @@ void WFSTDecoderLite::collectPaths() {
 void WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
     assert(trans->hook == NULL);
     
-    NetInst* inst = (NetInst*)netInstPool->malloc();
+    int n = hmmModels->getNumStates(trans->inLabel - 1);
+    NetInst* inst = (NetInst*)stateNPools[n]->malloc();
     inst->hmmIndex = trans->inLabel - 1;
-    int n = hmmModels->getNumStates(inst->hmmIndex);
     inst->nStates = n;
-    inst->states = (Token*)stateNPools[n]->malloc();
     for (int i = 0; i < n; ++i)
         inst->states[i] = nullToken;
     trans->hook = inst;
@@ -790,16 +786,14 @@ NetInst* WFSTDecoderLite::returnNetInst(NetInst* inst, NetInst* prevInst) {
         activeNetInstList = inst->next;
         // inline destroyNetInst(inst);
         inst->trans->hook = NULL;
-        stateNPools[inst->nStates]->free(inst->states);
-        netInstPool->free(inst);
+        stateNPools[inst->nStates]->free(inst);
         inst = activeNetInstList;
     } else {
         // Model we are deactivating is not at head of list.
         prevInst->next = inst->next;
         // inline destroyNetInst(inst);
         inst->trans->hook = NULL;
-        stateNPools[inst->nStates]->free(inst->states);
-        netInstPool->free(inst);
+        stateNPools[inst->nStates]->free(inst);
         inst = prevInst->next;
     }
 
