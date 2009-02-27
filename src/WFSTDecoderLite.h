@@ -50,15 +50,46 @@ namespace Juicer {
 
     /* a NetInst is attached to each non-eplison transition */
     typedef struct NetInst_ {
+        struct NetInst_* next;  
         int hmmIndex;
         int nStates;
-        WFSTTransition* trans;  /* the transition this inst is attached to */
-        Token* states;    /* states[nStates] including non-emitting entry and exit states */
-        
         int nActiveHyps;
-        
-        struct NetInst_* next;  
+        WFSTTransition* trans;  /* the transition this inst is attached to */
+#ifdef OPT_FIXN_INST_POOL
+        Token states[];    /* states[nStates] including non-emitting entry and exit states */
+        // Token* states; will cause seg fault as states[n] in NetInstn below refers to local
+        // data within the structure
+#else
+        Token* states;    /* states[nStates] including non-emitting entry and exit states */
+#endif
     } NetInst;
+
+#ifdef OPT_FIXN_INST_POOL
+    typedef struct NetInst3_ {
+        struct NetInst_* next;  
+        int hmmIndex;
+        int nStates;
+        int nActiveHyps;
+        WFSTTransition* trans;
+        Token states[3];
+    } NetInst3;
+    typedef struct NetInst4_ {
+        struct NetInst_* next;  
+        int hmmIndex;
+        int nStates;
+        int nActiveHyps;
+        WFSTTransition* trans;
+        Token states[4];
+    } NetInst4;
+    typedef struct NetInst5_ {
+        struct NetInst_* next;  
+        int hmmIndex;
+        int nStates;
+        int nActiveHyps;
+        WFSTTransition* trans;
+        Token states[5];
+    } NetInst5;
+#endif
     
     
     class WFSTDecoderLite : public WFSTDecoder {
@@ -146,6 +177,10 @@ namespace Juicer {
             BlockMemPool* pathPool;
             BlockMemPool* netInstPool;
             BlockMemPool** stateNPools;
+
+#ifdef OPT_FIXN_INST_POOL
+            BlockMemPool** netInstNPools;
+#endif
             
             int nStatePools;
             

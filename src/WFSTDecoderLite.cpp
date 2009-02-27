@@ -69,6 +69,16 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
         for (int i = 1; i <= maxNStates; ++i)
             stateNPools[i] = new BlockMemPool(sizeof(Token)*i, MEMORY_POOL_REALLOC_AMOUNT/2);
 
+#ifdef OPT_FIXN_INST_POOL
+        printf("OPT_FIXN_INST_POOL is on\n");
+        if (maxNStates > 5)
+            error("WFSTDecoderLite.cpp: max number HMM states is %d > 5, is not supported\n");
+        netInstNPools = new BlockMemPool*[3]; // nstate in [3,4,5] for the moment
+        netInstNPools -= 3; // index from 3 to 5
+        netInstNPools[3] = new BlockMemPool(sizeof(NetInst3), MEMORY_POOL_REALLOC_AMOUNT/2);
+        netInstNPools[4] = new BlockMemPool(sizeof(NetInst4), MEMORY_POOL_REALLOC_AMOUNT/2);
+        netInstNPools[5] = new BlockMemPool(sizeof(NetInst5), MEMORY_POOL_REALLOC_AMOUNT/2);
+#endif
         dhhPool = NULL;   
         bestDecHyp = NULL;
     }
@@ -89,6 +99,14 @@ WFSTDecoderLite::~WFSTDecoderLite() {
         delete stateNPools[i];
     ++stateNPools;
     delete[] stateNPools;
+
+#ifdef OPT_FIXN_INST_POOL
+    for (int i = 3; i <= 5; ++i)
+        delete netInstNPools[i];
+    netInstNPools += 3;
+    delete[] netInstNPools;
+#endif
+
     delete pathPool;
     delete netInstPool;
 
@@ -121,15 +139,19 @@ void WFSTDecoderLite::recognitionStart() {
         activeNetInstList = NULL;
         assert(newActiveNetInstList == NULL);
 
+#ifdef OPT_FIXN_INST_POOL
+        for (int i = 3; i <= 5; ++i)
+            netInstNPools[i]->purge_memory();
+#else
         netInstPool->purge_memory();
+        // free all tokens
+        for (int i = 1; i <= maxNStates; ++i)
+            stateNPools[i]->purge_memory();
+#endif
 
         // free all paths
         pathPool->purge_memory();
         resetPathLists();
-
-        // free all tokens
-        for (int i = 1; i <= maxNStates; ++i)
-            stateNPools[i]->purge_memory();
 
         if (dhhPool) {
             delete dhhPool;
@@ -253,7 +275,7 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
 }
 
 void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
-    // fprintf(stderr, "processing frame %d\n", currFrame);
+    // fprintf(stderr, "processing frame %d\n", currFrame); fflush(stderr);
 
     currFrame = frame_;
 
@@ -764,13 +786,22 @@ void WFSTDecoderLite::collectPaths() {
 void WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
     assert(trans->hook == NULL);
     
+    int hmmIndex = trans->inLabel - 1;
+    int n = hmmModels->getNumStates(hmmIndex);
+
+#ifdef OPT_FIXN_INST_POOL
+
+    NetInst* inst = (NetInst*)netInstNPools[n]->malloc();
+#else
     NetInst* inst = (NetInst*)netInstPool->malloc();
-    inst->hmmIndex = trans->inLabel - 1;
-    int n = hmmModels->getNumStates(inst->hmmIndex);
-    inst->nStates = n;
     inst->states = (Token*)stateNPools[n]->malloc();
-    for (int i = 0; i < n; ++i)
+#endif
+
+    inst->hmmIndex = hmmIndex;
+    inst->nStates = n;
+    for (int i = 0; i < n; ++i) {
         inst->states[i] = nullToken;
+    }
     trans->hook = inst;
     inst->trans = trans;
     inst->nActiveHyps = 0;
@@ -790,16 +821,24 @@ NetInst* WFSTDecoderLite::returnNetInst(NetInst* inst, NetInst* prevInst) {
         activeNetInstList = inst->next;
         // inline destroyNetInst(inst);
         inst->trans->hook = NULL;
+#ifdef OPT_FIXN_INST_POOL
+        netInstNPools[inst->nStates]->free(inst);
+#else
         stateNPools[inst->nStates]->free(inst->states);
         netInstPool->free(inst);
+#endif
         inst = activeNetInstList;
     } else {
         // Model we are deactivating is not at head of list.
         prevInst->next = inst->next;
         // inline destroyNetInst(inst);
         inst->trans->hook = NULL;
+#ifdef OPT_FIXN_INST_POOL
+        netInstNPools[inst->nStates]->free(inst);
+#else
         stateNPools[inst->nStates]->free(inst->states);
         netInstPool->free(inst);
+#endif
         inst = prevInst->next;
     }
 
