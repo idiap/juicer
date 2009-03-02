@@ -413,7 +413,7 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
 // internal propagation passes tokens within an HMM, tee transition is not 
 // dealt with here
 void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
-    int N = inst->nStates;
+    int N_1 = inst->nStates - 1; // nStates-1 is the only way nStates will be used here
     Token* res;
     Token* cur;
     real** trP = hmmModels->getTransMat(inst->hmmIndex);
@@ -423,7 +423,7 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
     {
         // scan emitting states first
         res = tokenBuf+1;
-        for (int j = 1 ; j < N-1; ++j, ++res) {
+        for (int j = 1 ; j < N_1; ++j, ++res) {
             int i = se[j].start;
             int endi = se[j].end;
             cur = &inst->states[i];
@@ -468,7 +468,7 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
         inst->nActiveHyps = 0;
         res = tokenBuf;
         cur = inst->states;
-        for (int i = 0; i < N-1; ++i) {
+        for (int i = 0; i < N_1; ++i) {
             if (res->score > LOG_ZERO)
                 ++inst->nActiveHyps;
             *cur++ = *res++;
@@ -481,25 +481,25 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
     // note the SEIndex does not include tee transition, which are dealt 
     // elsewhere
     {
-        int i = se[N-1].start;
-        int endi = se[N-1].end;
+        int i = se[N_1].start;
+        int endi = se[N_1].end;
         
-        res = &inst->states[N-1];
+        res = &inst->states[N_1];
         cur = &inst->states[i];
         
         // assume a transition from i to exit
         *res = *cur;
         
-        res->score += trP[i][N-1];
-        res->acousticScore += trP[i][N-1];
+        res->score += trP[i][N_1];
+        res->acousticScore += trP[i][N_1];
         
         // compare with all other possible to-exit transitions
         for (++i, ++cur; i < endi; ++i, ++cur) {
-            score_t tmpScore = cur->score + trP[i][N-1];
+            score_t tmpScore = cur->score + trP[i][N_1];
             if (tmpScore > res->score) {
                 *res = *cur;
                 res->score = tmpScore;
-                res->acousticScore += trP[i][N-1];
+                res->acousticScore += trP[i][N_1];
     
                 // non-emit states can not have higher score so no need to compare with bestEmitScore
             }
@@ -602,9 +602,13 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
                         bestStartScore = newScore;
                 }
 
+#ifdef OPT_INST_TEE
+                if (inst->teeWeight > LOG_ZERO) {
+                    real teeWeight = inst->teeWeight;
+#else
                 real teeWeight = hmmModels->getTeeLogProb(inst->hmmIndex);
-                //teeWeight = LOG_ZERO;
                 if (teeWeight > LOG_ZERO) {
+#endif
                     newScore += teeWeight;
                     // if there is a tee transition, pass the token on
                     // and propagate it to next transitions
@@ -769,6 +773,9 @@ void WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
         inst->states[i] = nullToken;
     trans->hook = inst;
     inst->trans = trans;
+#ifdef OPT_INST_TEE
+    inst->teeWeight = hmmModels->getTeeLogProb(trans->inLabel - 1);
+#endif
     inst->nActiveHyps = 0;
     inst->next = newActiveNetInstList;
     newActiveNetInstList = inst;
