@@ -26,6 +26,12 @@ using namespace std;
 
 namespace Juicer {
 
+#ifdef USE_DOUBLE_SCORE
+    typedef double score_t;
+#else
+    typedef real score_t;
+#endif
+
     typedef struct Path_ {
         struct Path_* prev; /* previous path */
         
@@ -33,7 +39,7 @@ namespace Juicer {
         struct Path_* knil;
         
         int frame;
-        double score;  /* use double for higher precision, will be normalised (-bestEmitScore) at each frame  */
+        score_t score;  /* use score_t for higher precision, will be normalised (-bestEmitScore) at each frame  */
         real acousticScore; /* un-normalised acoustic score */
         real lmScore;
         int label;          /* output symbol id */
@@ -42,54 +48,23 @@ namespace Juicer {
     } Path;
 
     typedef struct Token_ {
-        double score;  /* use double for higher precision, will be normalised (-bestEmitScore) at each frame  */
-        double acousticScore; /* un-normalised real acoustic score */
+        score_t score;  /* use score_t for higher precision, will be normalised (-bestEmitScore) at each frame  */
+        score_t acousticScore; /* un-normalised real acoustic score */
         real lmScore; 
         Path* path; 
     } Token;
 
     /* a NetInst is attached to each non-eplison transition */
     typedef struct NetInst_ {
-        struct NetInst_* next;  
-        int hmmIndex;
-        int nStates;
-        int nActiveHyps;
-        WFSTTransition* trans;  /* the transition this inst is attached to */
-#ifdef OPT_FIXN_INST_POOL
-        Token states[];    /* states[nStates] including non-emitting entry and exit states */
-        // Token* states; will cause seg fault as states[n] in NetInstn below refers to local
-        // data within the structure
-#else
-        Token* states;    /* states[nStates] including non-emitting entry and exit states */
-#endif
-    } NetInst;
+        struct NetInst_* next;
 
-#ifdef OPT_FIXN_INST_POOL
-    typedef struct NetInst3_ {
-        struct NetInst_* next;  
         int hmmIndex;
         int nStates;
         int nActiveHyps;
-        WFSTTransition* trans;
-        Token states[3];
-    } NetInst3;
-    typedef struct NetInst4_ {
-        struct NetInst_* next;  
-        int hmmIndex;
-        int nStates;
-        int nActiveHyps;
-        WFSTTransition* trans;
-        Token states[4];
-    } NetInst4;
-    typedef struct NetInst5_ {
-        struct NetInst_* next;  
-        int hmmIndex;
-        int nStates;
-        int nActiveHyps;
-        WFSTTransition* trans;
-        Token states[5];
-    } NetInst5;
-#endif
+        WFSTTransition* trans;  // the transition this inst is attached to
+        Token states[];         // states[nStates] including non-emitting entry and exit states
+                                // NetInst + states[n] are allocated by stateNPools
+    } NetInst;
     
     
     class WFSTDecoderLite : public WFSTDecoder {
@@ -106,7 +81,7 @@ namespace Juicer {
 
             // compatipable with WFSTDecoder interface
             void init() {recognitionStart();}
-            DecHyp* finish() {recognitionFinish();}
+            DecHyp* finish() {return recognitionFinish();}
 
             void recognitionStart();
             void processFrame(real* inputVec, int frame_);
@@ -175,12 +150,7 @@ namespace Juicer {
             
             // memory resources
             BlockMemPool* pathPool;
-            BlockMemPool* netInstPool;
             BlockMemPool** stateNPools;
-
-#ifdef OPT_FIXN_INST_POOL
-            BlockMemPool** netInstNPools;
-#endif
             
             int nStatePools;
             
@@ -199,7 +169,6 @@ namespace Juicer {
             void HMMInternalPropagation(NetInst* inst);
             void propagateToken(Token* tok, WFSTTransition* trans);
             void attachNetInst(WFSTTransition* trans);
-            void destroyNetInst(NetInst* inst);
             void joinNewActiveInstList();
             NetInst* returnNetInst(NetInst* inst, NetInst* prevInst);
 
