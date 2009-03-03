@@ -171,7 +171,7 @@ namespace Juicer {
             void resetPathLists();
             void HMMInternalPropagation(NetInst* inst);
             void propagateToken(Token* tok, WFSTTransition* trans);
-            void attachNetInst(WFSTTransition* trans);
+            NetInst* attachNetInst(WFSTTransition* trans);
             void joinNewActiveInstList();
             NetInst* returnNetInst(NetInst* inst, NetInst* prevInst);
 

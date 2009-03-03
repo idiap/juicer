@@ -114,11 +114,13 @@ void WFSTDecoderLite::recognitionStart() {
     {
         // need to manually reset trans->hook as returnNetInst() is not used
         // for freeing memory
+#ifndef OPT_KEEP_INST
         NetInst* inst = activeNetInstList;
         while (inst) {
             inst->trans->hook = NULL;
             inst = inst->next;
         }
+#endif
         activeNetInstList = NULL;
         assert(newActiveNetInstList == NULL);
 
@@ -126,9 +128,11 @@ void WFSTDecoderLite::recognitionStart() {
         pathPool->purge_memory();
         resetPathLists();
 
-        // free all tokens
+#ifdef OPT_KEEP_INST
+        // free all NetInsts
         for (int i = 1; i <= maxNStates; ++i)
             stateNPools[i]->purge_memory();
+#endif
 
         if (dhhPool) {
             delete dhhPool;
@@ -255,7 +259,6 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
 
     currFrame = frame_;
 
-    // TODO: a better caching mechanism
     hmmModels->newFrame(currFrame, inputVec); // clear GMM cache
     bestFinalToken = nullToken; 
 
@@ -319,30 +322,11 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
         totalActiveEndHyps += nActiveEndHyps;
         totalProcEmitHyps += nEmitHypsProcessed;
 
-#if 0
-        int nActiveTokens = 0;
-
-        for(list<NetInst*>::iterator it = netInstList.begin(); it != netInstList.end();++it) {
-            NetInst* inst = *it;
-            for (int i = 0; i < inst->nStates-1; ++i) {
-                if ((inst->states[i]).score > LOG_ZERO)
-                    ++nActiveTokens;
-            }
-        }
-        printf("%03d, active tokens = %d\n", currFrame, nActiveTokens);
-#endif
-
-
-        // printf("%03d, %d/%d = %d pruned after HMM internal propagation\n", currFrame, nPruned, nInst, netInstList.size());
 
     } // end of <<Do hmm internal propagation for each active inst>>
 
     //printf("%03d, n(Active/Emit/End)Hyps = (%d/%d/%d)\n", currFrame, nActiveEmitHyps + nActiveEndHyps, nActiveEmitHyps, nActiveEndHyps);
 
-#if 0
-    if (emitHypsHistogram)
-        printf("%03d, histogram->count: %d\n", currFrame, emitHypsHistogram->count);
-#endif
 
     // Update end pruning thresholds
     // bestEndScore has now been updated during hmm internal propagation
@@ -577,10 +561,27 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
             } else {
                 // normal transition, pass tok to the entry state of it's attached instance
                 // create new NetInst if neccssary
-                if (trans->hook == NULL) {
-                    attachNetInst(trans);
-                }
+#ifdef OPT_KEEP_INST
                 NetInst* inst = (NetInst*)trans->hook;
+                if (inst == NULL) {
+                    inst = attachNetInst(trans);
+                } else  {
+                    if (inst->nActiveHyps == 0) {
+                        // this inst is reused for the 1st time
+                        // put it into newActiveNetInstList
+                        inst->next = newActiveNetInstList;
+                        newActiveNetInstList = inst;
+                        if (newActiveNetInstListLastElem == NULL)
+                            newActiveNetInstListLastElem = inst;
+                        ++totalActiveModels;
+                    }
+                }
+#else
+                NetInst* inst = (NetInst*)trans->hook;
+                if (inst == NULL) {
+                    inst = attachNetInst(trans);
+                }
+#endif
 
                 // pass token to entry state
                 Token* res = inst->states;
@@ -762,19 +763,20 @@ void WFSTDecoderLite::collectPaths() {
 
 // attach a NetInst to non-eplison transition, and add it to the *front* 
 // active inst list, so it will be processed at the next frame
-void WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
+NetInst* WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
     assert(trans->hook == NULL);
     
-    int n = hmmModels->getNumStates(trans->inLabel - 1);
+    int hmmIndex = trans->inLabel - 1;
+    int n = hmmModels->getNumStates(hmmIndex);
     NetInst* inst = (NetInst*)stateNPools[n]->malloc();
-    inst->hmmIndex = trans->inLabel - 1;
+    inst->hmmIndex = hmmIndex;
     inst->nStates = n;
     for (int i = 0; i < n; ++i)
         inst->states[i] = nullToken;
     trans->hook = inst;
     inst->trans = trans;
 #ifdef OPT_INST_TEE
-    inst->teeWeight = hmmModels->getTeeLogProb(trans->inLabel - 1);
+    inst->teeWeight = hmmModels->getTeeLogProb(hmmIndex);
 #endif
     inst->nActiveHyps = 0;
     inst->next = newActiveNetInstList;
@@ -782,6 +784,7 @@ void WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
     if (newActiveNetInstListLastElem == NULL)
         newActiveNetInstListLastElem = inst;
     ++totalActiveModels;
+    return inst;
 }
 
 
@@ -791,17 +794,28 @@ NetInst* WFSTDecoderLite::returnNetInst(NetInst* inst, NetInst* prevInst) {
     if ( prevInst == NULL ) {
         // Model we are deactivating is at head of list.
         activeNetInstList = inst->next;
+#ifdef OPT_KEEP_INST
+        for (int i = 0; i < inst->nStates; ++i)
+            inst->states[i] = nullToken;
+#else
         inst->trans->hook = NULL;
         stateNPools[inst->nStates]->free(inst);
+#endif
         inst = activeNetInstList;
     } else {
         // Model we are deactivating is not at head of list.
         prevInst->next = inst->next;
+#ifdef OPT_KEEP_INST
+        for (int i = 0; i < inst->nStates; ++i)
+            inst->states[i] = nullToken;
+#else
         inst->trans->hook = NULL;
         stateNPools[inst->nStates]->free(inst);
+#endif
         inst = prevInst->next;
     }
 
+    --totalActiveModels;
     // Return the pointer to the next active model in the linked list.
     return inst ;
 }
