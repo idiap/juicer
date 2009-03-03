@@ -270,7 +270,7 @@ void DecLexInfo::readFromASCII(
 
 	// Hard-code the use of '-' and '+' as context separators in
 	// triphone model names (for now).
-	char *cdSepChars="-+" ;
+	const char *cdSepChars="-+" ;
 
    // Hard-code the use of '!' at the start of a word to designate a special word (for now).
    char specialChar='!' ;

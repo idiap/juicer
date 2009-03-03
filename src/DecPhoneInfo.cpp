@@ -34,7 +34,7 @@ DecPhoneInfo::DecPhoneInfo()
 
 
 DecPhoneInfo::DecPhoneInfo( const char *monoListFName , char *phonesFName , char *silName , 
-                            char *pauseName , CDType cdType_ , char *cdSepChars_ )
+                            char *pauseName , CDType cdType_ , const char *cdSepChars_ )
 {
    FILE *phones_fd ;
    char line[1000] ;
@@ -561,7 +561,9 @@ CDPhoneLookup::CDPhoneLookup( MonophoneLookup *monoLookup_ )
 }
 
 
-CDPhoneLookup::CDPhoneLookup( MonophoneLookup *monoLookup_ , CDType cdType_ , char *cdSepChars_ )
+CDPhoneLookup::CDPhoneLookup(
+    MonophoneLookup *monoLookup_ , CDType cdType_ , const char *cdSepChars_
+)
 {
    if ( monoLookup_ == NULL )
       error("CDPhoneLookup::CDPhoneLookup - monoLookup_ is NULL") ;

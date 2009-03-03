@@ -53,7 +53,7 @@ class CDPhoneLookup
 public:
 	// Constructors / destructor
 	CDPhoneLookup( MonophoneLookup *monoLookup_ ) ;
-	CDPhoneLookup( MonophoneLookup *monoLookup_ , CDType cdType_ , char *cdSepChars_ ) ;
+	CDPhoneLookup( MonophoneLookup *monoLookup_ , CDType cdType_ , const char *cdSepChars_ ) ;
 	virtual ~CDPhoneLookup() ;
 	
 	// Public methods
@@ -116,7 +116,7 @@ public:
 	// If the sil_name and pause_name params are set, then the indices of the
 	//   silence and pause phonemes in the list are set.
 	DecPhoneInfo( const char *monoListFName , char *phonesFName , char *silName , 
-                 char *pauseName , CDType cdType_ , char *cdSepChars_ ) ;
+                 char *pauseName , CDType cdType_ , const char *cdSepChars_ ) ;
 	virtual ~DecPhoneInfo() ;
 
 	// Returns a pointer to the phoneme name at position "index" in the list.
