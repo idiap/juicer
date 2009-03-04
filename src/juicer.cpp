@@ -20,12 +20,11 @@
 
 #ifdef HAVE_HTKLIB
 # include "HModels.h"
+#endif
+#ifdef OPTIMISE_FLATMODEL
+# include "HTKFlatModels.h"
 #else
-# ifdef OPTIMISE_FLATMODEL
-#  include "HTKFlatModels.h"
-# else
-#  include "HTKModels.h"
-# endif
+# include "HTKModels.h"
 #endif
 
 #ifdef OPTIMISE_DECODER_LITE
@@ -86,6 +85,8 @@ bool           onTheFlyComposition=false ;
 bool           doLabelAndWeightPushing=false ;
 
 // Decoder Parameters
+char           *htkConfigFName=NULL ;
+char           *htkMListFName=NULL ;
 float          mainBeam=0.0 ;
 float          phoneEndBeam=0.0 ;
 float          phoneStartBeam=0.0 ;
@@ -146,6 +147,12 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
     cmd->addText("\nAcoustic Model Options:") ;
     cmd->addSCmdOption( "-htkModelsFName" , &htkModelsFName , "" ,
                         "the file containing the acoustic models in HTK MMF format" ) ;
+#ifdef HAVE_HTKLIB
+    cmd->addSCmdOption( "-htkConfig" , &htkConfigFName , "" ,
+                        "use HTKLib with this config file for model likelihood calculations" ) ;
+    cmd->addSCmdOption( "-htkModelsList" , &htkMListFName , "" ,
+                        "list of models in model file (need for HTKLib only)" ) ;
+#endif
     cmd->addBCmdOption( "-doModelsIOTest" , &doModelsIOTest , false ,
                         "tests the text and binary acoustic models load/save" ) ;
 
@@ -356,13 +363,13 @@ int main( int argc , char *argv[] )
     assert(0);
 #endif
 
-#ifndef HAVE_HTKLIB
+//#ifndef HAVE_HTKLIB
     if ( doModelsIOTest )
     {
         testModelsIO(
             htkModelsFName , monoListFName , priorsFName , statesPerModel ) ;
     }
-#endif
+//#endif
 
     // load network
     LogFile::puts( "loading transducer network .... " ) ;
@@ -628,13 +635,18 @@ void setupModels( Models **models )
 
         // HTK MMF model input - i.e. a HMM/GMM system
 #ifdef HAVE_HTKLIB
-        *models = new HModels() ;
-#else
+        if ( (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (htkMListFName != NULL) && (htkMListFName[0] != '\0') )
+        {
+            *models = new HModels(htkConfigFName,htkMListFName) ;
+        } else {
+#endif
 # ifdef OPTIMISE_FLATMODEL
         *models = new HTKFlatModels() ;
 # else
         *models = new HTKModels() ;
 # endif
+#ifdef HAVE_HTKLIB
+        }
 #endif
 
 #ifdef USE_BINARY_MODELS
@@ -683,15 +695,20 @@ void setupModels( Models **models )
                   "aNNPriorsFName defined but statesPerModel <= 2") ;
 
 #ifdef HAVE_HTKLIB
-        assert(0);  // makes no sense right now to have HTK models and LNA
-        *models = new HModels() ;
-#else
-# ifdef OPTIMISE_FLATMODEL
+        if ( (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (htkMListFName != NULL) && (htkMListFName[0] != '\0') )
+        {
+            assert(0);  // makes no sense right now to have HTK models and LNA
+            *models = new HModels(htkConfigFName,htkMListFName) ;
+        } else {
+#endif
+#ifdef OPTIMISE_FLATMODEL
         //  not implemented, use HTKModels instead now
         *models = new HTKModels();
-# else
+#else
         *models = new HTKModels() ;
-# endif
+#endif
+#ifdef HAVE_HTKLIB
+        }
 #endif
         (*models)->Load( monoListFName , priorsFName , statesPerModel ) ;
     }

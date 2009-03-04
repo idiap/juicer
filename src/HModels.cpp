@@ -55,9 +55,33 @@ HModels::HModels()
 	noAlias = FALSE;
 	isHTKinitialised = false;
 
-	HError(-9999,"Juicer::HModels::HModels() - TODO SetHTKCFG()");
-	// TODO: The next function should be called by juicer not here in the constructor.
-	SetHTKCFG("data/HModels.cfg");
+        LogFile::printf( "\nUsing HTKLib for model likelhood calculation.\n");
+}
+
+/**
+ * Constructor: We initialise this class by running HTK's init functions
+ * following the same procedure in HTKLVrec/HDecode.c
+ */
+HModels::HModels( const char * cfg , const char * mlist )
+{
+    /*
+     * Initialise some variables specified in the header file.
+     * Copied and modified from HHEd.c
+     */
+	HTKCFG = new char[1024];
+	HTKMMF = new char[1024];
+	HTKMList = new char[1024];
+	HTKCFG[0] = '\0';
+	HTKMMF[0] = '\0';
+	HTKMList[0] = '\0';
+	hmmDir = NULL;
+	hmmExt = NULL;
+	noAlias = FALSE;
+	isHTKinitialised = false;
+
+	SetHTKCFG(cfg);
+	SetHTKModelsList(mlist);
+        LogFile::printf( "\nUsing HTKLib for model likelhood calculation.\n");
 }
 
 /**

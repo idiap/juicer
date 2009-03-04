@@ -85,6 +85,7 @@ namespace Juicer
     {
     public:
         HModels() ;
+        HModels( const char * configFName , const char * htkModelsList ) ;
         virtual ~HModels();
 
         /*
