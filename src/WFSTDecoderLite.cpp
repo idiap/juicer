@@ -96,8 +96,7 @@ WFSTDecoderLite::~WFSTDecoderLite() {
     delete dhhPool;
     delete bestDecHyp;
 
-    if (emitHypsHistogram)
-        delete emitHypsHistogram;
+    delete emitHypsHistogram;
 }
 
 // start recognition for a new utterance, so initialise per-utterance 
@@ -128,21 +127,18 @@ void WFSTDecoderLite::recognitionStart() {
         pathPool->purge_memory();
         resetPathLists();
 
-#ifdef OPT_KEEP_INST
+#ifndef OPT_KEEP_INST
         // free all NetInsts
         for (int i = 1; i <= maxNStates; ++i)
             stateNPools[i]->purge_memory();
 #endif
 
-        if (dhhPool) {
-            delete dhhPool;
-            dhhPool = NULL;
-        }
+        // clear memory left from last utterance
+        delete dhhPool;
+        dhhPool = NULL;
 
-        if (bestDecHyp) {
-            delete bestDecHyp;
-            bestDecHyp = NULL;
-        }
+        delete bestDecHyp;
+        bestDecHyp = NULL;
 
     } // end of <<Free per-utterance memory>>
 
@@ -224,7 +220,6 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
                tmp->nConnect = 1 ;
                tmp->prev = NULL ;
               
-               //printf("DEBUG_PATH path[%03d] score = %.15f\n", i++, p->acousticScore);
                tmp->state = p->label;
                tmp->score = p->score;
                tmp->time = p->frame;
