@@ -659,6 +659,12 @@ WFSTNetwork::~WFSTNetwork()
 }
 
 
+void WFSTNetwork::resetTransitionHooks() {
+    for (int i = 0; i < nTransitions; ++i) {
+        transitions[i].hook = NULL;
+    }
+}
+
 void WFSTNetwork::getTransitions(
     WFSTTransition *prev , int *nNext , WFSTTransition **next
 )

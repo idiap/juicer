@@ -46,6 +46,7 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
 
     printf("WFSTDecoderLite (maxEmitHyps = %d, emit/p_start/p_end/w_end PruneWin (%f/%f/%f/%f)\n", maxEmitHyps, emitPruneWin_, phoneStartPruneWin_, phoneEndPruneWin_, wordPruneWin_);
 
+
     if (maxEmitHyps > 0) {
         if (emitPruneWin > 0.0)
             emitHypsHistogram = new Histogram(1, -emitPruneWin - 800.0, 200.0);
@@ -56,6 +57,7 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
 
     // initialise memory pools
     {
+
         maxNStates = 0;
         for (int i = 0; i < hmmModels->getNumHMMs(); ++i)
             if (hmmModels->getNumStates(i) > maxNStates)
@@ -71,9 +73,25 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
                 MEMORY_POOL_REALLOC_AMOUNT/2
             );
 
+        nAllocInst = 0;
+
         dhhPool = NULL;   
         bestDecHyp = NULL;
     }
+
+    int maxAllocInsts_ = 5;
+    assert(maxAllocInsts_ > 0);
+    if (maxAllocInsts_ < 100) {
+        // it's a percentage number
+        maxAllocInsts = network->getNumTransitions()*maxAllocInsts_/100;
+    } else if (maxAllocInsts_ >= 100 && maxAllocInsts_ < 8000) {
+        // it's a memory limit in MB
+        maxAllocInsts = maxAllocInsts_*1024*1024/(sizeof(NetInst)+sizeof(Token)*nStatePools);
+    } else {
+        // it's just a limit
+        maxAllocInsts = maxAllocInsts_;
+    }
+    printf("WFSTDecoderLite.cpp: maxAllocInsts = %d, maxAllocInsts_ = %d\n", maxAllocInsts, maxAllocInsts_);
 
     this->tokenBuf = new Token[maxNStates];
     this->tokenBuf[0] = nullToken; /* states other than entry will be overwritten during decoding */
@@ -113,13 +131,19 @@ void WFSTDecoderLite::recognitionStart() {
     {
         // need to manually reset trans->hook as returnNetInst() is not used
         // for freeing memory
-#ifndef OPT_KEEP_INST
+
         NetInst* inst = activeNetInstList;
         while (inst) {
+#ifdef OPT_KEEP_INST
+            inst->nActiveHyps = 0;
+            for (int i = 0; i < inst->nStates; ++i)
+                inst->states[i] = nullToken;
+            --totalActiveModels;
+#else
             inst->trans->hook = NULL;
+#endif
             inst = inst->next;
         }
-#endif
         activeNetInstList = NULL;
         assert(newActiveNetInstList == NULL);
 
@@ -127,11 +151,20 @@ void WFSTDecoderLite::recognitionStart() {
         pathPool->purge_memory();
         resetPathLists();
 
-#ifndef OPT_KEEP_INST
+#ifdef OPT_KEEP_INST
+        if (nAllocInst > maxAllocInsts) {
+            // printf("Freeing up %d NetInsts\n", nAllocInst);
+            network->resetTransitionHooks();
+            // free all NetInsts
+            for (int i = 1; i <= maxNStates; ++i)
+                stateNPools[i]->purge_memory();
+        }
+#else
         // free all NetInsts
         for (int i = 1; i <= maxNStates; ++i)
             stateNPools[i]->purge_memory();
 #endif
+
 
         // clear memory left from last utterance
         delete dhhPool;
@@ -250,7 +283,7 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
 }
 
 void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
-    // fprintf(stderr, "processing frame %d\n", currFrame);
+    // fprintf(stderr, "processing frame %d, nAllocInst=%d\n", currFrame, nAllocInst); fflush(stderr);
 
     currFrame = frame_;
 
@@ -779,6 +812,7 @@ NetInst* WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
     if (newActiveNetInstListLastElem == NULL)
         newActiveNetInstListLastElem = inst;
     ++totalActiveModels;
+    ++nAllocInst;
     return inst;
 }
 
@@ -795,6 +829,7 @@ NetInst* WFSTDecoderLite::returnNetInst(NetInst* inst, NetInst* prevInst) {
 #else
         inst->trans->hook = NULL;
         stateNPools[inst->nStates]->free(inst);
+        --nAllocInst;
 #endif
         inst = activeNetInstList;
     } else {
@@ -806,6 +841,7 @@ NetInst* WFSTDecoderLite::returnNetInst(NetInst* inst, NetInst* prevInst) {
 #else
         inst->trans->hook = NULL;
         stateNPools[inst->nStates]->free(inst);
+        --nAllocInst;
 #endif
         inst = prevInst->next;
     }

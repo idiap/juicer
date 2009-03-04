@@ -182,6 +182,8 @@ public:
    int               spMarker ;
 
 
+   void resetTransitionHooks();
+
 protected:
    WFSTAlphabet      *inputAlphabet ;
    WFSTAlphabet      *outputAlphabet ;

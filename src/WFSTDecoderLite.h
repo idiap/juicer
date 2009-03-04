@@ -120,7 +120,6 @@ namespace Juicer {
             real wordPruneWin;
             int maxEmitHyps;   /* top N instances threshold, 0 to disable */
 
-
             real bestEmitScore; /* hightest score of each frame */
             real bestStartScore;
             real bestEndScore;
@@ -130,6 +129,8 @@ namespace Juicer {
             real currEndPruneThresh;
             real currWordPruneThresh;
             real currEmitPruneThresh;
+
+            int maxAllocInsts; // free up all NetInsts when this limit is reached
 
             // statistics
             int lastPathCollectFrame; 
@@ -145,6 +146,8 @@ namespace Juicer {
 
             int nEmitHypsProcessed;
             int nEndHypsProcessed;
+
+            int nAllocInst;
             
             // other resources
             Models* hmmModels;     
