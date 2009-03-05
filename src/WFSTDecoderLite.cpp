@@ -47,6 +47,8 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
     printf("WFSTDecoderLite (maxEmitHyps = %d, emit/p_start/p_end/w_end PruneWin (%f/%f/%f/%f)\n", maxEmitHyps, emitPruneWin_, phoneStartPruneWin_, phoneEndPruneWin_, wordPruneWin_);
 
 
+    setMaxAllocModels(10); // default is to keep 10% NetInsts out of all possible NetInsts
+
     if (maxEmitHyps > 0) {
         if (emitPruneWin > 0.0)
             emitHypsHistogram = new Histogram(1, -emitPruneWin - 800.0, 200.0);
@@ -73,25 +75,12 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
                 MEMORY_POOL_REALLOC_AMOUNT/2
             );
 
-        nAllocInst = 0;
+        nAllocInsts = 0;
 
         dhhPool = NULL;   
         bestDecHyp = NULL;
     }
 
-    int maxAllocInsts_ = 10;
-    assert(maxAllocInsts_ > 0);
-    if (maxAllocInsts_ < 100) {
-        // it's a percentage number
-        maxAllocInsts = network->getNumTransitions()*maxAllocInsts_/100;
-    } else if (maxAllocInsts_ >= 100 && maxAllocInsts_ < 8000) {
-        // it's a memory limit in MB
-        maxAllocInsts = maxAllocInsts_*1024*1024/(sizeof(NetInst)+sizeof(Token)*nStatePools);
-    } else {
-        // it's just a limit
-        maxAllocInsts = maxAllocInsts_;
-    }
-    printf("WFSTDecoderLite.cpp: maxAllocInsts = %d, maxAllocInsts_ = %d\n", maxAllocInsts, maxAllocInsts_);
 
     this->tokenBuf = new Token[maxNStates];
     this->tokenBuf[0] = nullToken; /* states other than entry will be overwritten during decoding */
@@ -101,9 +90,6 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
     activeNetInstList = NULL;
     newActiveNetInstList = NULL;
     newActiveNetInstListLastElem = NULL;
-#ifdef OPT_KEEP_INST
-    printf("OPT_KEEP_INST is on\n");
-#endif
 }
 
 WFSTDecoderLite::~WFSTDecoderLite() {
@@ -155,21 +141,21 @@ void WFSTDecoderLite::recognitionStart() {
         resetPathLists();
 
 #ifdef OPT_KEEP_INST
-//        printf("nAllocInst = %d, which is %.2f%% of all transitions\n",
-//                    nAllocInst, 100.*nAllocInst/network->getNumTransitions());
-        if (nAllocInst > maxAllocInsts) {
-//            printf("Freeing up %d NetInsts\n", nAllocInst);
+//        printf("nAllocInsts = %d, which is %.2f%% of all transitions\n",
+//                    nAllocInsts, 100.*nAllocInsts/network->getNumTransitions());
+        if (nAllocInsts > maxAllocModels) {
+//            printf("Freeing up %d NetInsts\n", nAllocInsts);
             network->resetTransitionHooks();
             // free all NetInsts
             for (int i = 1; i <= maxNStates; ++i)
                 stateNPools[i]->purge_memory();
-            nAllocInst = 0;
+            nAllocInsts = 0;
         }
 #else
         // free all NetInsts
         for (int i = 1; i <= maxNStates; ++i)
             stateNPools[i]->purge_memory();
-        nAllocInst = 0;
+        nAllocInsts = 0;
 #endif
 
 
@@ -236,9 +222,6 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
        
     best = bestFinalToken;
 
-//    printf("\n");
-//    printf("%03d, best score:%f, best acousticScore: %f, best lmScore:%f\n", currFrame, best.score, best.acousticScore, best.lmScore);
-
     // the per utterance memory is not freed now, as the best token returned still use them
     // they will be cleared the next time recognitionStart() is called
     // <<Convert best token to DecHyp structure>>
@@ -290,7 +273,7 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
 }
 
 void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
-    // fprintf(stderr, "processing frame %d, nAllocInst=%d\n", currFrame, nAllocInst); fflush(stderr);
+    // fprintf(stderr, "processing frame %d, nAllocInsts=%d\n", currFrame, nAllocInsts); fflush(stderr);
 
     currFrame = frame_;
 
@@ -316,8 +299,6 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
         }
 
         currStartPruneThresh = (phoneStartPruneWin > 0.0 ? (bestStartScore - phoneStartPruneWin) : LOG_ZERO);
-        // printf("%03d, bestEmitScore = %f\n", currFrame, bestEmitScore);
-        // printf("%03d, normaliseScore = %f, currEmitPruneThresh = %f\n", currFrame, normaliseScore, currEmitPruneThresh);
     } // end of <<Update start & emit pruning thresholds>>
 
     // <<Do hmm internal propagation for each active inst>>
@@ -367,7 +348,6 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
     // bestEndScore has now been updated during hmm internal propagation
     currEndPruneThresh = (phoneEndPruneWin > 0.0 ? (bestEndScore - phoneEndPruneWin) : LOG_ZERO) ;
     currWordPruneThresh = (wordPruneWin > 0.0 ? (bestEndScore - wordPruneWin) : LOG_ZERO) ;
-    //printf("%03d, currEndPruneThresh = %f\n", currFrame, currEndPruneThresh);
 
     // <<Do external propagation (exit states) for each active inst (inc. tee and eplison transition)>>
     {
@@ -421,8 +401,6 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
         real pathRatio = ((real)nPath)/nPathNew; /* # of newly created paths / # of last remained paths */
 
         if (pathRatio > 10. && nPath > 4096 || (currFrame - lastPathCollectFrame > 100)) {
-            // printf("%03d, nPath/nPathNew = (%d/%d) = %f\n", currFrame, nPath, nPathNew, pathRatio);
-            // printf("%03d, %d paths since last collection\n", currFrame, nPath - nPathNew);
             collectPaths();
             lastPathCollectFrame = currFrame;
         }
@@ -706,11 +684,6 @@ void WFSTDecoderLite::deRefPath(Path* p) {
         p->link->knil = p->knil;
         p->knil->link = p->link; // remove from yesRefList
         
-        /*
-        p->link = noRefList.link; // insert to the front of noRefList
-        p->knil = (Path*)&noRefList;
-        p->link->knil = p->knil->link = p;
-        */
         assert(noRefListTail.link == NULL);
         assert(yesRefListTail.link == NULL);
         
@@ -819,7 +792,7 @@ NetInst* WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
     if (newActiveNetInstListLastElem == NULL)
         newActiveNetInstListLastElem = inst;
     ++totalActiveModels;
-    ++nAllocInst;
+    ++nAllocInsts;
     return inst;
 }
 
@@ -836,7 +809,7 @@ NetInst* WFSTDecoderLite::returnNetInst(NetInst* inst, NetInst* prevInst) {
 #else
         inst->trans->hook = NULL;
         stateNPools[inst->nStates]->free(inst);
-        --nAllocInst;
+        --nAllocInsts;
 #endif
         inst = activeNetInstList;
     } else {
@@ -848,7 +821,7 @@ NetInst* WFSTDecoderLite::returnNetInst(NetInst* inst, NetInst* prevInst) {
 #else
         inst->trans->hook = NULL;
         stateNPools[inst->nStates]->free(inst);
-        --nAllocInst;
+        --nAllocInsts;
 #endif
         inst = prevInst->next;
     }
@@ -864,6 +837,21 @@ void WFSTDecoderLite::joinNewActiveInstList() {
     newActiveNetInstListLastElem->next = activeNetInstList;
     activeNetInstList = newActiveNetInstList;
     newActiveNetInstList = newActiveNetInstListLastElem = NULL;
+}
+
+void WFSTDecoderLite::setMaxAllocModels(int maxAllocModels_) {
+    assert(maxAllocModels_ > 0);
+    if (maxAllocModels_ < 100) {
+        // it's a percentage number
+        maxAllocModels = network->getNumTransitions()*maxAllocModels_/100;
+    } else if (maxAllocModels_ >= 100 && maxAllocModels_ < 8000) {
+        // it's a memory limit in MB
+        maxAllocModels = maxAllocModels_*1024*1024/(sizeof(NetInst)+sizeof(Token)*nStatePools);
+    } else {
+        // it's just a limit
+        maxAllocModels = maxAllocModels_;
+    }
+    // printf("WFSTDecoderLite.cpp: maxAllocModels = %d, maxAllocModel_ = %d\n", maxAllocModels, maxAllocModel_);
 }
 
 };

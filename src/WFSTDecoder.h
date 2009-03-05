@@ -94,6 +94,8 @@ public:
    bool latticeGeneration() { return doLatticeGeneration ; } ;
    WFSTLattice *getLattice() { return lattice ; } ;
    void getBestHyp( int *numResultWords , int **resultWords , int **resultWordsTimes ) ;
+
+   virtual void setMaxAllocModels(int maxAllocModels) {};
    
 /*
    void setNetwork( Network *network_ ) ;

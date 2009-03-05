@@ -11,7 +11,6 @@
 
 OPT = # add flags as you wish
 OPT += -DOPTIMISE_FLATMODEL
-OPT += -DOPTIMISE_DECODER_LITE # this turns on the new core based by token-passing
 OPT += -DOPT_INST_TEE
 OPT += -DOPT_KEEP_INST
 #OPT += DUSE_DOUBLE_SCORE # use double instead of real for Token.score in WFSTDecoderLite

@@ -90,6 +90,7 @@ namespace Juicer {
             void processFrame(real* inputVec, int frame_);
             DecHyp* recognitionFinish();
             
+            void setMaxAllocModels(int maxAllocModels);
             // although most variables are the same as in WFSTDecoder,
             // they are re-declared here instead of inheriting from WFSTDecoder,
             // just in case this may replace WFSTDecoder completely
@@ -111,7 +112,6 @@ namespace Juicer {
             int nPathNew;        /* # of all paths since last collection */
             Token bestFinalToken; /* store best token as there may be no inst (hence token) attached to a final epsilon transition */
 
-            
             // pruning resources
             Histogram    *emitHypsHistogram;
             real emitPruneWin; /* main beam pruning threshold, 0.0 to disable */
@@ -130,7 +130,7 @@ namespace Juicer {
             real currWordPruneThresh;
             real currEmitPruneThresh;
 
-            int maxAllocInsts; // free up all NetInsts when this limit is reached
+            int maxAllocModels; // free up all NetInsts when this limit is reached
 
             // statistics
             int lastPathCollectFrame; 
@@ -147,7 +147,7 @@ namespace Juicer {
             int nEmitHypsProcessed;
             int nEndHypsProcessed;
 
-            int nAllocInst;
+            int nAllocInsts;
             
             // other resources
             Models* hmmModels;     

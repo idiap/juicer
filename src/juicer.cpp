@@ -27,9 +27,8 @@
 # include "HTKModels.h"
 #endif
 
-#ifdef OPTIMISE_DECODER_LITE
 #include "WFSTDecoderLite.h"
-#endif
+
 #ifdef WITH_ONTHEFLY
 # include "WFSTOnTheFlyDecoder.h"
 #endif
@@ -49,8 +48,8 @@
 using namespace Torch ;
 using namespace Juicer ;
 
-// decoding core selection
-bool useNewCore = false;
+// decoding core selection, default to WFSTDecoderLite
+bool useBasicCore = false;
 
 // General parameters
 char           *logFName=NULL ;
@@ -92,6 +91,7 @@ float          phoneEndBeam=0.0 ;
 float          phoneStartBeam=0.0 ;
 float          wordEmitBeam=0.0 ;
 int            maxHyps=0 ;
+int            maxAllocModels=0 ;
 char           *inputFormat_s=NULL ;
 DSTDataFileFormat inputFormat ;
 char           *outputFormat_s=NULL ;
@@ -122,10 +122,8 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
 {
     // General Parameters
     cmd->addText("\nGeneral Options:") ;
-#ifdef OPTIMISE_DECODER_LITE
-    cmd->addBCmdOption( "-fast" , &useNewCore , false ,
-                        "turn on the faster token-passing based decoding core" ) ;
-#endif
+    cmd->addBCmdOption( "-basicCore" , &useBasicCore , false ,
+                        "use the basic WFSTDecoder core instead of WFSTDecoderLite, which can be slower" ) ;
     cmd->addSCmdOption( "-logFName" , &logFName , "" ,
                         "the name of the log file" ) ;
     cmd->addICmdOption( "-framesPerSec" , &framesPerSec , 100 ,
@@ -193,6 +191,8 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
                         "the (+ve log) window used for pruning word-emitting-state hypotheses" ) ;
     cmd->addICmdOption( "-maxHyps" , &maxHyps , 0 ,
                         "Upper limit on the number of active emitting state hypotheses" ) ;
+    cmd->addICmdOption( "-maxAllocModels" , &maxAllocModels , 10 ,
+                        "Maximum of allocated models in the decoder, can be specified in 3 ways: 1 - 100: percentage of all possible models in a network; 100 - 8000: memory reserved for decoding models in MB; > 8000: upper limit of the number of allocated models");
     cmd->addSCmdOption( "-inputFName" , &inputFName , "" ,
                         "the file containing the list of files to be decoded" ) ;
     cmd->addSCmdOption( "-inputFormat" , &inputFormat_s , "" ,
@@ -544,13 +544,12 @@ int main( int argc , char *argv[] )
     LogFile::puts( "creating WFSTDecoder .... " ) ;
     WFSTDecoder *decoder = NULL ;
     if ( !onTheFlyComposition )  {
-#ifdef OPTIMISE_DECODER_LITE
-        if (useNewCore) {
+        if (!useBasicCore) {
             decoder = new WFSTDecoderLite(
             network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
                 maxHyps);
+            decoder->setMaxAllocModels(maxAllocModels);
         } else 
-#endif
 
         decoder = new WFSTDecoder(
 	    network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
