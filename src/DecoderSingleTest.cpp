@@ -22,6 +22,9 @@ using namespace Torch;
 
 namespace Juicer {
 
+#ifdef HAVE_HTKLIB
+# include "HShell.h"
+#endif
 
 int DecoderSingleTest::framesPerSec = 0 ;
 
@@ -200,8 +203,17 @@ void DecoderSingleTest::run(
  */
 void DecoderSingleTest::openSource(FrontEnd *frontend)
 {
-    assert(dataFName);
-    frontend->SetSource(dataFName);
+#ifdef HAVE_HTKLIB
+    if ( frontend->isHTKLibSource )
+    {
+        frontend->SetSource(GetStrArg());
+    } else {
+#endif
+        assert(dataFName);
+        frontend->SetSource(dataFName);
+#ifdef HAVE_HTKLIB
+    }
+#endif
 }
 
 

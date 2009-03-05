@@ -22,7 +22,6 @@
  *  INSTRUCTIONS for initialising this class:
  *
  *  	HModels m = new HModels();
- *  	m::SetHTKCFG("HTKConfigFileName");
  *  	m::SetHTKModelsList("modelListFilename");
  *  	m::Load("MMF.ascii");
  *
@@ -44,7 +43,7 @@ namespace Juicer
 {
 
 	/**
-	 * Includes from HHEd.c
+	 * Includes from HTK
 	 */
 	#include "HShell.h"
 	#include "HMem.h"
@@ -85,17 +84,13 @@ namespace Juicer
     {
     public:
         HModels() ;
-        HModels( const char * configFName , const char * htkModelsList ) ;
+        HModels( const char * htkModelsList ) ;
         virtual ~HModels();
 
         /*
-         * Set the name of the file that stores the HTK configuration
+         * Function to set the name HTK model list file
+         * e.g. /share/spandh.ami1/ami/amiasr/decoder/test/data/models-rt06/xwrd.clustered.mlist"
          */
-        void SetHTKCFG( const char * configFName );
-		/*
-		 * Function to set the name HTK model list file
-    	 * e.g. /share/spandh.ami1/ami/amiasr/decoder/test/data/models-rt06/xwrd.clustered.mlist"
-		 */
         void SetHTKModelsList( const char * htkModelsList );
 
         /*
@@ -136,25 +131,13 @@ namespace Juicer
 
     private:
     	/*
-    	 * Initialse HTK
-    	 */
-    	void InitialiseHTK();
-    	/*
-    	 * Parse simulated HTK command line arguments
-    	 */
-    	void ParseArgs();
-    	/*
-    	 * Tells HTK to load the HMMs
-    	 */
-    	void InitialiseHMMSet();
-    	/*
     	 * Allocate memory for the HMM lookup table, names and transition probabilities
     	 */
     	void InitialiseHModels( bool removeInitialToFinalTransitions );
     	/*
     	 * Has HTK been initialised?
     	 */
-    	bool isHTKinitialised;
+    	bool isHModelsinitialised;
     	/*
     	 * HTK Memory heap
     	 */
@@ -167,9 +150,7 @@ namespace Juicer
     	/*
     	 * File related variables
     	 */
-    	char *HTKCFG;		/* Filename of the HTK config file */
     	char *HTKMList;		/* Filename of the model list */
-    	char *HTKMMF;       /* Filename of the MMF */
     	char * hmmDir;      /* directory to look for hmm def files */
     	char * hmmExt;      /* hmm def file extension */
     	/*

@@ -26,7 +26,7 @@
 namespace Juicer{
 
 /**
- * Includes from HHEd.c
+ * Includes from HTK
  */
 #include "HSigP.h"
 #include "HVQ.h"
@@ -44,44 +44,31 @@ HModels::HModels()
      * Initialise some variables specified in the header file.
      * Copied and modified from HHEd.c
      */
-	HTKCFG = new char[1024];
-	HTKMMF = new char[1024];
 	HTKMList = new char[1024];
-	HTKCFG[0] = '\0';
-	HTKMMF[0] = '\0';
 	HTKMList[0] = '\0';
 	hmmDir = NULL;
 	hmmExt = NULL;
 	noAlias = FALSE;
-	isHTKinitialised = false;
-
-        LogFile::printf( "\nUsing HTKLib for model likelhood calculation.\n");
+	isHModelsinitialised = false;
 }
 
 /**
  * Constructor: We initialise this class by running HTK's init functions
  * following the same procedure in HTKLVrec/HDecode.c
  */
-HModels::HModels( const char * cfg , const char * mlist )
+HModels::HModels( const char * mlist )
 {
     /*
      * Initialise some variables specified in the header file.
      * Copied and modified from HHEd.c
      */
-	HTKCFG = new char[1024];
-	HTKMMF = new char[1024];
 	HTKMList = new char[1024];
-	HTKCFG[0] = '\0';
-	HTKMMF[0] = '\0';
 	HTKMList[0] = '\0';
 	hmmDir = NULL;
 	hmmExt = NULL;
 	noAlias = FALSE;
-	isHTKinitialised = false;
-
-	SetHTKCFG(cfg);
+	isHModelsinitialised = false;
 	SetHTKModelsList(mlist);
-        LogFile::printf( "\nUsing HTKLib for model likelhood calculation.\n");
 }
 
 /**
@@ -89,10 +76,8 @@ HModels::HModels( const char * cfg , const char * mlist )
  */
 HModels::~HModels()
 {
-    delete[] HTKCFG;
-    delete[] HTKMMF;
     delete[] HTKMList;
-    if (isHTKinitialised) {
+    if (isHModelsinitialised) {
         delete[] stateProbCache;
         for( int i=0;i<hSet.numTransP;i++ )
         {
@@ -123,13 +108,6 @@ HModels::~HModels()
 
 
 /**
- * Set the name of the file that stores the HTK configuration e.g.:
- */
-void HModels::SetHTKCFG( const char * configFName ){
-	strcpy(HTKCFG,configFName);
-}
-
-/**
  * Set the name of the file that stores the model list e.g.:
  * /share/spandh.ami1/ami/amiasr/asrcore/sys06/rt05seval/ihm/hmms/P1/xwrd.clustered.mlist
  */
@@ -153,171 +131,30 @@ void HModels::Load( const char *phonesListFName , const char *priorsFName , int 
  */
 void HModels::Load( const char *htkModelsFName , bool removeInitialToFinalTransitions )
 {
-	/*
-	 * If HTKCFG is not set then exit
-	 */
-	if (HTKCFG[0]=='\0')
-	{
-		HError(9999,"\nJuicer::HModels::Load() - HTK config not set");
-	}
-	/*
-	 * Store MMF filename in class
-	 */
-	strcpy(HTKMMF,htkModelsFName);
-	/*
-	 * If HTKMList is not set then assume that the file is htkModelsFName + ".mlist"
-	 */
-	if (HTKMList[0]=='\0')
-	{
-		strcpy(HTKMList,htkModelsFName);
-		strcat(HTKMList,".mlist");
-		LogFile::printf( "\nHModels::Load() HTKMList not set - using default %s ... " , HTKMList );
-	}
-    /*
-     * Initialise HTK.
-     */
-    InitialiseHTK();
-	/*
-	 * Now load the models and make the Observation structure for storing feature vectors
-	 */
-    InitialiseHMMSet();
-	/*
-	 * Copy the transition probability matrices out of HTK structures for faster access
-	 * and create a look up table for converting indices to HMM pointers.
-	 */
-	InitialiseHModels( removeInitialToFinalTransitions );
-	/*
-	 * HTK is now initialised
-	 */
-	isHTKinitialised = true;
-    createTrP();
-    createSEIndex();
-}
+        noAlias = TRUE;                        // zap aliases in hmmList
+        // hmmDir = NULL ;                     // Input HMM definition directory
+        // hmmExt = NULL ;                     // Input HMM file extension
 
-/**
- *  -------------------- Initialisation ---------------------
- *  Copied and modified from HHEd.c
- */
-void HModels::InitialiseHTK()
-{
-	/**
-     * Simulate command line options
-	 * 	USAGE: HHEd [options] hmmList
-	 *
-	 *	 Option                                       Default
-	 *
-	 *	 -d s    dir to find hmm definitions          current
-	 *	 -x s    extension for hmm files              none
-	 *	 -z      zap aliases in hmmList
-	 *	 -A      Print command line arguments         off
-	 *	 -B      Save HMMs/transforms as binary       off
-	 *	 -C cf   Set config file to cf                default
-	 *	 -D      Display configuration variables      off
-	 *	 -H mmf  Load HMM macro file mmf
-	 *	 -S f    Set script file to f                 none
-	 **/
-    int argc = 6;
-    char *argv[argc];
-    argv[0] = "Juicer::HModels";
-    argv[1] = "-C";
-    argv[2] = HTKCFG;
-    argv[3] = "-H";
-    argv[4] = HTKMMF;
-    argv[5] = "-z";
-    /*
-     * Standard HTK initialisation
-     */
-    char *hhed_version = "!HVER!HHEd:   3.4 [CUED 25/04/06]";
-    char *hhed_vc_id = "$Id: HHEd.c,v 1.2 2006/12/07 11:09:08 mjfg Exp $";
-    if(InitShell(argc,argv,hhed_version,hhed_vc_id)<SUCCESS)
-		HError(2600,"HHEd: InitShell failed");
-	InitMem();
-	InitLabel();
-	InitMath();
-	InitSigP();
-	InitWave();
-	InitAudio();
-	InitVQ();
-	InitModel();
-	if(InitParm()<SUCCESS)
-		HError(2600,"HHEd: InitParm failed");
-	InitUtil();
-    /*
+	/*
 	 * Allocate HTK Heaps for models and Observation vector
 	 */
 	CreateHeap(&hmmHeap,"Model Heap",MSTAK,1,1.0,100000,1000000);
 	CreateHMMSet(&hSet,&hmmHeap,TRUE);
 	hset=&hSet;
-	/*
-	 * Parse simulated command line options argc/argv
-	 * that are not handled by HTKLib
-	 */
-	ParseArgs();
-}
 
-/**
- *  -------------------- Initialisation ---------------------
- *  Copied and modified from HHEd.c
- *  Parse simulated command line options argc/argv
- *  that are not handled by HTKLib
- */
-void HModels::ParseArgs()
-{
-	char *s;
-	while (NextArg() == SWITCHARG) {
-		s = GetSwtArg();
-		if (strlen(s)!=1)
-			HError(2619,"HHEd: Bad switch %s; must be single letter",s);
-		switch(s[0]) {
-		case 'd':
-			if (NextArg()!=STRINGARG)
-				HError(2619,"HHEd: Input HMM definition directory expected");
-			hmmDir = GetStrArg();
-			break;
-		case 'x':
-			if (NextArg()!=STRINGARG)
-				HError(2619,"HHEd: Input HMM file extension expected");
-			hmmExt = GetStrArg();
-			break;
-		case 'z':
-			noAlias = TRUE;
-			break;
-		case 'J':
-			if (NextArg()!=STRINGARG)
-				HError(2319,"HERest: input transform directory expected");
-			AddInXFormDir(hset,GetStrArg());
-			break;
-		case 'H':
-			if (NextArg()!=STRINGARG)
-				HError(2619,"HHEd: Input MMF file name expected");
-			AddMMF(hset,GetStrArg());
-			break;
-		default:
-			HError(2619,"HHEd: Unknown switch %s",s);
-		}
-	}
-	if (NumArgs()>0)
-		HError(2619,"HHEd: Unexpected extra args on command line");
-}
-
-/**
- *  -------------------- Initialisation ---------------------
- *  Copied and modified from HHEd.c
- *  Load the HMMs from disk
- */
-void HModels::InitialiseHMMSet()
-{
 	/*
-	 * Load the models, removing logical models if desired
+	 * First load the models, removing logical models if desired
 	 */
-    LogFile::printf( "\nHModels::Load loading MMF %s ... " , HTKMMF );
+	AddMMF(hset,(char*)htkModelsFName) ;          // Input MMF file name
+        // AddInXFormDir(hset,GetStrArg()) ;   // Input transform directory
+	LogFile::printf( "\nHModels::Load loading MMF %s ... " , htkModelsFName );
 	if(MakeHMMSet(&hSet,HTKMList)<SUCCESS)
 		HError(2628,"Initialise: MakeHMMSet failed");
 	if (noAlias) ZapAliases();
 	if(LoadHMMSet(&hSet,hmmDir,hmmExt)<SUCCESS)
 		HError(2628,"Initialise: LoadHMMSet failed");
-    /* INVDIAGC is much faster than DIAGC, due to use * instead of / */
-    ConvDiagC(hset,TRUE);
+	/* INVDIAGC is much faster than DIAGC, due to use * instead of / */
+	ConvDiagC(hset,TRUE);
 
 	/*
 	 * Make the Observation structure for storing feature vectors.
@@ -325,6 +162,7 @@ void HModels::InitialiseHMMSet()
 	Boolean saveAsVQ = FALSE;
 	Boolean eSep = FALSE;
 	currentFrameData = MakeObservation(&hmmHeap,hSet.swidth,hSet.pkind,saveAsVQ, eSep);
+
 	/*
 	 * Set some useful variables
 	 */
@@ -333,6 +171,19 @@ void HModels::InitialiseHMMSet()
 	nHMMs = hset->numPhyHMM;
 	LogFile::printf("\n%d logical/%d physical models loaded [%d states max, %d mixes max] ... ",
 			hset->numLogHMM,nHMMs,maxStates,maxMixes);
+
+	/*
+	 * Copy the transition probability matrices out of HTK structures for faster access
+	 * and create a look up table for converting indices to HMM pointers.
+	 */
+	InitialiseHModels( removeInitialToFinalTransitions );
+	createTrP();
+	createSEIndex();
+
+	/*
+	 * HModels is now initialised
+	 */
+	isHModelsinitialised = true;
 }
 
 
@@ -449,6 +300,7 @@ void HModels::newFrame( int frame , const real *input )
 	 *            fv[1][0] recast as an int is the size of the feature vector
 	 *            fv[1][1...size] stores the feature vector
 	 */
+
 	int *dim = (int*)currentFrameData.fv[1];
 	*dim = hSet.vecSize;
 	memcpy(currentFrameData.fv[1]+1,input,hSet.vecSize*sizeof(real));

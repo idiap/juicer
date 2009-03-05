@@ -65,6 +65,17 @@ namespace Juicer
             mSpeakerIDSink = 0;
             printf("iInputVecSize %d GetArraySize %d\n", iInputVecSize, mSink->GetArraySize());
             assert(iInputVecSize == mSink->GetArraySize());
+
+#ifdef HAVE_HTKLIB
+            // Set flag in frontend to true if the environment variable ASRFactory_Source=HTKLib  
+            isHTKLibSource = false;
+            if ( iFormat == FRONTEND_FACTORY )
+            {
+                const char* ret = getenv("ASRFactory_Source");
+                printf("ASRFactory_Source = %s\n" , ret);
+                isHTKLibSource = ( strcmp(ret,"HTKLib") == 0 );
+            }
+#endif
         }
 
         ~FrontEnd()
@@ -114,6 +125,10 @@ namespace Juicer
                 return (char*)data;
             return "yyy";
         }
+
+#ifdef HAVE_HTKLIB
+        bool isHTKLibSource;
+#endif
 
     private:
         Tracter::Source* mSource;
