@@ -19,6 +19,22 @@
 #include "LogFile.h"
 
 #ifdef HAVE_HTKLIB
+  namespace Juicer 
+  {
+#   include "HShell.h"
+#   include "HMem.h"
+#   include "HMath.h"
+#   include "HAudio.h"
+#   include "HWave.h" 
+#   include "HParm.h"
+#   include "HLabel.h"
+#   include "HModel.h"
+#   include "HSigP.h"
+#   include "HVQ.h"
+#   include "HUtil.h"
+#   include "HTrain.h"
+#   include "HAdapt.h"
+  }
 # include "HModels.h"
 #endif
 #ifdef OPTIMISE_FLATMODEL
@@ -64,6 +80,10 @@ char              *sentEndWord=NULL ;
 // GMM Model parameters
 char           *htkModelsFName=NULL ;
 bool           doModelsIOTest=false ;
+#ifdef HAVE_HTKLIB
+char           *htkConfigFName=NULL ;
+char           *htkMListFName=NULL ;
+#endif
 
 // Hybrid HMM/ANN parameters
 char           *priorsFName=NULL ;
@@ -85,8 +105,6 @@ bool           onTheFlyComposition=false ;
 bool           doLabelAndWeightPushing=false ;
 
 // Decoder Parameters
-char           *htkConfigFName=NULL ;
-char           *htkMListFName=NULL ;
 float          mainBeam=0.0 ;
 float          phoneEndBeam=0.0 ;
 float          phoneStartBeam=0.0 ;
@@ -149,9 +167,9 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
                         "the file containing the acoustic models in HTK MMF format" ) ;
 #ifdef HAVE_HTKLIB
     cmd->addSCmdOption( "-htkConfig" , &htkConfigFName , "" ,
-                        "use HTKLib with this config file for model likelihood calculations" ) ;
+                        "the HTK config file that initialises HTKLib if required (optional)" ) ;
     cmd->addSCmdOption( "-htkModelsList" , &htkMListFName , "" ,
-                        "list of models in model file (need for HTKLib only)" ) ;
+                        "the MMF file's model list (activates HTKLib for HMM likelihood calculation)" ) ;
 #endif
     cmd->addBCmdOption( "-doModelsIOTest" , &doModelsIOTest , false ,
                         "tests the text and binary acoustic models load/save" ) ;
@@ -330,6 +348,54 @@ bool fileExists( const char *fname )
 
 void setupModels( Models **models ) ;
 
+/**
+ *  -------------------- Initialisation ---------------------
+ */
+void InitialiseHTK()
+{
+        /**
+         * Simulate command line options
+         *      USAGE: HHEd [options] hmmList
+         *
+         *       Option                                       Default
+         *
+         *       -C cf   Set config file to cf                default
+         *       -D      Display configuration variables      off
+         *       -S f    Set script file to f                 none
+         **/
+    int argc = 6;
+    char *argv[argc];
+    argv[0] = "Juicer::HTKLib";
+    argv[1] = "-C";
+    argv[2] = htkConfigFName;
+    argv[3] = "-S";
+    argv[4] = inputFName;
+    argv[5] = "-D";
+
+    /*
+     * Standard Global HTK initialisation
+     */
+    char *hvite_version = "!HVER!HVite:   3.4 [CUED 25/04/06]";
+    char *hvite_vc_id = "$Id: HVite.c,v 1.1.1.1 2006/10/11 09:55:02 jal58 Exp $";
+    if(InitShell(argc,argv,hvite_version,hvite_vc_id)<SUCCESS)
+                HError(2600,"HVite: InitShell failed");
+        InitMem();
+        InitLabel();
+        InitMath();
+        InitSigP();
+        InitWave();
+        InitAudio();
+        InitVQ();
+        InitModel();
+        if(InitParm()<SUCCESS)
+                HError(2600,"HHEd: InitParm failed");
+        InitUtil();
+
+        if (NumArgs()>0) {
+                printf( "HTK config loaded: %d segments to process in script file\n" , NumArgs() );
+        }
+
+}
 
 int main( int argc , char *argv[] )
 {
@@ -337,6 +403,13 @@ int main( int argc , char *argv[] )
 
     // process command line
     processCmdLine( &cmd , argc , argv ) ;
+
+#ifdef HAVE_HTKLIB
+    if ( (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') )
+    {
+        InitialiseHTK();
+    }
+#endif
 
     LogFile::open( logFName ) ;
     LogFile::date( "juicer started on" ) ;
@@ -363,13 +436,11 @@ int main( int argc , char *argv[] )
     assert(0);
 #endif
 
-//#ifndef HAVE_HTKLIB
     if ( doModelsIOTest )
     {
         testModelsIO(
             htkModelsFName , monoListFName , priorsFName , statesPerModel ) ;
     }
-//#endif
 
     // load network
     LogFile::puts( "loading transducer network .... " ) ;
@@ -539,6 +610,11 @@ int main( int argc , char *argv[] )
         assert(0);
     }
     FrontEnd *frontend = new FrontEnd(models->getInputVecSize(), source);
+#ifdef HAVE_HTKLIB
+    if ( frontend->isHTKLibSource )
+        if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
+            HError( 9999 , "Juicer: HTKLibSource selected but no HTK config provided" );
+#endif
 
     // create decoder
     LogFile::puts( "creating WFSTDecoder .... " ) ;
@@ -635,9 +711,12 @@ void setupModels( Models **models )
 
         // HTK MMF model input - i.e. a HMM/GMM system
 #ifdef HAVE_HTKLIB
+        if ( (htkMListFName != NULL) && (htkMListFName[0] != '\0') )
+            if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
+                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no HTK config was provided\n" );
         if ( (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (htkMListFName != NULL) && (htkMListFName[0] != '\0') )
         {
-            *models = new HModels(htkConfigFName,htkMListFName) ;
+            *models = new HModels(htkMListFName) ;
         } else {
 #endif
 # ifdef OPTIMISE_FLATMODEL
@@ -695,10 +774,13 @@ void setupModels( Models **models )
                   "aNNPriorsFName defined but statesPerModel <= 2") ;
 
 #ifdef HAVE_HTKLIB
+        if ( (htkMListFName != NULL) && (htkMListFName[0] != '\0') )
+            if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
+                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no HTK config was provided\n" );
         if ( (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (htkMListFName != NULL) && (htkMListFName[0] != '\0') )
         {
             assert(0);  // makes no sense right now to have HTK models and LNA
-            *models = new HModels(htkConfigFName,htkMListFName) ;
+            *models = new HModels(htkMListFName) ;
         } else {
 #endif
 #ifdef OPTIMISE_FLATMODEL
