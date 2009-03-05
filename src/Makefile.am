@@ -76,9 +76,13 @@ libjuicer_la_CPPFLAGS = \
 	@TRACTER_CFLAGS@ \
 	@HTK_INCLUDES@ \
 	@INTEL_IPP_INCLUDES@
-libjuicer_la_LIBADD = @TRACTER_LIBS@ @INTEL_IPP_LIBS@
 
-LDADD = libjuicer.la @TORCH3_LIBS@
+libjuicer_la_LIBADD = \
+	@TRACTER_LIBS@ \
+	@INTEL_IPP_LIBS@
+
+LDADD = libjuicer.la @TORCH3_LIBS@ @HTK_LIBS@
+
 
 if WITH_HTK
 JUICER_SOURCES += HModels.cpp
