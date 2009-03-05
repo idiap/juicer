@@ -18,6 +18,8 @@
 #include "MonophoneLookup.h"
 #include "LogFile.h"
 
+#include "config.h"
+
 #ifdef HAVE_HTKLIB
   namespace Juicer 
   {
@@ -348,6 +350,7 @@ bool fileExists( const char *fname )
 
 void setupModels( Models **models ) ;
 
+#ifdef HAVE_HTKLIB
 /**
  *  -------------------- Initialisation ---------------------
  */
@@ -396,6 +399,7 @@ void InitialiseHTK()
         }
 
 }
+#endif
 
 int main( int argc , char *argv[] )
 {
@@ -412,7 +416,8 @@ int main( int argc , char *argv[] )
 #endif
 
     LogFile::open( logFName ) ;
-    LogFile::date( "juicer started on" ) ;
+    LogFile::printf( "Juicer version %s\n", PACKAGE_VERSION ) ;
+    LogFile::date( "started on" ) ;
     LogFile::hostname( "on host" ) ;
 
     // load vocabulary
