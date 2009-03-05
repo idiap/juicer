@@ -83,7 +83,7 @@ char           *htkModelsFName=NULL ;
 bool           doModelsIOTest=false ;
 #ifdef HAVE_HTKLIB
 char           *htkConfigFName=NULL ;
-char           *htkMListFName=NULL ;
+bool           useHModels=false ;
 #endif
 
 // Hybrid HMM/ANN parameters
@@ -168,8 +168,8 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
 #ifdef HAVE_HTKLIB
     cmd->addSCmdOption( "-htkConfig" , &htkConfigFName , "" ,
                         "the HTK config file that initialises HTKLib if required (optional)" ) ;
-    cmd->addSCmdOption( "-htkModelsList" , &htkMListFName , "" ,
-                        "the MMF file's model list (activates HTKLib for HMM likelihood calculation)" ) ;
+    cmd->addBCmdOption( "-useHModels" , &useHModels , false ,
+                        "use HTKLib for HMM likelihood calculation" ) ;
 #endif
     cmd->addBCmdOption( "-doModelsIOTest" , &doModelsIOTest , false ,
                         "tests the text and binary acoustic models load/save" ) ;
@@ -358,8 +358,6 @@ void InitialiseHTK()
 {
         /**
          * Simulate command line options
-         *      USAGE: HHEd [options] hmmList
-         *
          *       Option                                       Default
          *
          *       -C cf   Set config file to cf                default
@@ -715,12 +713,16 @@ void setupModels( Models **models )
 
         // HTK MMF model input - i.e. a HMM/GMM system
 #ifdef HAVE_HTKLIB
-        if ( (htkMListFName != NULL) && (htkMListFName[0] != '\0') )
+        if ( useHModels ) 
+        {
+            if ( (tiedListFName == NULL) || (tiedListFName[0] == '\0') )
+                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no (tied) model list was provided\n" );
             if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
                 LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no HTK config was provided\n" );
-        if ( (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (htkMListFName != NULL) && (htkMListFName[0] != '\0') )
+        }
+        if ( useHModels && (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (tiedListFName != NULL) && (tiedListFName[0] != '\0') )
         {
-            *models = new HModels(htkMListFName) ;
+            *models = new HModels(tiedListFName) ;
         } else {
 #endif
 # ifdef OPTIMISE_FLATMODEL
@@ -778,13 +780,17 @@ void setupModels( Models **models )
                   "aNNPriorsFName defined but statesPerModel <= 2") ;
 
 #ifdef HAVE_HTKLIB
-        if ( (htkMListFName != NULL) && (htkMListFName[0] != '\0') )
+        if ( useHModels ) 
+        {
+            if ( (tiedListFName == NULL) || (tiedListFName[0] == '\0') )
+                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no (tied) model list was provided\n" );
             if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
                 LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no HTK config was provided\n" );
-        if ( (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (htkMListFName != NULL) && (htkMListFName[0] != '\0') )
+        }
+        if ( useHModels && (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (tiedListFName != NULL) && (tiedListFName[0] != '\0') )
         {
             assert(0);  // makes no sense right now to have HTK models and LNA
-            *models = new HModels(htkMListFName) ;
+            *models = new HModels(tiedListFName) ;
         } else {
 #endif
 #ifdef OPTIMISE_FLATMODEL
