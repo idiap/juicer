@@ -79,7 +79,7 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
         bestDecHyp = NULL;
     }
 
-    int maxAllocInsts_ = 5;
+    int maxAllocInsts_ = 10;
     assert(maxAllocInsts_ > 0);
     if (maxAllocInsts_ < 100) {
         // it's a percentage number
@@ -101,6 +101,9 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
     activeNetInstList = NULL;
     newActiveNetInstList = NULL;
     newActiveNetInstListLastElem = NULL;
+#ifdef OPT_KEEP_INST
+    printf("OPT_KEEP_INST is on\n");
+#endif
 }
 
 WFSTDecoderLite::~WFSTDecoderLite() {
@@ -152,17 +155,21 @@ void WFSTDecoderLite::recognitionStart() {
         resetPathLists();
 
 #ifdef OPT_KEEP_INST
+//        printf("nAllocInst = %d, which is %.2f%% of all transitions\n",
+//                    nAllocInst, 100.*nAllocInst/network->getNumTransitions());
         if (nAllocInst > maxAllocInsts) {
-            // printf("Freeing up %d NetInsts\n", nAllocInst);
+//            printf("Freeing up %d NetInsts\n", nAllocInst);
             network->resetTransitionHooks();
             // free all NetInsts
             for (int i = 1; i <= maxNStates; ++i)
                 stateNPools[i]->purge_memory();
+            nAllocInst = 0;
         }
 #else
         // free all NetInsts
         for (int i = 1; i <= maxNStates; ++i)
             stateNPools[i]->purge_memory();
+        nAllocInst = 0;
 #endif
 
 
