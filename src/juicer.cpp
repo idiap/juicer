@@ -66,6 +66,9 @@
 using namespace Torch ;
 using namespace Juicer ;
 
+// Version string
+bool version = false;
+
 // decoding core selection, default to WFSTDecoderLite
 bool useBasicCore = false;
 
@@ -142,6 +145,8 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
 {
     // General Parameters
     cmd->addText("\nGeneral Options:") ;
+    cmd->addBCmdOption( "-version" , &version , false ,
+                        "print version and exit" ) ;
     cmd->addBCmdOption( "-basicCore" , &useBasicCore , false ,
                         "use the basic WFSTDecoder core instead of WFSTDecoderLite, which can be slower" ) ;
     cmd->addSCmdOption( "-logFName" , &logFName , "" ,
@@ -249,6 +254,13 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
                         "Loops around the first file / device" ) ;
 
     cmd->read( argc , argv ) ;
+
+    // Version request
+    if (version)
+    {
+        printf("Juicer version %s\n", PACKAGE_VERSION);
+        exit(0);
+    }
 
     // First interpret the inputFormat
     if ( strcmp( inputFormat_s , "factory" ) == 0 )
