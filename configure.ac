@@ -2,7 +2,7 @@
 # ...and manually buggered up by Phil Garner
 
 AC_PREREQ(2.59)
-AC_INIT([Juicer], [0.9.0])
+AC_INIT([Juicer], [0.10.0])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_SRCDIR([src/juicer.cpp])
 AC_CONFIG_HEADERS([config.h])
