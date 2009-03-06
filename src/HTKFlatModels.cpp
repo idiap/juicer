@@ -203,8 +203,8 @@ real HTKFlatModels::calcGMMOutput( int gmmInd )
             }
             means += fvecSize4;
             vars += fvecSize4;
-            logProb = logAdd(logProb , -0.5*sumxmu +dets[i]) ;
-
+            logProb = HTKFlatModels::logAdd(logProb , -0.5*sumxmu +dets[i]) ;
+            // logProb = Torch::logAdd(logProb , -0.5*sumxmu +dets[i]) ;
         }
 #endif
         currGMMOutputs[gmmInd] = logProb;
@@ -212,5 +212,29 @@ real HTKFlatModels::calcGMMOutput( int gmmInd )
     }
     return currGMMOutputs[gmmInd] ;
 }
+
+#ifdef USE_DOUBLE
+#define MINUS_LOG_THRESHOLD -39.14
+#else
+#define MINUS_LOG_THRESHOLD -18.42
+#endif
+// a version of Torch3's logAdd, included here to take advantage of Intel's C++ compiler 
+// without the need of re-compiling Torch lib
+real HTKFlatModels::logAdd(real x, real y) {
+    if (x < y) {
+        real t = x;
+        x = y;
+        y = t;
+    }
+
+    real diff = y - x;
+
+    if (diff < MINUS_LOG_THRESHOLD) {
+        return  x;
+    } else {
+        return x+log(1.0+exp(diff));
+    }
+}
+
 
 }; // namespace juicer

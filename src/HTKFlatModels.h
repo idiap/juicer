@@ -13,7 +13,7 @@
  *
  * by Zhang Le
  * Begin       : 02-Oct-2008
- * Last Change : 15-Oct-2008.
+ * Last Change : 06-Mar-2009.
  * 
  */
 
@@ -59,6 +59,7 @@ namespace Juicer {
             real *fDet(int gmmId)    {return fDets+fMixtures[gmmId].compInd;}
             // real *fWeight(int gmmId) {return fWeights+fMixtures[gmmId].compInd;}
             real calcGMMOutput( int gmmInd );
+            real logAdd(real x, real y);
     };
 
 }; // namespace juicer
