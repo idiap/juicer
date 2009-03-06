@@ -46,7 +46,6 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
 
     printf("WFSTDecoderLite (maxEmitHyps = %d, emit/p_start/p_end/w_end PruneWin (%f/%f/%f/%f)\n", maxEmitHyps, emitPruneWin_, phoneStartPruneWin_, phoneEndPruneWin_, wordPruneWin_);
 
-
     setMaxAllocModels(10); // default is to keep 10% NetInsts out of all possible NetInsts
 
     if (maxEmitHyps > 0) {
@@ -127,7 +126,6 @@ void WFSTDecoderLite::recognitionStart() {
             inst->nActiveHyps = 0;
             for (int i = 0; i < inst->nStates; ++i)
                 inst->states[i] = nullToken;
-            --totalActiveModels;
 #else
             inst->trans->hook = NULL;
 #endif
