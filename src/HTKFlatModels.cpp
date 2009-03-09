@@ -20,6 +20,14 @@
 #include <ippcore.h>
 #include <ipps.h>
 #include <ippsr.h>
+
+// OPTIMISE_ALIGN4 seems to work well with INTEL's IPP lib, but maybe slower otherwise
+#define OPTIMISE_ALIGN4
+#endif
+
+#ifdef OPT_ICSI_LOG
+#include "icsilog.h"
+static float* icsiLogTable;
 #endif
 
 #include "HTKFlatModels.h"
@@ -31,6 +39,10 @@ namespace Juicer {
 
 HTKFlatModels::HTKFlatModels() {
     fBuffer = NULL;
+#ifdef OPT_ICSI_LOG
+#define ICSI_LOG_N 14
+   icsiLogTable = new float[(int)pow(2,ICSI_LOG_N)]; //memory allocation for the table
+#endif
 }
 
 HTKFlatModels::~HTKFlatModels() {
@@ -38,6 +50,10 @@ HTKFlatModels::~HTKFlatModels() {
     ippFree(fBuffer);
 #else
     free(fBuffer);
+#endif
+
+#ifdef OPT_ICSI_LOG
+    free(icsiLogTable);
 #endif
 }
 
@@ -232,7 +248,11 @@ real HTKFlatModels::logAdd(real x, real y) {
     if (diff < MINUS_LOG_THRESHOLD) {
         return  x;
     } else {
+#ifdef OPT_ICSI_LOG
+        return x+icsi_log(1.0+exp(diff), icsiLogTable, ICSI_LOG_N);
+#else
         return x+log(1.0+exp(diff));
+#endif
     }
 }
 
