@@ -217,6 +217,30 @@ real HTKFlatModels::calcGMMOutput( int gmmInd )
     return currGMMOutputs[gmmInd] ;
 }
 
+#ifdef OPT_FAST_EXP
+// from "A Fast, Compact Approximation of the Exponential Function" by Nicol N. Schraudolph, 1999
+// at http:// citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.57.1569
+static union {
+    double d;
+    struct {
+#ifdef LITTLE_ENDIAN
+        int j,i;
+#else
+        int i,j;
+#endif
+    }n;
+} _eco;
+
+#define EXP_A ((1<<20)/M_LN2)
+#define EXP_C 60801
+#define fastexp(y) (_eco.n.i = EXP_A*(y) + ((1023<<20) - EXP_C), _eco.d)
+#endif
+
+#ifdef OPT_FAST_LOG
+// Borchardt'™s Algorithmfor fast log computation
+#define fastlog(x) (6 * (x - 1) / (x + 1 + 4 * sqrt(x)))
+#endif
+
 #ifdef USE_DOUBLE
 #define MINUS_LOG_THRESHOLD -39.14
 #else
@@ -236,7 +260,20 @@ real HTKFlatModels::logAdd(real x, real y) {
     if (diff < MINUS_LOG_THRESHOLD) {
         return  x;
     } else {
-        return x+log(1.0+exp(diff));
+        // return x+log(1.0+exp(diff));
+#ifdef OPT_FAST_LOG
+    #ifdef OPT_FAST_EXP
+        return x + fastlog(1.0 + fastexp(diff));
+    #else
+        return x + fastlog(1.0 + exp(diff));
+    #endif
+#else
+    #ifdef OPT_FAST_EXP
+            return x + log(1.0 + fastexp(diff));
+    #else
+            return x + log(1.0 + exp(diff));
+    #endif
+#endif
     }
 }
 
