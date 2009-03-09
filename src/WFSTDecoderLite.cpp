@@ -1,4 +1,15 @@
 /*
+ * Copyright 2009 by The University of Edinburgh
+ *
+ * Copyright 2009 by Idiap Research Institute
+ *                   http://www.idiap.ch
+ *
+ * Copyright 2009 by The University of Sheffield
+ *
+ * See the file COPYING for the licence associated with this software.
+ */
+
+/*
  * vi:ts=4:tw=78:shiftwidth=4:expandtab
  * vim600:fdm=marker
  *
