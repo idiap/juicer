@@ -11,11 +11,11 @@
 
 OPT = # add flags as you wish
 OPT += -DOPTIMISE_FLATMODEL
+OPT += -DOPTIMISE_ALIGN4
 OPT += -DOPT_INST_TEE
 OPT += -DOPT_KEEP_INST
 
 #OPT += DUSE_DOUBLE_SCORE # use double instead of real for Token.score in WFSTDecoderLite
-#OPT += -DOPTIMISE_ALIGN4
 # note: NO_BEST_END and NO_BEST_START only apply to WFSTDecoder.cpp, it won't affect WFSTDecoderLite
 #OPT += -DNO_BEST_END
 #OPT += -DNO_BEST_START
