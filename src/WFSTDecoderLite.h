@@ -132,8 +132,10 @@ namespace Juicer {
             int maxEmitHyps;   /* top N instances threshold, 0 to disable */
 
             real bestEmitScore; /* hightest score of each frame */
+#ifndef OPT_SINGLE_BEST
             real bestStartScore;
             real bestEndScore;
+#endif
             real normaliseScore; /* highest normalised emitting score from last frame */
 
             real currStartPruneThresh;

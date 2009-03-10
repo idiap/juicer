@@ -184,8 +184,10 @@ void WFSTDecoderLite::recognitionStart() {
     normaliseScore = 0.0;
 
     bestEmitScore = LOG_ZERO;  
+#ifndef OPT_SINGLE_BEST
     bestStartScore = LOG_ZERO;
     bestEndScore = LOG_ZERO;
+#endif
 
     currStartPruneThresh = LOG_ZERO;
     currEndPruneThresh = LOG_ZERO;
@@ -307,7 +309,11 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
             currEmitPruneThresh = (emitPruneWin > 0.0 ? -emitPruneWin : LOG_ZERO);
         }
 
+#ifndef OPT_SINGLE_BEST
         currStartPruneThresh = (phoneStartPruneWin > 0.0 ? (bestStartScore - phoneStartPruneWin) : LOG_ZERO);
+#else
+        currStartPruneThresh = (phoneStartPruneWin > 0.0 ? (bestEmitScore - phoneStartPruneWin) : LOG_ZERO);
+#endif
     } // end of <<Update start & emit pruning thresholds>>
 
     // <<Do hmm internal propagation for each active inst>>
@@ -319,7 +325,9 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
         nEndHypsProcessed = 0;
 
         bestEmitScore = LOG_ZERO; /* bestEmitScore & bestEndScore will be updated in HMMInternalPropagation() */
+#ifndef OPT_SINGLE_BEST
         bestEndScore = LOG_ZERO;
+#endif
 
         NetInst* prevInst = NULL;
         NetInst* inst = activeNetInstList;
@@ -355,13 +363,20 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
 
     // Update end pruning thresholds
     // bestEndScore has now been updated during hmm internal propagation
+#ifndef OPT_SINGLE_BEST
     currEndPruneThresh = (phoneEndPruneWin > 0.0 ? (bestEndScore - phoneEndPruneWin) : LOG_ZERO) ;
     currWordPruneThresh = (wordPruneWin > 0.0 ? (bestEndScore - wordPruneWin) : LOG_ZERO) ;
+#else
+    currEndPruneThresh = (phoneEndPruneWin > 0.0 ? (bestEmitScore - phoneEndPruneWin) : LOG_ZERO) ;
+    currWordPruneThresh = (wordPruneWin > 0.0 ? (bestEmitScore - wordPruneWin) : LOG_ZERO) ;
+#endif
 
     // <<Do external propagation (exit states) for each active inst (inc. tee and eplison transition)>>
     {
         nEndHypsProcessed = 0;
+#ifndef OPT_SINGLE_BEST
         bestStartScore = LOG_ZERO; /* bestStartScore will be updated in propagateToken */
+#endif
 
         NetInst* prevInst = NULL;
         NetInst* inst = activeNetInstList;
@@ -515,8 +530,13 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
         if (res->score <= LOG_ZERO) {
             *res = nullToken;
        } else {
+#ifndef OPT_SINGLE_BEST
             if (res->score > bestEndScore)
                 bestEndScore = res->score;
+#else
+            if (res->score > bestEmitScore)
+                bestEmitScore = res->score;
+#endif
             ++inst->nActiveHyps;
             ++nActiveEndHyps;
        }
@@ -621,8 +641,13 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
                     if (newScore > bestEmitScore)
                         bestEmitScore = newScore;
 
+#ifndef OPT_SINGLE_BEST
                     if (newScore > bestStartScore)
                         bestStartScore = newScore;
+#else
+                    if (newScore > bestEmitScore)
+                        bestEmitScore = newScore;
+#endif
                 }
 
 #ifdef OPT_INST_TEE
