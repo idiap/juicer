@@ -21,11 +21,42 @@
 #include <ipps.h>
 #include <ippsr.h>
 
-// OPTIMISE_ALIGN4 seems to work well with INTEL's IPP lib, but maybe slower otherwise
-#define OPTIMISE_ALIGN4
+// OPT_ALIGN4 seems to work well with INTEL's IPP lib, but maybe slower otherwise
+#define OPT_ALIGN4
 #endif
 
 #include "HTKFlatModels.h"
+
+
+#ifdef OPT_FAST_EXP
+// from "A Fast, Compact Approximation of the Exponential Function" by Nicol N. Schraudolph, 1999
+// at http:// citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.57.1569
+static union {
+    double d;
+    struct {
+#ifdef LITTLE_ENDIAN
+        int j,i;
+#else
+        int i,j;
+#endif
+    }n;
+} _eco;
+
+#define EXP_A ((1<<20)/M_LN2)
+#define EXP_C 60801
+#define fastexp(y) (_eco.n.i = EXP_A*(y) + ((1023<<20) - EXP_C), _eco.d)
+#endif
+
+#ifdef OPT_FAST_LOG
+// Borchardt'™s Algorithmfor fast log computation
+#define fastlog(x) (6 * (x - 1) / (x + 1 + 4 * sqrt(x)))
+#endif
+
+#ifdef USE_DOUBLE
+#define MINUS_LOG_THRESHOLD -39.14
+#else
+#define MINUS_LOG_THRESHOLD -18.42
+#endif
 
 
 using namespace Torch;
@@ -74,7 +105,7 @@ void HTKFlatModels::init()
     }
 
     fnGaussians = nMaxGmmComp*nMixtures;
-#ifdef OPTIMISE_ALIGN4
+#ifdef OPT_ALIGN4
     fvecSize4=(vecSize+3)&(~3);
     fnMixtures4 = (nMixtures+3)&(~3);
     fnGaussians4 = (fnGaussians+3)&(~3);
@@ -217,35 +248,6 @@ real HTKFlatModels::calcGMMOutput( int gmmInd )
     return currGMMOutputs[gmmInd] ;
 }
 
-#ifdef OPT_FAST_EXP
-// from "A Fast, Compact Approximation of the Exponential Function" by Nicol N. Schraudolph, 1999
-// at http:// citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.57.1569
-static union {
-    double d;
-    struct {
-#ifdef LITTLE_ENDIAN
-        int j,i;
-#else
-        int i,j;
-#endif
-    }n;
-} _eco;
-
-#define EXP_A ((1<<20)/M_LN2)
-#define EXP_C 60801
-#define fastexp(y) (_eco.n.i = EXP_A*(y) + ((1023<<20) - EXP_C), _eco.d)
-#endif
-
-#ifdef OPT_FAST_LOG
-// Borchardt'™s Algorithmfor fast log computation
-#define fastlog(x) (6 * (x - 1) / (x + 1 + 4 * sqrt(x)))
-#endif
-
-#ifdef USE_DOUBLE
-#define MINUS_LOG_THRESHOLD -39.14
-#else
-#define MINUS_LOG_THRESHOLD -18.42
-#endif
 // a version of Torch3's logAdd, included here to take advantage of Intel's C++ compiler 
 // without the need of re-compiling Torch lib
 real HTKFlatModels::logAdd(real x, real y) {

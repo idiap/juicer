@@ -458,7 +458,7 @@ void HTKModels::newFrame( int frame , const real *input )
    {
       // clear outputs from previous frame
       int i ;
-#ifndef OPTIMISE_FLATMODEL
+#ifndef OPT_FLATMODEL
       for ( i=0 ; i<nMixtures ; i++ )
          mixtures[i].currCompOutputsValid = false ;
 #endif

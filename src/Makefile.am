@@ -10,7 +10,7 @@
 ## Process this file with automake to produce Makefile.in
 
 OPT = # add flags as you wish
-OPT += -DOPTIMISE_FLATMODEL
+OPT += -DOPT_FLATMODEL
 OPT += -DOPT_INST_TEE
 OPT += -DOPT_KEEP_INST
 
@@ -20,9 +20,9 @@ OPT += -DOPT_KEEP_INST
 
 #OPT += DUSE_DOUBLE_SCORE # use double instead of real for Token.score in WFSTDecoderLite
 
-# OPTIMISE_ALIGN4 seems to work well with INTEL's IPP lib, but maybe slower otherwise
+# OPT_ALIGN4 seems to work well with INTEL's IPP lib, but maybe slower otherwise
 # so it will be turned on automatically when HAVE_INTEL_IPP is defined 
-#OPT += -DOPTIMISE_ALIGN4
+#OPT += -DOPT_ALIGN4
 
 # note: NO_BEST_END and NO_BEST_START only apply to WFSTDecoder.cpp, it won't affect WFSTDecoderLite
 #OPT += -DNO_BEST_END

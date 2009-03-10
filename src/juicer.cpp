@@ -39,7 +39,7 @@
   }
 # include "HModels.h"
 #endif
-#ifdef OPTIMISE_FLATMODEL
+#ifdef OPT_FLATMODEL
 # include "HTKFlatModels.h"
 #else
 # include "HTKModels.h"
@@ -737,7 +737,7 @@ void setupModels( Models **models )
             *models = new HModels(tiedListFName) ;
         } else {
 #endif
-# ifdef OPTIMISE_FLATMODEL
+# ifdef OPT_FLATMODEL
         *models = new HTKFlatModels() ;
 # else
         *models = new HTKModels() ;
@@ -805,7 +805,7 @@ void setupModels( Models **models )
             *models = new HModels(tiedListFName) ;
         } else {
 #endif
-#ifdef OPTIMISE_FLATMODEL
+#ifdef OPT_FLATMODEL
         //  not implemented, use HTKModels instead now
         *models = new HTKModels();
 #else
