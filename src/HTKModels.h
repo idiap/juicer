@@ -132,7 +132,6 @@ namespace Juicer
         }
 
     protected:
-
         int            currFrame ;
         const real     *currInput ;
         int            vecSize ;
@@ -172,8 +171,7 @@ namespace Juicer
 
         void initFromHTKParseResult() ;
 
-        void createSEIndex();
-        void createTrP();
+        void createTrPandSEIndex();
 
         int addHMM( HTKHMM *hmm ) ;
         int addGMM( HTKHMMState *st ) ;
@@ -206,12 +204,15 @@ namespace Juicer
         inline real calcMixtureOutput(
             int mixInd , const real *logCompWeights
         ) ;
+
+        char* transBuffer; // single buffer for trP and SEIndex
     };
 
     void testModelsIO(
         const char *htkModelsFName , const char *phonesListFName ,
         const char *priorsFName , int statesPerModel
     ) ;
+
 
 }
 

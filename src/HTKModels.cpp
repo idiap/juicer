@@ -68,6 +68,7 @@ HTKModels::HTKModels()
    outFD = stdout ;
    inFD = NULL ;
    fromBinFile = false ;
+
 }
 
 
@@ -213,8 +214,7 @@ void HTKModels::Load(
    vecSize = nHMMs ;
    hybridMode = true ;
 
-   createTrP();
-   createSEIndex();
+   createTrPandSEIndex();
 }
 
 
@@ -277,8 +277,8 @@ void HTKModels::Load(
    // Clean up parse result & close HTK models file
    cleanHTKDef() ;
    fclose( fd ) ;
-   createTrP();
-   createSEIndex();
+
+   createTrPandSEIndex();
 }
 
 
@@ -321,13 +321,6 @@ HTKModels::~HTKModels()
       {
          delete [] transMats[i].name ;
          delete [] transMats[i].nSucs ;
-         SEIndex* se = transMats[i].seIndexes;
-         ++se; /* remember we index from 1 */
-         delete[] se;
-         int n = transMats[i].nStates;
-         for (int j = 0; j < n; ++j)
-             delete[] transMats[i].trP[j];
-         delete[] transMats[i].trP;
          if ( transMats[i].sucs != NULL )
          {
             delete [] transMats[i].sucs[0] ;
@@ -396,6 +389,8 @@ HTKModels::~HTKModels()
       else
          free( logPriors ) ;
    }
+   // free trP and SEIndexes
+    delete[] transBuffer;
 }
 
 
@@ -1245,8 +1240,7 @@ void HTKModels::readBinary( const char *fName )
    }
 
    fromBinFile = true ;
-   createTrP();
-   createSEIndex();
+   createTrPandSEIndex();
 }
 
 
@@ -2332,14 +2326,31 @@ void testModelsIO( const char *htkModelsFName , const char *phonesListFName ,
    }
 }
 
-void HTKModels::createTrP() {
-    // adhoc function, maybe better integerated later
+void HTKModels::createTrPandSEIndex() {
+    int N = 0;
+    for (int i = 0; i < getNumHMMs(); ++i) {
+        if (getNumStates(i) > N)
+            N = getNumStates(i);
+    }
+
+    int nSE = 0;
+    for (int i = 0; i < nTransMats; ++i) {
+        TransMatrix& tm = transMats[i];
+        nSE += tm.nStates-1;
+    }
+    int bufSize = sizeof(real*)*nTransMats*N + sizeof(real)*nTransMats*N*N + sizeof(SEIndex)*nSE;
+    transBuffer = new char[bufSize];
+    real** trPBuffer1 = (real**)transBuffer;
+    real* trPBuffer2 = (real*)(transBuffer + sizeof(real*)*nTransMats*N);
+    SEIndex* seBuffer = (SEIndex*)(transBuffer + sizeof(real*)*nTransMats*N + sizeof(real)*nTransMats*N*N);
+
+    // create trPs
     for (int i = 0; i < nTransMats; ++i) {
         TransMatrix& tm = transMats[i];
         int n = tm.nStates;
-        real** trP = new real*[n];
+        real** trP = &trPBuffer1[i*N];
         for (int j = 0; j < n; ++j) {
-            trP[j] = new real[n];
+            trP[j] = &trPBuffer2[i*N*N+j*n];
             for (int k = 0; k < n; ++k)
                 trP[j][k] = LOG_ZERO;
         }
@@ -2351,31 +2362,29 @@ void HTKModels::createTrP() {
         }
         tm.trP = trP;
     }
-}
 
-void HTKModels::createSEIndex() {
-    real** trP;
-    SEIndex* se;
-    int N, min, max;
+    // create SEIndex
+    SEIndex* se = seBuffer;
+
     for (int i = 0; i < nTransMats; ++i) {
         TransMatrix& tm = transMats[i];
-        trP = tm.trP;
+        real** trP = tm.trP;
         assert(trP);
-        N = tm.nStates;
-        se = new SEIndex[N-1];
+        int n = tm.nStates;
         --se; /* we index from 1, as state 0 does not need a SEIndex */
-        for (int j = 1; j < N; ++j) {
+        for (int j = 1; j < n; ++j) {
             int min, max;
-            for (min = (j == N-1?1:0); min < N-1; ++min) /* tee transition is not dealt with here */
+            for (min = (j == n-1?1:0); min < n-1; ++min) /* tee transition is not dealt with here */
                 if (trP[min][j] > LOG_ZERO)
                     break;
-            for (max = N-1; max >= 1; --max)
+            for (max = n-1; max >= 1; --max)
                 if (trP[max][j] > LOG_ZERO)
                     break;
             se[j].start = min;
             se[j].end = max+1;
         }
         tm.seIndexes = se;
+        se += n;
     }
 }
 
