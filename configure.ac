@@ -135,6 +135,9 @@ AS_IF(
 )
 AM_CONDITIONAL([WITH_INTEL_IPP], [test "$with_ipproot" != ""])
 
+# required by feature OPT_FAST_EXP
+AC_C_BIGENDIAN
+
 # SWIG interface
 AC_ARG_ENABLE(swig,
   [AS_HELP_STRING(

@@ -17,7 +17,6 @@ OPT += -DOPT_SINGLE_BEST
 
 #OPT += -DOPT_FAST_LOG
 #OPT += -DOPT_FAST_EXP
-#OPT += -DLITTLE_ENDIAN
 
 #OPT += DUSE_DOUBLE_SCORE # use double instead of real for Token.score in WFSTDecoderLite
 

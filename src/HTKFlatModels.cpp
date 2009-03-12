@@ -27,17 +27,17 @@
 
 #include "HTKFlatModels.h"
 
-
 #ifdef OPT_FAST_EXP
 // from "A Fast, Compact Approximation of the Exponential Function" by Nicol N. Schraudolph, 1999
 // at http:// citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.57.1569
 static union {
     double d;
     struct {
-#ifdef LITTLE_ENDIAN
-        int j,i;
-#else
+//  WORDS_BIGENDIAN should be defined automatically in config.h during configure
+#ifdef WORDS_BIGENDIAN
         int i,j;
+#else
+        int j,i;
 #endif
     }n;
 } _eco;
