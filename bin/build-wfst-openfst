@@ -59,7 +59,7 @@ set OUTCDBFSM     = "${PREFIX}.out.bfsm"
 set OUTDIR        = `dirname $INGRAMFSM`
 
 # Some commonly used variables
-set SEMIRING         = standard
+set SEMIRING         = log
 
 
 # Make sure all the input files exist
