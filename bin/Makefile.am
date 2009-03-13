@@ -11,6 +11,7 @@ dist_bin_SCRIPTS = \
 	aux2eps.pl \
 	build-wfst \
 	build-wfst-mit \
+	build-wfst-openfst \
 	do-star-closure.pl \
 	fstRemoveAux.pl \
 	map-labels.pl

@@ -1,0 +1,180 @@
+#!/bin/tcsh
+#
+# Copyright 2009 by Idiap Research Institute, http://www.idiap.ch
+#                   
+# See the file COPYING for the licence associated with this software.
+#
+
+#
+# Based on build-wfst (for the AT&T toolkit)
+# OpenFST is less forgiving than AT&T with regard to stochasticity.  You
+# need at least some insertion penalty to make the grammar pushable.
+#
+# Phil Garner, March 2009
+#
+echo This is build-wfst-openfst
+
+# Check that the juicer environment file has been sourced already
+if ( ! $?JUTOOLS ) then
+   echo "\nbuild-wfst: juicer environment not configured (JUTOOLS not set)\n"
+   exit 1
+endif
+
+# Process command line options
+unset OPTFINAL
+while ( $#argv > 3 ) 
+   if ( "$argv[1]" == "-of" ) then
+      set OPTFINAL
+      shift argv
+   else
+      break
+   endif
+end
+
+# Check command line arguments
+if ( $#argv != 3 ) then
+   echo "\nusage: build-wfst [options] <grammar FSM> <lexicon FSM> <CD FSM>\n"
+   echo "   options:    -of      Optimise final transducer\n"
+   exit 1
+endif
+
+set INGRAMFSM     = $argv[1]
+set PREFIX        = `echo $INGRAMFSM | sed -r 's:\.fsm$::'`
+set INGRAMINSYMS  = "${PREFIX}.insyms"
+set INGRAMOUTSYMS = "${PREFIX}.outsyms"
+set OUTGRAMBFSM   = "${PREFIX}.out.bfsm"
+
+set INLEXFSM      = $argv[2]
+set PREFIX        = `echo $INLEXFSM | sed -r 's:\.fsm$::'`
+set INLEXINSYMS   = "${PREFIX}.insyms"
+set INLEXOUTSYMS  = "${PREFIX}.outsyms"
+set OUTLEXBFSM    = "${PREFIX}.out.bfsm"
+
+set INCDFSM       = $argv[3]
+set PREFIX        = `echo $INCDFSM | sed -r 's:\.fsm$::'`
+set INCDINSYMS    = "${PREFIX}.insyms"
+set INCDOUTSYMS   = "${PREFIX}.outsyms"
+set OUTCDBFSM     = "${PREFIX}.out.bfsm"
+
+set OUTDIR        = `dirname $INGRAMFSM`
+
+# Some commonly used variables
+set SEMIRING         = standard
+
+
+# Make sure all the input files exist
+if ( ! -f $INGRAMFSM ) then
+   echo "Input grammar FSM: $INGRAMFSM not found" ; exit 1
+endif
+if ( ! -f $INGRAMINSYMS ) then
+   echo "Input grammar input symbols: $INGRAMINSYMS not found" ; exit 1
+endif
+if ( ! -f $INGRAMOUTSYMS ) then
+   echo "Input grammar output symbols: $INGRAMOUTSYMS not found" ; exit 1
+endif
+if ( ! -f $INLEXFSM ) then
+   echo "Input lexicon FSM: $INLEXFSM not found" ; exit 1
+endif
+if ( ! -f $INLEXINSYMS ) then
+   echo "Input lexicon input symbols: $INLEXINSYMS not found" ; exit 1
+endif
+if ( ! -f $INLEXOUTSYMS ) then
+   echo "Input lexicon output symbols: $INLEXOUTSYMS not found" ; exit 1
+endif
+if ( ! -f $INCDFSM ) then
+   echo "Input CD phone FSM: $INCDFSM not found" ; exit 1
+endif
+if ( ! -f $INCDINSYMS ) then
+   echo "Input CD phone input symbols: $INCDINSYMS not found" ; exit 1
+endif
+if ( ! -f $INCDOUTSYMS ) then
+   echo "Input CD phone output symbols: $INCDOUTSYMS not found" ; exit 1
+endif
+
+# Remove stray keyfile if there is one
+set CODEX = $OUTDIR/codex
+rm -f $CODEX
+
+# Prepare the grammar transducer
+fstcompile --arc_type=$SEMIRING --fst_type=const ${INGRAMFSM} | \
+fstarcsort | \
+fstdeterminize > ${OUTGRAMBFSM}
+echo -n "${OUTGRAMBFSM}: "
+echo `fstinfo ${OUTGRAMBFSM} | grep "of arcs"`
+
+# Prepare the lexicon transducer
+fstcompile --arc_type=$SEMIRING --fst_type=const ${INLEXFSM} | \
+fstarcsort | \
+fstclosure > ${OUTLEXBFSM}
+echo -n "${OUTLEXBFSM}: "
+echo `fstinfo ${OUTLEXBFSM} | grep "of arcs"`
+
+# Prepare the context dependency transducer
+fstcompile --arc_type=$SEMIRING --fst_type=const ${INCDFSM} | \
+fstarcsort | \
+fstconnect | \
+fstinvert | \
+fstdeterminize | \
+fstencode --encode_labels - $CODEX | \
+fstminimize - | \
+fstencode --decode - $CODEX | \
+fstinvert > ${OUTCDBFSM}
+rm -f $CODEX
+echo -n "${OUTCDBFSM}: "
+echo `fstinfo ${OUTCDBFSM} | grep "of arcs"`
+
+
+# Compose LG
+echo Composing LG transducer ${OUTDIR}/lg.bfsm
+fstcompose ${OUTLEXBFSM} ${OUTGRAMBFSM} | \
+fstepsnormalize | \
+fstdeterminize | \
+fstencode --encode_labels - $CODEX | \
+fstminimize - | \
+fstencode --decode - $CODEX | \
+fstarcsort > ${OUTDIR}/lg.bfsm.tmp
+rm -f $CODEX
+
+
+if ( ! $?OPTFINAL ) then
+    # Remove aux symbols from LG
+    echo Removing aux symbols
+    fstprint ${OUTDIR}/lg.bfsm.tmp > ${OUTDIR}/lg.fsm.tmp1
+    ${JUTOOLS}/aux2eps.pl ${OUTDIR}/lg.fsm.tmp1 ${INLEXINSYMS} \
+        > ${OUTDIR}/lg.fsm.tmp2
+    fstcompile --arc_type=$SEMIRING --fst_type=const ${OUTDIR}/lg.fsm.tmp2 \
+        | fstarcsort \
+        > ${OUTDIR}/lg.bfsm
+    rm ${OUTDIR}/lg.bfsm.tmp ${OUTDIR}/lg.fsm.tmp1 ${OUTDIR}/lg.fsm.tmp2
+else
+    mv ${OUTDIR}/lg.bfsm.tmp ${OUTDIR}/lg.bfsm
+endif
+echo -n "lg.bfsm "
+echo `fstinfo ${OUTDIR}/lg.bfsm | grep "of arcs"`
+
+
+# Compose CLG
+if ( $?OPTFINAL ) then
+    fstcompose ${OUTCDBFSM} ${OUTDIR}/lg.bfsm | \
+    fstepsnormalize | \
+    fstdeterminize | \
+    fstencode --encode_labels - $CODEX | \
+    fstminimize - | \
+    fstencode --decode - $CODEX | \
+    fstpush --push_weights > ${OUTDIR}/clg.bfsm
+    rm -f $CODEX
+else
+    fstcompose ${OUTCDBFSM} ${OUTDIR}/lg.bfsm | \
+    fstpush --push_weights > ${OUTDIR}/clg.bfsm
+endif
+echo -n "clg.bfsm: "
+echo `fstinfo ${OUTDIR}/clg.bfsm | grep "of arcs"`
+
+cp ${INCDINSYMS} ${OUTDIR}/final.insyms
+cp ${INGRAMOUTSYMS} ${OUTDIR}/final.outsyms
+fstprint ${OUTDIR}/clg.bfsm > ${OUTDIR}/final.fsm
+
+# May be required instead as new juicer core doesn't understand aux symbols
+#fstprint ${OUTDIR}/clg.bfsm > ${OUTDIR}/final.fsm.tmp
+#${JUTOOLS}/aux2eps.pl ${OUTDIR}/final.fsm.tmp ${INCDINSYMS} \
+#        > ${OUTDIR}/final.fsm
