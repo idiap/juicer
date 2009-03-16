@@ -127,26 +127,26 @@ void DecoderSingleTest::configure(
       dataFName = new char[strlen(ptr)+1] ;
       strcpy( dataFName , ptr ) ;
 
-      // Extract start frame
-      if ( (ptr = strtok( NULL , "," )) == NULL )
-         error("DST::configure - error isolating start frame from extended filename") ;
-      if ( sscanf( ptr , "%d" , &extStartFrame ) != 1 ) 
-         error("DST::configure - error extracting start frame from extended filename") ;
+      // Extract start frame if there is one
+      if ( (ptr = strtok( NULL , "," )) != NULL )
+      {
+         if ( sscanf( ptr , "%d" , &extStartFrame ) != 1 ) 
+            error("DST::configure - error extracting start frame from extended filename") ;
 
-      // Extract end frame
-      if ( (ptr = strtok( NULL , "]" )) == NULL )
-         error("DST::configure - error isolating end frame from extended filename") ;
-      if ( sscanf( ptr , "%d" , &extEndFrame ) != 1 ) 
-         error("DST::configure - error extracting end frame from extended filename") ;
+         // Extract end frame
+         if ( (ptr = strtok( NULL , "]" )) == NULL )
+            error("DST::configure - error isolating end frame from extended filename") ;
+         if ( sscanf( ptr , "%d" , &extEndFrame ) != 1 ) 
+            error("DST::configure - error extracting end frame from extended filename") ;
 
-      // Some basic error checking
-      if ( extStartFrame < 0 )
-         error("DST::configure - extStartFrame < 0") ;
-      if ( extEndFrame <= 0 )
-         error("DST::configure - extEndFrame <= 0") ;
-      if ( extStartFrame >= extEndFrame )
-         error("DST::configure - extStartFrame >= extEndFrame") ;
-
+         // Some basic error checking
+         if ( extStartFrame < 0 )
+            error("DST::configure - extStartFrame < 0") ;
+         if ( extEndFrame <= 0 )
+            error("DST::configure - extEndFrame <= 0") ;
+         if ( extStartFrame >= extEndFrame )
+            error("DST::configure - extStartFrame >= extEndFrame") ;
+      }
       delete [] str ;
    }
    else
