@@ -131,7 +131,7 @@ namespace Juicer
 #endif
 
     private:
-        Tracter::Source* mSource;
+        Tracter::ISource* mSource;
         ArraySink<float>* mSink;
         ArraySink<float>* mSpeakerIDSink;
         ASRFactory mFactory;
