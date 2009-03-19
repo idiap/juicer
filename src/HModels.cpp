@@ -28,6 +28,7 @@ namespace Juicer{
 /**
  * Includes from HTK
  */
+
 #include "HSigP.h"
 #include "HVQ.h"
 #include "HUtil.h"
@@ -48,8 +49,10 @@ HModels::HModels()
 	HTKMList[0] = '\0';
 	hmmDir = NULL;
 	hmmExt = NULL;
+        inputXformDir = NULL;
 	noAlias = FALSE;
 	isHModelsinitialised = false;
+	useHAdapt = false;
 }
 
 /**
@@ -66,8 +69,10 @@ HModels::HModels( const char * mlist )
 	HTKMList[0] = '\0';
 	hmmDir = NULL;
 	hmmExt = NULL;
+        inputXformDir = NULL;
 	noAlias = FALSE;
 	isHModelsinitialised = false;
+	useHAdapt = false;
 	SetHTKModelsList(mlist);
 }
 
@@ -143,15 +148,40 @@ void HModels::Load( const char *htkModelsFName , bool removeInitialToFinalTransi
 	hset=&hSet;
 
 	/*
-	 * First load the models, removing logical models if desired
+	 * First load the models, sort out adaptation transform paths and remove logical models if desired
 	 */
-	AddMMF(hset,(char*)htkModelsFName) ;          // Input MMF file name
-        // AddInXFormDir(hset,GetStrArg()) ;   // Input transform directory
+	AddMMF(hset,(char*)htkModelsFName) ;                          // Input MMF file name
+        if ( (inputXformDir!=NULL) && (inputXformDir[0]!='\0') )      // Input transform directory
+        {
+             useHAdapt = true;
+             xfInfo->useInXForm = TRUE;
+             LogFile::printf( "Using input transform directories:\n" );
+             // We have a colon separated list. 
+             // Make a copy of the list and carve it up
+             char *str = new char[strlen(inputXformDir)+1] ;
+             strcpy( str , inputXformDir ) ;
+             // Extract the paths
+             char *ptr = strtok( str , ":" ) ;
+             while ( ptr != NULL )
+             {
+                 char *ixd = new char[strlen(ptr)+1] ;
+                 strcpy( ixd , ptr ) ;
+                 LogFile::printf( "\t%s\n" , ixd );
+                 AddInXFormDir(hset,ixd);
+                 ptr = strtok( NULL , ":" ) ;
+             }
+             delete [] str;
+        }
+        if ( xfInfo->usePaXForm == TRUE ) 
+        {
+             useHAdapt = true;
+             LogFile::printf( "Using parent transform directory:\n\t%s" , xfInfo->paXFormDir );
+        }
 	LogFile::printf( "\nHModels::Load loading MMF %s ... " , htkModelsFName );
-	if(MakeHMMSet(&hSet,HTKMList)<SUCCESS)
+	if(MakeHMMSet(hset,HTKMList)<SUCCESS)
 		HError(2628,"Initialise: MakeHMMSet failed");
 	if (noAlias) ZapAliases();
-	if(LoadHMMSet(&hSet,hmmDir,hmmExt)<SUCCESS)
+	if(LoadHMMSet(hset,hmmDir,hmmExt)<SUCCESS)
 		HError(2628,"Initialise: LoadHMMSet failed");
 	/* INVDIAGC is much faster than DIAGC, due to use * instead of / */
 	ConvDiagC(hset,TRUE);
@@ -169,7 +199,7 @@ void HModels::Load( const char *htkModelsFName , bool removeInitialToFinalTransi
 	maxStates = MaxStatesInSet(hset);
 	maxMixes = MaxMixInSet(hset);
 	nHMMs = hset->numPhyHMM;
-	LogFile::printf("\n%d logical/%d physical models loaded [%d states max, %d mixes max] ... ",
+	LogFile::printf("\n%d logical/%d physical models loaded [%d states max, %d mixes max]\n",
 			hset->numLogHMM,nHMMs,maxStates,maxMixes);
 
 	/*
@@ -204,11 +234,11 @@ void HModels::InitialiseHModels( bool removeInitialToFinalTransitions )
 	{
 		transMats[i].nStates  = -1;
 		transMats[i].nSucs    = new int[ maxStates ];
-        transMats[i].sucs     = new int*[ maxStates ];
+		transMats[i].sucs     = new int*[ maxStates ];
 		transMats[i].logProbs = new real*[ maxStates ];
 		for( int j=0;j<maxStates;j++ )
 		{
-            assert(j < maxStates);
+			assert(j < maxStates);
 			transMats[i].sucs[j] = new int[ maxStates ];
 			transMats[i].logProbs[j] = new real[ maxStates ];
 		}
@@ -283,7 +313,6 @@ void HModels::outputStats( FILE *fd )
     LogFile::puts( "\nHModels::outputStats() - Not implemented.\n" );
 }
 
-
 /**
  * Implementing the Juicer Models API function
  * Tells this class that the decoder has moved to a new frame.
@@ -330,21 +359,49 @@ real HModels::calcOutput( int hmmInd , int stateInd )
  */
 real HModels::calcOutput( int gmmInd )
 {
-	/*
-	 * 1: Check if the output probability has been cached.
-	 */
-	if ( stateProbCache[gmmInd].isEmpty )
-	{
-		/*
-		 * 2: Get the GMM corresponding to gmmInd from GMMlookupTable.
-		 * 3: Get the probability distribution function of stream 1.
-		 * 4: Call HTK's SoutP to calculate the output probability for
-		 *    stream 1 of currentFrameData using that pdf.
-		 */
-		stateProbCache[gmmInd].isEmpty = false;
-		stateProbCache[gmmInd].logProb = SOutP( hset , 1 , &currentFrameData , GMMlookupTable[gmmInd] );
-	}
-	return stateProbCache[gmmInd].logProb;
+    /*
+     * 1: Check if the output probability has been cached.
+     */
+    if ( stateProbCache[gmmInd].isEmpty )
+    {
+        /*
+         * 2: Get the GMM corresponding to gmmInd from GMMlookupTable.
+         * 3: Get the probability distribution function of stream 1.
+         * 4: Call HTK's SoutP to calculate the output probability for
+         *    stream 1 of currentFrameData using that pdf.
+         */
+        stateProbCache[gmmInd].isEmpty = false;
+
+        // If we are adapting then we need to tell HTK to apply any feature based transforms
+        if ( useHAdapt )
+        {
+            LogFloat det , wt , px;
+            StreamElem *se = GMMlookupTable[gmmInd];
+            MixtureElem *me = se->spdf.cpdf+1;
+            if ( se->nMix == 1 ) 
+            {
+                stateProbCache[gmmInd].logProb = MOutP( ApplyCompFXForm( me->mpdf , currentFrameData.fv[1] ,
+                                                                         xfInfo->inXForm , &det , currentFrameIndex ) , 
+                                                        me->mpdf );
+                stateProbCache[gmmInd].logProb += det;
+            } else {
+                stateProbCache[gmmInd].logProb = LZERO;
+                for (int m=1; m<=se->nMix; m++,me++) {
+                    wt = MixLogWeight(hset, me->weight);
+                    if (wt>LMINMIX) {   
+                        px = MOutP( ApplyCompFXForm( me->mpdf , currentFrameData.fv[1] ,                                                          
+                                                     xfInfo->inXForm , &det , currentFrameIndex ) ,
+                                    me->mpdf );
+                        px += det;
+                        stateProbCache[gmmInd].logProb=LAdd(stateProbCache[gmmInd].logProb,wt+px);
+                    }
+                }
+            }
+        } else {
+            stateProbCache[gmmInd].logProb = SOutP( hset , 1 , &currentFrameData , GMMlookupTable[gmmInd] );
+        }
+    }
+    return stateProbCache[gmmInd].logProb;
 }
 
 

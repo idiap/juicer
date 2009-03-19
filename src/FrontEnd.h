@@ -12,6 +12,7 @@
 #include "LNASource.h"
 #include "ArraySink.h"
 #include "ALSASource.h"
+#include "HModels.h"
 
 #include "config.h"
 
@@ -75,6 +76,7 @@ namespace Juicer
                 printf("ASRFactory_Source = %s\n" , ret);
                 isHTKLibSource = ( strcmp(ret,"HTKLib") == 0 );
             }
+            useHModels=false;
 #endif
         }
 
@@ -127,7 +129,9 @@ namespace Juicer
         }
 
 #ifdef HAVE_HTKLIB
-        bool isHTKLibSource;
+        bool      isHTKLibSource;
+        HModels  *HTKLIBModels;
+        bool      useHModels;
 #endif
 
     private:

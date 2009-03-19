@@ -53,6 +53,7 @@ namespace Juicer
 	#include "HParm.h"
 	#include "HLabel.h"
 	#include "HModel.h"
+	#include "HAdapt.h"
 
 	/**
 	 * Juicer's transition matrix structure.
@@ -129,6 +130,13 @@ namespace Juicer
             void createSEIndex();
             void createTrP();
 
+    	/*
+    	 * HTK's HMM storage - made public for easy acces to hset
+    	 */
+    	HMMSet  hSet;        /* current HMM set */
+        char   *inputXformDir;
+        bool    useHAdapt;
+        XFInfo *xfInfo;
     private:
     	/*
     	 * Allocate memory for the HMM lookup table, names and transition probabilities
@@ -156,7 +164,6 @@ namespace Juicer
     	/*
     	 * HTK's HMM storage
     	 */
-    	HMMSet hSet;        /* current HMM set */
     	HMMSet *hset;       /* current HMM set */
     	int nHMMs;			/* number of physical HMMs in current set */
     	int maxStates;		/* max number of states in current HMM set */
