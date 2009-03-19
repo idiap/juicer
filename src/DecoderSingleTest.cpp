@@ -208,16 +208,17 @@ void DecoderSingleTest::openSource(FrontEnd *frontend)
     if ( frontend->isHTKLibSource )
     {
         char * datFN = GetStrArg();
-        if ( frontend->HTKLIBModels->useHAdapt )
-        {
-            UpdateSpkrStats( &(frontend->HTKLIBModels->hSet) , frontend->HTKLIBModels->xfInfo , datFN );
-//            if ( UpdateSpkrStats( &(frontend->HTKLIBModels->hSet) , frontend->HTKLIBModels->xfInfo , datFN ) 
-//                    && (!(frontend->HTKLIBModels->xfInfo->useInXForm)) 
-//                    && (frontend->HTKLIBModels->hSet.semiTied == NULL) ) 
-//            {
-//                frontend->HTKLIBModels->xfInfo->inXForm = NULL;
-//            }
-        }
+        if ( frontend->useHModels )
+            if ( frontend->HTKLIBModels->useHAdapt )
+            {
+                 UpdateSpkrStats( &(frontend->HTKLIBModels->hSet) , frontend->HTKLIBModels->xfInfo , datFN );
+//               if ( UpdateSpkrStats( &(frontend->HTKLIBModels->hSet) , frontend->HTKLIBModels->xfInfo , datFN ) 
+//                      && (!(frontend->HTKLIBModels->xfInfo->useInXForm)) 
+//                      && (frontend->HTKLIBModels->hSet.semiTied == NULL) ) 
+//               {
+//                   frontend->HTKLIBModels->xfInfo->inXForm = NULL;
+//               }
+            }    
         frontend->SetSource(datFN);
     } else {
 #endif
