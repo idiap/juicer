@@ -256,11 +256,9 @@ void DecoderSingleTest::decodeUtterance(
 
     // now feed the decoder nData frames a time
     while (nData > 0) {
-        decoder->processFrame(&buffer[start++], nFrames++, nData);
-        if ((extEndFrame >= 0) && (nFrames+offset > extEndFrame))
-            break;
-
-        if (frontend->GetArray(array, nFrames+offset+nData-1)) {
+         decoder->processFrame(&buffer[start++], nFrames++, nData);
+        if ((extEndFrame < 0 || (nFrames+offset+nData-2 < extEndFrame)) &&
+                frontend->GetArray(array, nFrames+offset+nData-1)) {
             if (end == BUF_LEN) { // copy remaining data to the beginning
                 end = 0;
                 while (start < BUF_LEN) {
