@@ -240,12 +240,49 @@ void DecoderSingleTest::decodeUtterance(
     nFrames = 0;
     float* array;
     int offset = extStartFrame < 0 ? 0 : extStartFrame;
+
+#ifdef OPT_BLOCK_CALC
+#define BUF_LEN 128
+    int preRead = 10;
+    float* buffer[BUF_LEN];
+    int nData = 0;
+    int end = 0;
+    int start = 0;
+    // pre-fetch preRead frames into buffer
+    while (end < preRead && frontend->GetArray(array, nFrames+offset+end)) {
+        buffer[end++] = array;
+        ++nData;
+    }
+
+    // now feed the decoder nData frames a time
+    while (nData > 0) {
+        decoder->processFrame(&buffer[start++], nFrames++, nData);
+        if ((extEndFrame >= 0) && (nFrames+offset > extEndFrame))
+            break;
+
+        if (frontend->GetArray(array, nFrames+offset+nData-1)) {
+            if (end == BUF_LEN) { // copy remaining data to the beginning
+                end = 0;
+                while (start < BUF_LEN) {
+                    buffer[end++] = buffer[start++];
+                }
+                start = 0;
+            }
+            buffer[end++] = array;
+        } else {
+            --nData;
+        }
+    }
+
+#else
     while(frontend->GetArray(array, nFrames+offset))
     {
         decoder->processFrame(array, nFrames++);
         if ((extEndFrame >= 0) && (nFrames+offset > extEndFrame))
             break;
     }
+#endif
+
     DecHyp* hyp = decoder->finish() ;
     endTime = clock() ;
     decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;

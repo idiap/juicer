@@ -297,7 +297,9 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
     //   process the new frame.
 
     // Inform the phoneModels/models of the new input vector
+#ifndef OPT_BLOCK_CALC
    models->newFrame( currFrame , inputVec ) ;
+#endif
 
    if ( doLatticeGeneration )
    {

@@ -58,6 +58,8 @@ static union {
 #define MINUS_LOG_THRESHOLD -18.42
 #endif
 
+// end macro definitions
+
 
 using namespace Torch;
 
@@ -65,6 +67,10 @@ namespace Juicer {
 
 HTKFlatModels::HTKFlatModels() {
     fBuffer = NULL;
+#ifdef OPT_BLOCK_CALC
+    fCacheT = NULL;
+    fCache = NULL;
+#endif
 }
 
 HTKFlatModels::~HTKFlatModels() {
@@ -115,8 +121,14 @@ void HTKFlatModels::init()
     fnGaussians4 = fnGaussians;
 #endif
 
+
     int model_len=sizeof(FMixture)*fnMixtures4+sizeof(real)*(fnGaussians4+ 
             fnGaussians*fvecSize4+fnGaussians*fvecSize4);
+#ifdef OPT_BLOCK_CALC
+    model_len += sizeof(real)*nGMMs*fnBlock + sizeof(int)*nGMMs;
+    printf("HTKFlatModels: fnBlock = %d\n", fnBlock);
+#endif
+
     printf("HTKFlatModels allocated %.2f MB for flat parameters\n", model_len/(1024.*1024));
 #ifdef HAVE_INTEL_IPP
     fBuffer = ippMalloc(model_len);
@@ -129,6 +141,10 @@ void HTKFlatModels::init()
     fDets    = (real*)(fMixtures+fnMixtures4);
     fMeans      = fDets+fnGaussians4;
     fVars       = fMeans+fnGaussians*fvecSize4;
+#ifdef OPT_BLOCK_CALC
+    fCacheT = (int*)(fVars+fnGaussians*fvecSize4);
+    fCache = (real*)(fCacheT+nGMMs);
+#endif
 
     for (int i = 0; i < nMixtures; ++i) {
         fMixtures[i].compNum = mixtures[i].nComps;
@@ -214,6 +230,46 @@ real HTKFlatModels::calcOutput( int gmmInd ) { // new version of GMM obversion c
 }
     
 
+#ifdef OPT_BLOCK_CALC
+real HTKFlatModels::calcGMMOutput( int gmmInd )
+{
+    int n = currFrame - fCacheT[gmmInd];
+    if (n < fnBlock) {
+        return fCache[gmmInd*fnBlock+n];
+    } else {
+        // compute GMM outp for the next few frames
+        real *dets=fDet(gmmInd);
+        int nMix = fMixtures[gmmInd].compNum;
+        int m = min(currInputLen, fnBlock);
+        for (int k = 0; k < m; ++k) {
+            real *means=fMean(gmmInd);
+            real *vars=fVar(gmmInd);
+            real logProb = LOG_ZERO;
+#ifdef HAVE_INTEL_IPP
+            ippsLogGaussMixture_32f_D2(currInputData[k],means,vars,nMix,fvecSize4, vecSize, dets, &logProb);
+#else
+            for (int i = 0; i < nMix; ++i) {
+                real* m = means;
+                real* v = vars;
+                const real* x=currInputData[k];
+                real sumxmu = 0.0;
+                for (int j = 0; j < vecSize; ++j) {
+                    real xmu = *(x++) - *(m++); 
+                    sumxmu += xmu*xmu* *v++;
+                }
+                means += fvecSize4;
+                vars += fvecSize4;
+                logProb = HTKFlatModels::logAdd(logProb , -0.5*sumxmu +dets[i]) ;
+                // logProb = Torch::logAdd(logProb , -0.5*sumxmu +dets[i]) ;
+            }
+#endif
+            fCache[gmmInd*fnBlock+k] = logProb;
+        }
+        fCacheT[gmmInd] = currFrame;
+        return fCache[gmmInd*fnBlock];
+    }
+}
+#else
 real HTKFlatModels::calcGMMOutput( int gmmInd )
 {
     if ( currGMMOutputs[gmmInd] <= LOG_ZERO ) {
@@ -247,6 +303,7 @@ real HTKFlatModels::calcGMMOutput( int gmmInd )
     }
     return currGMMOutputs[gmmInd] ;
 }
+#endif
 
 // a version of Torch3's logAdd, included here to take advantage of Intel's C++ compiler 
 // without the need of re-compiling Torch lib
@@ -279,5 +336,25 @@ real HTKFlatModels::logAdd(real x, real y) {
     }
 }
 
+#ifdef OPT_BLOCK_CALC
+void HTKFlatModels::newFrame( int frame , const real **input, int nData) {
+   if ( (frame > 0) && (frame != (currFrame+1)) )
+      error("HTKFlatModels::newFrame - invalid frame") ;
+   currFrame = frame ;
+   currInputData = input ;
+   currInputLen = nData;
+   if (frame == 0) {
+       // reset cache status for new utterance
+       for (int i = 0; i < nGMMs; ++i)
+           fCacheT[i] = -1000;
+   }
+}
+
+void HTKFlatModels::setBlockSize(int bs) {
+    if (bs < 1 || bs > 10)
+        error("HTKFlatModels::setBlockSize fnBlock should be in [1, 10]");
+    fnBlock = bs;
+}
+#endif
 
 }; // namespace juicer

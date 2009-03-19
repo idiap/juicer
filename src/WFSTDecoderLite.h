@@ -98,7 +98,11 @@ namespace Juicer {
             DecHyp* finish() {return recognitionFinish();}
 
             void recognitionStart();
+#ifdef OPT_BLOCK_CALC
+            void processFrame( real **inputVec, int currFrame_, int nFrames);
+#else
             void processFrame(real* inputVec, int frame_);
+#endif
             DecHyp* recognitionFinish();
             
             void setMaxAllocModels(int maxAllocModels);

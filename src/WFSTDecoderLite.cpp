@@ -283,12 +283,20 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
     } // end of <<Convert best token to DecHyp structure>>
 }
 
+#ifdef OPT_BLOCK_CALC
+void WFSTDecoderLite::processFrame(real **inputVec, int frame_, int nFrames_) {
+#else
 void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
+#endif
     // fprintf(stderr, "processing frame %d, nAllocInsts=%d\n", currFrame, nAllocInsts); fflush(stderr);
 
     currFrame = frame_;
 
+#ifdef OPT_BLOCK_CALC
+    hmmModels->newFrame(currFrame, (const real**)inputVec, nFrames_); 
+#else
     hmmModels->newFrame(currFrame, inputVec); // clear GMM cache
+#endif
     bestFinalToken = nullToken; 
 
 

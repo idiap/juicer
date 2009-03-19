@@ -13,7 +13,7 @@
  *
  * by Zhang Le
  * Begin       : 02-Oct-2008
- * Last Change : 09-Mar-2009.
+ * Last Change : 19-Mar-2009.
  * 
  */
 
@@ -41,6 +41,10 @@ namespace Juicer {
                     bool removeInitialToFinalTransitions_=false ) ;
             real calcOutput( int gmmInd ) ; // new version of GMM obversion calculation
             real calcOutput( int hmmInd , int stateInd ); // new version of GMM obversion calculation
+#ifdef OPT_BLOCK_CALC
+        void newFrame( int frame , const real **input, int nFrame);
+        void setBlockSize(int bs);
+#endif
 
         private:
             int fvecSize4;
@@ -53,6 +57,14 @@ namespace Juicer {
             real *fMeans;            // Gaussian means
             real *fVars;             // Gaussian variances
             void* fBuffer;            // data buffer
+
+#ifdef OPT_BLOCK_CALC
+            int fnBlock;
+            real* fCache;            // block cache
+            int* fCacheT;            // time of last calculation
+            const real** currInputData;
+            int currInputLen;
+#endif
 
             real *fMean(int gmmId)   {return fMeans+fvecSize4*fMixtures[gmmId].compInd;}
             real *fVar(int gmmId)    {return fVars+fvecSize4*fMixtures[gmmId].compInd;}
