@@ -24,6 +24,7 @@ namespace Juicer {
 
 #ifdef HAVE_HTKLIB
 # include "HShell.h"
+# include "HAdapt.h"
 #endif
 
 int DecoderSingleTest::framesPerSec = 0 ;
@@ -206,7 +207,19 @@ void DecoderSingleTest::openSource(FrontEnd *frontend)
 #ifdef HAVE_HTKLIB
     if ( frontend->isHTKLibSource )
     {
-        frontend->SetSource(GetStrArg());
+        char * datFN = GetStrArg();
+        if ( frontend->useHModels )
+            if ( frontend->HTKLIBModels->useHAdapt )
+            {
+                 UpdateSpkrStats( &(frontend->HTKLIBModels->hSet) , frontend->HTKLIBModels->xfInfo , datFN );
+//               if ( UpdateSpkrStats( &(frontend->HTKLIBModels->hSet) , frontend->HTKLIBModels->xfInfo , datFN ) 
+//                      && (!(frontend->HTKLIBModels->xfInfo->useInXForm)) 
+//                      && (frontend->HTKLIBModels->hSet.semiTied == NULL) ) 
+//               {
+//                   frontend->HTKLIBModels->xfInfo->inXForm = NULL;
+//               }
+            }    
+        frontend->SetSource(datFN);
     } else {
 #endif
         assert(dataFName);

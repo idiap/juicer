@@ -5,6 +5,11 @@
 # Usage:
 #       untieModels.sh <MMF file> <tied triphone list> <output directory>
 #
+#
+# Copyright 2009 by The University of Sheffield
+#
+# See the file COPYING for the licence associated with this software.
+#
 
 HHED=HHEd
 

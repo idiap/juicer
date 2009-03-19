@@ -85,8 +85,14 @@ char              *sentEndWord=NULL ;
 char           *htkModelsFName=NULL ;
 bool           doModelsIOTest=false ;
 #ifdef HAVE_HTKLIB
+HModels        *HTKLIBModels=NULL ;
 char           *htkConfigFName=NULL ;
 bool           useHModels=false ;
+char           *speakerNamePattern=NULL ;
+char           *parentXformDir=NULL ;
+char           *parentXformExt=NULL ;
+char           *inputXformDir=NULL ;
+char           *inputXformExt=NULL ;
 #endif
 
 // Hybrid HMM/ANN parameters
@@ -174,14 +180,25 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
     cmd->addText("\nAcoustic Model Options:") ;
     cmd->addSCmdOption( "-htkModelsFName" , &htkModelsFName , "" ,
                         "the file containing the acoustic models in HTK MMF format" ) ;
+    cmd->addBCmdOption( "-doModelsIOTest" , &doModelsIOTest , false ,
+                        "tests the text and binary acoustic models load/save" ) ;
 #ifdef HAVE_HTKLIB
+    cmd->addText("\nHTK Options:") ;
     cmd->addSCmdOption( "-htkConfig" , &htkConfigFName , "" ,
                         "the HTK config file that initialises HTKLib if required (optional)" ) ;
     cmd->addBCmdOption( "-useHModels" , &useHModels , false ,
                         "use HTKLib for HMM likelihood calculation" ) ;
+    cmd->addSCmdOption( "-speakerNamePattern" , &speakerNamePattern , "" ,
+                        "speaker name pattern syntax: outPat[:inPat[:parentPat]]" ) ;
+    cmd->addSCmdOption( "-parentXformDir" , &parentXformDir , "" ,
+                        "directory for parent transform" ) ;
+    cmd->addSCmdOption( "-parentXformExt" , &parentXformExt , "" ,
+                        "parent transform filename extension" ) ;
+    cmd->addSCmdOption( "-inputXformDir" , &inputXformDir , "" ,
+                        "colon separated list of directories to search for input transforms" ) ;
+    cmd->addSCmdOption( "-inputXformExt" , &inputXformExt , "" ,
+                        "input transform filename extension" ) ;
 #endif
-    cmd->addBCmdOption( "-doModelsIOTest" , &doModelsIOTest , false ,
-                        "tests the text and binary acoustic models load/save" ) ;
 
     // Hybrid HMM/ANN Parameters
     cmd->addText("\nHybrid HMM/ANN related options:") ;
@@ -371,6 +388,10 @@ bool fileExists( const char *fname )
 void setupModels( Models **models ) ;
 
 #ifdef HAVE_HTKLIB
+/** 
+ * ---------------- Information about transforms ------------
+ */
+XFInfo xfInfo;
 /**
  *  -------------------- Initialisation ---------------------
  */
@@ -399,7 +420,7 @@ void InitialiseHTK()
     char *hvite_version = "!HVER!HVite:   3.4 [CUED 25/04/06]";
     char *hvite_vc_id = "$Id: HVite.c,v 1.1.1.1 2006/10/11 09:55:02 jal58 Exp $";
     if(InitShell(argc,argv,hvite_version,hvite_vc_id)<SUCCESS)
-                HError(2600,"HVite: InitShell failed");
+                HError(2600,"HTKLib: InitShell failed");
         InitMem();
         InitLabel();
         InitMath();
@@ -409,13 +430,13 @@ void InitialiseHTK()
         InitVQ();
         InitModel();
         if(InitParm()<SUCCESS)
-                HError(2600,"HHEd: InitParm failed");
+                HError(2600,"HTKLib: InitParm failed");
         InitUtil();
+        InitAdapt(&xfInfo);
 
         if (NumArgs()>0) {
-                printf( "HTK config loaded: %d segments to process in script file\n" , NumArgs() );
+                LogFile::printf( "HTK config loaded:\n\t%s\n\t%d segments in %s\n" , htkConfigFName , NumArgs() , inputFName );
         }
-
 }
 #endif
 
@@ -426,17 +447,17 @@ int main( int argc , char *argv[] )
     // process command line
     processCmdLine( &cmd , argc , argv ) ;
 
+    LogFile::open( logFName ) ;
+    LogFile::printf( "Juicer version %s\n", PACKAGE_VERSION ) ;
+    LogFile::date( "started on" ) ;
+    LogFile::hostname( "on host" ) ;
+
 #ifdef HAVE_HTKLIB
     if ( (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') )
     {
         InitialiseHTK();
     }
 #endif
-
-    LogFile::open( logFName ) ;
-    LogFile::printf( "Juicer version %s\n", PACKAGE_VERSION ) ;
-    LogFile::date( "started on" ) ;
-    LogFile::hostname( "on host" ) ;
 
     // load vocabulary
     LogFile::puts( "loading vocab .... " ) ;
@@ -635,8 +656,15 @@ int main( int argc , char *argv[] )
     FrontEnd *frontend = new FrontEnd(models->getInputVecSize(), source);
 #ifdef HAVE_HTKLIB
     if ( frontend->isHTKLibSource )
+    {
         if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
             HError( 9999 , "Juicer: HTKLibSource selected but no HTK config provided" );
+        if ( useHModels ) 
+        {
+            frontend->useHModels=true;
+            frontend->HTKLIBModels = HTKLIBModels;
+        }
+    }
 #endif
 
     // create decoder
@@ -735,14 +763,88 @@ void setupModels( Models **models )
 #ifdef HAVE_HTKLIB
         if ( useHModels ) 
         {
-            if ( (tiedListFName == NULL) || (tiedListFName[0] == '\0') )
+            if ( (tiedListFName == NULL) || (tiedListFName[0] == '\0') ) 
+            {
+                useHModels=false;
                 LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no (tied) model list was provided\n" );
+            }
             if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
+            {
+                useHModels=false;
                 LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no HTK config was provided\n" );
+            }
+        } else {
+            if ( ( (speakerNamePattern!=NULL) && (speakerNamePattern[0]!='\0') ) ||
+                 ( (parentXformDir!=NULL) && (parentXformDir[0]!='\0') ) ||
+                 ( (inputXformDir!=NULL) && (inputXformDir[0]!='\0') )  )
+                error( "speakerNamePattern, inputXformDir and parentXformDir require the -useHModels option\n" );
+
         }
-        if ( useHModels && (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (tiedListFName != NULL) && (tiedListFName[0] != '\0') )
+        if ( useHModels )
         {
-            *models = new HModels(tiedListFName) ;
+            LogFile::printf( "Using HModels.\n");
+            HTKLIBModels = new HModels(tiedListFName);
+            xfInfo.usePaXForm = FALSE;
+            xfInfo.useInXForm = FALSE;
+            HTKLIBModels->xfInfo = &xfInfo;
+            *models = HTKLIBModels;
+            if ( (speakerNamePattern!=NULL) && (speakerNamePattern[0]!='\0') )
+            {
+                // We have a colon separated list.
+                // Make a copy of the list and carve it up
+                char *str = new char[strlen(speakerNamePattern)+1] ;
+                strcpy( str , speakerNamePattern ) ;
+                // Extract the paths
+                char *ptr = strtok( str , ":" ) ;
+                char *pattern = new char[strlen(ptr)+1] ;
+                strcpy( pattern , ptr ) ;
+                xfInfo.outSpkrPat = pattern;
+                LogFile::printf("\tOut speaker pattern    = %s\n", pattern);
+                ptr = strtok( NULL , ":" ) ;
+                if ( ptr !=NULL )
+                {
+                    char *pattern = new char[strlen(ptr)+1] ;
+                    strcpy( pattern , ptr ) ;
+                    xfInfo.inSpkrPat = pattern;
+                    LogFile::printf("\tIn speaker pattern     = %s\n", pattern);
+                    ptr = strtok( NULL , ":" ) ;
+                    if ( ptr !=NULL )
+                    {
+                        char *pattern = new char[strlen(ptr)+1] ;
+                        strcpy( pattern , ptr ) ;
+                        xfInfo.paSpkrPat = pattern;
+                        LogFile::printf("\tParent speaker pattern = %s\n", pattern);
+                    }
+                }
+                delete [] str;
+                if (xfInfo.inSpkrPat == NULL) 
+                {
+                    xfInfo.inSpkrPat = xfInfo.outSpkrPat; 
+                    LogFile::printf("\tIn speaker pattern     = %s\n", xfInfo.inSpkrPat);
+                }
+                if (xfInfo.paSpkrPat == NULL)
+                {
+                    xfInfo.paSpkrPat = xfInfo.outSpkrPat; 
+                    LogFile::printf("\tParent speaker pattern = %s\n", xfInfo.paSpkrPat);
+                }
+            }
+            if ( (parentXformDir!=NULL) && (parentXformDir[0]!='\0') )
+            {
+                if ( xfInfo.paSpkrPat == NULL )
+                    error("Parent transform specified without a corresponding mask");
+                xfInfo.usePaXForm = TRUE;
+                xfInfo.paXFormDir = parentXformDir; 
+                if ( (parentXformExt!=NULL) && (parentXformExt[0]!='\0') )
+                    xfInfo.paXFormExt = parentXformExt; 
+            }
+            if ( (inputXformDir!=NULL) && (inputXformDir[0]!='\0') )
+            {
+                if ( xfInfo.inSpkrPat == NULL )
+                    error("Input transform specified without a corresponding mask");
+                HTKLIBModels->inputXformDir=inputXformDir;
+                if ( (inputXformExt!=NULL) && (inputXformExt[0]!='\0') )
+                    xfInfo.inXFormExt = inputXformExt; 
+            }
         } else {
 #endif
 # ifdef OPT_FLATMODEL
@@ -813,7 +915,6 @@ void setupModels( Models **models )
         if ( useHModels && (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (tiedListFName != NULL) && (tiedListFName[0] != '\0') )
         {
             assert(0);  // makes no sense right now to have HTK models and LNA
-            *models = new HModels(tiedListFName) ;
         } else {
 #endif
 #ifdef OPT_FLATMODEL

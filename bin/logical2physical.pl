@@ -4,6 +4,12 @@
 #
 # Usage:
 #        logical2physical.pl -mlist=xwrd.triphon.mlist MMF.ascii > MMF.ascii.new
+#
+#
+# Copyright 2009 by The University of Sheffield
+#
+# See the file COPYING for the licence associated with this software.
+#
 
 
 while(<>) {
