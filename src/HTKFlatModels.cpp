@@ -351,8 +351,8 @@ void HTKFlatModels::newFrame( int frame , const real **input, int nData) {
 }
 
 void HTKFlatModels::setBlockSize(int bs) {
-    if (bs < 1 || bs > 10)
-        error("HTKFlatModels::setBlockSize fnBlock should be in [1, 10]");
+    if (bs < 1 || bs > 20)
+        error("HTKFlatModels::setBlockSize fnBlock should be in [1, 20]");
     fnBlock = bs;
 }
 #endif

@@ -255,8 +255,8 @@ void DecoderSingleTest::decodeUtterance(
     int offset = extStartFrame < 0 ? 0 : extStartFrame;
 
 #ifdef OPT_BLOCK_CALC
-#define BUF_LEN 128
-    int preRead = 10;
+#define BUF_LEN 512
+    int preRead = 20;
     float* buffer[BUF_LEN];
     int nData = 0;
     int end = 0;

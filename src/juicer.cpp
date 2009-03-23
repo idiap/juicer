@@ -136,7 +136,7 @@ bool           latticeGeneration=false ;
 char           *latticeDir=NULL ;
 
 #ifdef OPT_BLOCK_CALC
-int            blockSize = 5;
+int            blockSize = 8;
 #endif
 
 // Consistency checking parameters
@@ -240,8 +240,8 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
     cmd->addICmdOption( "-maxAllocModels" , &maxAllocModels , 10 ,
                         "Maximum of allocated models in the decoder, can be specified in 3 ways: 1 - 100: percentage of all possible models in a network; 100 - 8000: memory reserved for decoding models in MB; > 8000: upper limit of the number of allocated models");
 #ifdef OPT_BLOCK_CALC
-    cmd->addICmdOption( "-blockSize" , &blockSize , 5 ,
-                        "speed up GMM output calculation by computing a sequence of frames (1-10) a time.");
+    cmd->addICmdOption( "-blockSize" , &blockSize , 8 ,
+                        "speed up GMM output calculation by computing a sequence of frames (1-20) a time.");
 #endif
     cmd->addSCmdOption( "-inputFName" , &inputFName , "" ,
                         "the file containing the list of files to be decoded" ) ;
