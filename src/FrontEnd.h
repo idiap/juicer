@@ -12,7 +12,10 @@
 #include "LNASource.h"
 #include "ArraySink.h"
 #include "ALSASource.h"
-#include "HModels.h"
+
+#ifdef HAVE_HTKLIB
+# include "HModels.h"
+#endif
 
 #include "config.h"
 
