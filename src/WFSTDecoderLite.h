@@ -102,7 +102,7 @@ namespace Juicer {
 
             void recognitionStart();
 #ifdef OPT_BLOCK_CALC
-            void processFrame( real **inputVec, int currFrame_, int nFrames);
+            void processFrame(real **inputVec, int currFrame_, int nFrames);
 #else
             void processFrame(real* inputVec, int frame_);
 #endif

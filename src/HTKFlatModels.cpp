@@ -260,7 +260,6 @@ real HTKFlatModels::calcGMMOutput( int gmmInd )
                 means += fvecSize4;
                 vars += fvecSize4;
                 logProb = HTKFlatModels::logAdd(logProb , -0.5*sumxmu +dets[i]) ;
-                // logProb = Torch::logAdd(logProb , -0.5*sumxmu +dets[i]) ;
             }
 #endif
             fCache[gmmInd*fnBlock+k] = logProb;
@@ -295,7 +294,6 @@ real HTKFlatModels::calcGMMOutput( int gmmInd )
             means += fvecSize4;
             vars += fvecSize4;
             logProb = HTKFlatModels::logAdd(logProb , -0.5*sumxmu +dets[i]) ;
-            // logProb = Torch::logAdd(logProb , -0.5*sumxmu +dets[i]) ;
         }
 #endif
         currGMMOutputs[gmmInd] = logProb;

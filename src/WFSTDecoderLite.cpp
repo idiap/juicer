@@ -813,10 +813,6 @@ void WFSTDecoderLite::resetPathLists() {
 }
 
 void WFSTDecoderLite::collectPaths() {
-#ifdef PARTIAL_DECODING
-    Path* lastTracedPath = partialPaths.empty() ? NULL : (*partialPaths.rbegin());
-    int lastTracedFrame = lastTracedPath ? lastTracedPath->frame : -1;
-#endif
 
     // before each collection, the directlyUsedByToken of each path should be false
     // first scan all tokens in all instances and mark the directly referred paths
@@ -861,15 +857,6 @@ void WFSTDecoderLite::collectPaths() {
         path->directlyUsedByToken = false;
     }
 
-#ifdef PARTIAL_DECODING
-    // reset jointCount for next tracing
-    if (partialTraceInterval > 0) {
-        for (Path* path = yesRefList.link; path->link != NULL; path = path->link) {
-            if (path->frame > lastTracedFrame)
-                path->jointCount = 0;
-        }
-    }
-#endif
 
     nPathNew = nPath;
     lastPathCollectFrame = currFrame;
@@ -963,19 +950,27 @@ void WFSTDecoderLite::setMaxAllocModels(int maxAllocModels_) {
 #ifdef PARTIAL_DECODING
 // return true if found a converged path during the call
 bool WFSTDecoderLite::tracePartialPath() {
-// at least one call to collectPaths() is required between calls to this function
-// because jointCount of all paths with frame > lastTracedFrame need to be reset
-// in collectPaths(). So idealy this function should be called immediately after collectPaths()
-    assert(lastPathCollectFrame >= lastPartialTraceFrame);
-
+    // Idealy this function should be called immediately after collectPaths()
+    // so that we do not waste time on resetting paths to be reclaimed
     bool found = false;
     Path* lastTracedPath = partialPaths.empty() ? NULL : (*partialPaths.rbegin());
     int lastTracedFrame = lastTracedPath ? lastTracedPath->frame : -1;
-    
-    // go through all open hypothesises and try to find a path that all paths converge into
+
+    // step 1: reset jointCount for tracing
+    for (Path* path = yesRefList.link; path->link != NULL; path = path->link) {
+        if (path->frame > lastTracedFrame)
+            path->jointCount = 0;
+    }
+    for (Path* path = noRefList.link; path->link != NULL; path = path->link) {
+        if (path->frame > lastTracedFrame) {
+            path->jointCount = 0;
+        }
+    }
+
+    // step 2: go through all open hypothesises and try to find a path that all paths converge into
     NetInst* inst = activeNetInstList;
     while (!found && inst) {
-        // as all tokens within a NetInst have the same path history,
+        // as all tokens within a NetInst have the same path history
         // so we only need to trace from the first valid one
         Token* tok = inst->states;
         Path* path = tok->path;
@@ -1001,6 +996,7 @@ bool WFSTDecoderLite::tracePartialPath() {
     lastPartialTraceFrame = currFrame;
     return found;
 }
+
 // trace winning paths from |path| (including those can not be discovered by tracePartialPath())
 // up to the last traced path, and added them to partialPaths in order
 void WFSTDecoderLite::traceWinningPaths(Path* path) {
