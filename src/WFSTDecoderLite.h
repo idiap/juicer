@@ -56,6 +56,9 @@ namespace Juicer {
         int label;          /* output symbol id */
         int refCount;               /* counts this path is referred by other path's prev field */
         bool directlyUsedByToken;   /* normally false, used during path collection */
+#ifdef PARTIAL_DECODING
+        int jointCount;   /* how many paths go via this one */
+#endif
     } Path;
 
     typedef struct Token_ {
@@ -160,6 +163,7 @@ namespace Juicer {
 
             int nActiveEmitHyps;
             int nActiveEndHyps;
+            int nActiveInsts;
 
             int nEmitHypsProcessed;
             int nEndHypsProcessed;
@@ -188,12 +192,24 @@ namespace Juicer {
             void deRefPath(Path* p);
             void destroyPath(Path* p);
             void movePathYesRefList(Path* p);
+            void movePathYesRefListTail(Path* p);
             void resetPathLists();
             void HMMInternalPropagation(NetInst* inst);
             void propagateToken(Token* tok, WFSTTransition* trans);
             NetInst* attachNetInst(WFSTTransition* trans);
             void joinNewActiveInstList();
             NetInst* returnNetInst(NetInst* inst, NetInst* prevInst);
+
+#ifdef PARTIAL_DECODING
+            vector<Path*> partialPaths; // list of joint Path node in the hypothesis network
+            bool tracePartialPath();        // return true if found such node
+            void traceWinningPaths(Path* path);
+            int lastPartialTraceFrame;
+            int partialTraceInterval;   // in terms of frames
+        public:
+            void setPartialDecodeOptions(int traceInterval);
+#endif
+
 
     };
 };

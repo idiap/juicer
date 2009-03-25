@@ -55,7 +55,7 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
     phoneStartPruneWin = phoneStartPruneWin_;
     wordPruneWin = wordPruneWin_;
 
-    printf("WFSTDecoderLite (maxEmitHyps = %d, emit/p_start/p_end/w_end PruneWin (%f/%f/%f/%f)\n", maxEmitHyps, emitPruneWin_, phoneStartPruneWin_, phoneEndPruneWin_, wordPruneWin_);
+    LogFile::printf("WFSTDecoderLite (maxEmitHyps = %d, emit/p_start/p_end/w_end PruneWin (%f/%f/%f/%f)\n", maxEmitHyps, emitPruneWin_, phoneStartPruneWin_, phoneEndPruneWin_, wordPruneWin_);
 
     setMaxAllocModels(10); // default is to keep 10% NetInsts out of all possible NetInsts
 
@@ -100,6 +100,10 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
     activeNetInstList = NULL;
     newActiveNetInstList = NULL;
     newActiveNetInstListLastElem = NULL;
+
+#ifdef PARTIAL_DECODING
+    partialTraceInterval = 0;
+#endif
 }
 
 WFSTDecoderLite::~WFSTDecoderLite() {
@@ -149,6 +153,10 @@ void WFSTDecoderLite::recognitionStart() {
         pathPool->purge_memory();
         resetPathLists();
 
+#ifdef PARTIAL_DECODING
+        partialPaths.clear();
+#endif
+
 #ifdef OPT_KEEP_INST
 //        printf("nAllocInsts = %d, which is %.2f%% of all transitions\n",
 //                    nAllocInsts, 100.*nAllocInsts/network->getNumTransitions());
@@ -175,6 +183,10 @@ void WFSTDecoderLite::recognitionStart() {
         delete bestDecHyp;
         bestDecHyp = NULL;
 
+#ifdef PARTIAL_DECODING
+        partialPaths.clear();
+#endif
+
     } // end of <<Free per-utterance memory>>
 
     // reset global pruning stats
@@ -194,7 +206,11 @@ void WFSTDecoderLite::recognitionStart() {
     currWordPruneThresh = LOG_ZERO;
     currEmitPruneThresh = LOG_ZERO;
 
-    lastPathCollectFrame = 0;
+    lastPathCollectFrame = -1;
+
+#ifdef PARTIAL_DECODING
+    lastPartialTraceFrame = -1;
+#endif
 
     totalActiveModels = 0;
     totalActiveEmitHyps = 0;
@@ -202,6 +218,7 @@ void WFSTDecoderLite::recognitionStart() {
     totalProcEmitHyps = 0;
     totalProcEndHyps = 0;
 
+    nActiveInsts = 0;
     nActiveEmitHyps = 0;
     nActiveEndHyps = 0;
     nEmitHypsProcessed = 0;
@@ -219,19 +236,31 @@ void WFSTDecoderLite::recognitionStart() {
 
 DecHyp* WFSTDecoderLite::recognitionFinish() {
     Token best = nullToken;
-     LogFile::printf(
-        "\nStatistics:\n  nFrames=%d\n  avgActiveEmitHyps=%.2f\n"
-        "  avgActiveEndHyps=%.2f\n  avgActiveModels=%.2f\n"
-        "  avgProcessedEmitHyps=%.2f\n  avgProcessedEndHyps=%.2f\n" ,
-        currFrame+1,
-        ((real)totalActiveEmitHyps)/(currFrame+1), 
-        ((real)totalActiveEndHyps)/(currFrame+1),
-        ((real)totalActiveModels)/ (currFrame+1),
-        ((real)totalProcEmitHyps)/(currFrame+1),
-        ((real)totalProcEndHyps)/(currFrame+1)
-    ) ;
-       
-    best = bestFinalToken;
+    LogFile::printf(
+            "\nStatistics:\n  nFrames=%d\n  avgActiveEmitHyps=%.2f\n"
+            "  avgActiveEndHyps=%.2f\n  avgActiveModels=%.2f\n"
+            "  avgProcessedEmitHyps=%.2f\n  avgProcessedEndHyps=%.2f\n" ,
+            currFrame+1,
+            ((real)totalActiveEmitHyps)/(currFrame+1), 
+            ((real)totalActiveEndHyps)/(currFrame+1),
+            ((real)totalActiveModels)/ (currFrame+1),
+            ((real)totalProcEmitHyps)/(currFrame+1),
+            ((real)totalProcEndHyps)/(currFrame+1)
+            ) ;
+
+    best = bestFinalToken; 
+
+#ifdef PARTIAL_DECODING
+    // perform one more partial tracing, from best token
+    traceWinningPaths(best.path);
+    if (partialTraceInterval > 0) {
+        LogFile::printf("Partial paths recovered at frames: ");
+        for (vector<Path*>::iterator it = partialPaths.begin(); it != partialPaths.end(); ++it) {
+        LogFile::printf("%03d ", (*it)->frame);
+        }
+        LogFile::printf("\n");
+    }
+#endif
 
     // the per utterance memory is not freed now, as the best token returned still use them
     // they will be cleared the next time recognitionStart() is called
@@ -248,34 +277,34 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
             Path* p = best.path;
             while (p != NULL) {
                 DecHypHist *tmp ;
-            
+
                 tmp = (DecHypHist *)(dhhPool->getElem()) ;
-               tmp->type = DHHTYPE ;
-               tmp->nConnect = 1 ;
-               tmp->prev = NULL ;
-              
-               tmp->state = p->label;
-               tmp->score = p->score;
-               tmp->time = p->frame;
-               tmp->acousticScore = p->acousticScore;
-               tmp->lmScore = p->lmScore;
-               
-               if (oldHist != NULL) {
-                   oldHist->prev = tmp;
-               } else {
+                tmp->type = DHHTYPE ;
+                tmp->nConnect = 1 ;
+                tmp->prev = NULL ;
+
+                tmp->state = p->label;
+                tmp->score = p->score;
+                tmp->time = p->frame;
+                tmp->acousticScore = p->acousticScore;
+                tmp->lmScore = p->lmScore;
+
+                if (oldHist != NULL) {
+                    oldHist->prev = tmp;
+                } else {
                     // need to update the last hypothesis as the best hypothesis can contain
                     // added final transition weights
                     tmp->lmScore = best.lmScore;
                     tmp->score = best.score;
                     tmp->acousticScore = best.acousticScore;
-                    
+
                     bestDecHyp->score = best.score;
                     bestDecHyp->lmScore = best.lmScore;
                     bestDecHyp->acousticScore = best.acousticScore;
                     bestDecHyp->hist = tmp;
-               }
-               oldHist = tmp;
-            
+                }
+                oldHist = tmp;
+
                 p = p->prev;
             }
             return bestDecHyp;
@@ -288,7 +317,7 @@ void WFSTDecoderLite::processFrame(real **inputVec, int frame_, int nFrames_) {
 #else
 void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
 #endif
-    // fprintf(stderr, "processing frame %d, nAllocInsts=%d\n", currFrame, nAllocInsts); fflush(stderr);
+    // fprintf(stderr, "processing frame %d, lastPartialTraceFrame:%d\n", currFrame, lastPathCollectFrame); fflush(stderr);
 
     currFrame = frame_;
 
@@ -368,7 +397,6 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
 
     //printf("%03d, n(Active/Emit/End)Hyps = (%d/%d/%d)\n", currFrame, nActiveEmitHyps + nActiveEndHyps, nActiveEmitHyps, nActiveEndHyps);
 
-
     // Update end pruning thresholds
     // bestEndScore has now been updated during hmm internal propagation
 #ifndef OPT_SINGLE_BEST
@@ -423,6 +451,7 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
         totalProcEndHyps += nEndHypsProcessed;
 
         joinNewActiveInstList();
+        totalActiveModels += nActiveInsts;
     }
 
     // path collection
@@ -430,11 +459,16 @@ void WFSTDecoderLite::processFrame(real* inputVec, int frame_) {
     // separate pass.
     {
         assert(nPath >= 0);
-        real pathRatio = ((real)nPath)/nPathNew; /* # of newly created paths / # of last remained paths */
+        real pathRatio = ((real)nPath)/nPathNew; /* # of last remained paths / # of newly created paths */
 
-        if (pathRatio > 10. && nPath > 4096 || (currFrame - lastPathCollectFrame > 100)) {
+        if ((pathRatio > 12. && nPath > 10000) || (currFrame - lastPathCollectFrame > 100)) {
+            // printf("pathRatio = %f, nPath = %d, nPathNew = %d\n", pathRatio, nPath, nPathNew);
             collectPaths();
-            lastPathCollectFrame = currFrame;
+#ifdef PARTIAL_DECODING
+            // trace every 300 frames
+            if (partialTraceInterval > 0 && (currFrame - lastPartialTraceFrame > partialTraceInterval))
+                tracePartialPath();
+#endif
         }
     }
 }
@@ -623,7 +657,7 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
                         newActiveNetInstList = inst;
                         if (newActiveNetInstListLastElem == NULL)
                             newActiveNetInstListLastElem = inst;
-                        ++totalActiveModels;
+                        ++nActiveInsts;
                     }
                 }
 #else
@@ -694,6 +728,9 @@ Path* WFSTDecoderLite::createNewNoRefPath() {
     p->link->knil = p->knil->link = p;
     p->directlyUsedByToken = false;
     p->refCount = 0;
+#ifdef PARTIAL_DECODING
+    p->jointCount = 0;
+#endif
     ++nPath;
     return p;
 }
@@ -705,7 +742,7 @@ void WFSTDecoderLite::destroyPath(Path* p) {
     --nPath;
 }
 
-// increase the reference count and move the path to yesRefList if necessary
+// increase the reference count and move the path to the front of yesRefList if necessary
 void WFSTDecoderLite::refPath(Path* p) {
     if (p->refCount == 0) {
         p->link->knil = p->knil;
@@ -717,7 +754,7 @@ void WFSTDecoderLite::refPath(Path* p) {
     ++p->refCount;
 }
 
-// move path back to *the tail* of noRefList if necessary
+// move path back to *the tail* of noRefList
 void WFSTDecoderLite::deRefPath(Path* p) {
     assert(p->refCount > 0);
     --p->refCount;
@@ -731,7 +768,7 @@ void WFSTDecoderLite::deRefPath(Path* p) {
         
         p->link = (Path*)&noRefListTail;
         p->knil = noRefListTail.knil;
-        noRefListTail.knil = p;
+        noRefListTail.knil = p->knil->link = p;
     }
 }
 
@@ -745,6 +782,18 @@ void WFSTDecoderLite::movePathYesRefList(Path* p) {
     p->link = yesRefList.link;
     p->knil = (Path*)&yesRefList;
     p->link->knil = p->knil->link = p;
+}
+
+// this will move the path to the tail of the yesRefList
+void WFSTDecoderLite::movePathYesRefListTail(Path* p) {
+    // detach from old list
+    p->link->knil = p->knil;
+    p->knil->link = p->link;
+    
+    // insert to the tail of yesRefList
+    p->link = (Path*)&yesRefListTail;
+    p->knil = yesRefListTail.knil;
+    yesRefListTail.knil = p->knil->link = p;
 }
 
 void WFSTDecoderLite::resetPathLists() {
@@ -764,32 +813,36 @@ void WFSTDecoderLite::resetPathLists() {
 }
 
 void WFSTDecoderLite::collectPaths() {
+#ifdef PARTIAL_DECODING
+    Path* lastTracedPath = partialPaths.empty() ? NULL : (*partialPaths.rbegin());
+    int lastTracedFrame = lastTracedPath ? lastTracedPath->frame : -1;
+#endif
+
     // before each collection, the directlyUsedByToken of each path should be false
-    
     // first scan all tokens in all instances and mark the directly referred paths
-        NetInst* inst = activeNetInstList;
-        while (inst) {
+    NetInst* inst = activeNetInstList;
+    while (inst) {
         int n = inst->nStates;
         Token* tok = inst->states;
         for (int i = 0; i < n; ++tok, ++i) {
             Path* path = tok->path;
             if (path && path->directlyUsedByToken == false) {
                 path->directlyUsedByToken = true;
-                if (path->refCount > 0)
-                    movePathYesRefList(path); // force move the path to the front of the yes list
+                if (path->refCount > 0) {
+                        movePathYesRefList(path); // force move the path to the front of the yes list
+                }
             }
         }
         inst = inst->next;
     }
-    
 
     // now all directly referred path has directlyUsedByToken == true
-    // all in-directly referred path are in yesRefList    
+    // all in-directly referred path are in yesRefList (via refPath(), or the above scan)
     // so we free all other paths in noRefList
     for (Path* path = noRefList.link; path->link != NULL;) {
         if (path->directlyUsedByToken == false) {
             if (path->prev)
-                deRefPath(path->prev); // this will move the prev path to the tail of noRefList to be processed in this loop if necessary
+                deRefPath(path->prev); // this will move the prev path to the tail of noRefList to be processed in this loop
             Path* p = path;
             path = path->link;
             destroyPath(p);
@@ -799,7 +852,7 @@ void WFSTDecoderLite::collectPaths() {
             path = path->link;
         }
     }
-    
+
     // reset directlyUsedByToken in yesRefList for next collection
     // note all such paths have been moved to the front part of the list
     for (Path* path = yesRefList.link; path->link != NULL; path = path->link) {
@@ -807,8 +860,19 @@ void WFSTDecoderLite::collectPaths() {
             break; // all the rest paths having directlyUsedByToken == false too
         path->directlyUsedByToken = false;
     }
+
+#ifdef PARTIAL_DECODING
+    // reset jointCount for next tracing
+    if (partialTraceInterval > 0) {
+        for (Path* path = yesRefList.link; path->link != NULL; path = path->link) {
+            if (path->frame > lastTracedFrame)
+                path->jointCount = 0;
+        }
+    }
+#endif
+
     nPathNew = nPath;
-    
+    lastPathCollectFrame = currFrame;
 }
 
 // attach a NetInst to non-eplison transition, and add it to the *front* 
@@ -833,7 +897,7 @@ NetInst* WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
     newActiveNetInstList = inst;
     if (newActiveNetInstListLastElem == NULL)
         newActiveNetInstListLastElem = inst;
-    ++totalActiveModels;
+    ++nActiveInsts;
     ++nAllocInsts;
     return inst;
 }
@@ -868,7 +932,7 @@ NetInst* WFSTDecoderLite::returnNetInst(NetInst* inst, NetInst* prevInst) {
         inst = prevInst->next;
     }
 
-    --totalActiveModels;
+    --nActiveInsts;
     // Return the pointer to the next active model in the linked list.
     return inst ;
 }
@@ -895,6 +959,69 @@ void WFSTDecoderLite::setMaxAllocModels(int maxAllocModels_) {
     }
     // printf("WFSTDecoderLite.cpp: maxAllocModels = %d, maxAllocModel_ = %d\n", maxAllocModels, maxAllocModel_);
 }
+
+#ifdef PARTIAL_DECODING
+// return true if found a converged path during the call
+bool WFSTDecoderLite::tracePartialPath() {
+// at least one call to collectPaths() is required between calls to this function
+// because jointCount of all paths with frame > lastTracedFrame need to be reset
+// in collectPaths(). So idealy this function should be called immediately after collectPaths()
+    assert(lastPathCollectFrame >= lastPartialTraceFrame);
+
+    bool found = false;
+    Path* lastTracedPath = partialPaths.empty() ? NULL : (*partialPaths.rbegin());
+    int lastTracedFrame = lastTracedPath ? lastTracedPath->frame : -1;
+    
+    // go through all open hypothesises and try to find a path that all paths converge into
+    NetInst* inst = activeNetInstList;
+    while (!found && inst) {
+        // as all tokens within a NetInst have the same path history,
+        // so we only need to trace from the first valid one
+        Token* tok = inst->states;
+        Path* path = tok->path;
+        while (path == NULL) {
+            ++tok;
+            path = tok->path;
+        }
+
+        // backtrace from this path
+        while (path != NULL)  {
+            if (path->frame > lastTracedFrame && ++path->jointCount == nActiveInsts) {
+                found = true;
+                // there may be other winning paths leading to this one but can not
+                // be discovered by the algorithm, let's backtrace to find them out
+                traceWinningPaths(path);
+                break;
+            }
+            path = path->prev;
+        }
+        inst = inst->next;
+    }
+
+    lastPartialTraceFrame = currFrame;
+    return found;
+}
+// trace winning paths from |path| (including those can not be discovered by tracePartialPath())
+// up to the last traced path, and added them to partialPaths in order
+void WFSTDecoderLite::traceWinningPaths(Path* path) {
+    Path* lastTracedPath = partialPaths.empty() ? NULL : (*partialPaths.rbegin());
+    vector<Path*> paths;
+    paths.push_back(path);
+    while (lastTracedPath && lastTracedPath != path->prev) {
+        paths.push_back(path->prev);
+        path = path->prev;
+    }
+    for (vector<Path*>::reverse_iterator it = paths.rbegin(); it != paths.rend(); ++it) {
+        partialPaths.push_back(*it);
+    }
+}
+
+void WFSTDecoderLite::setPartialDecodeOptions(int traceInterval) {
+    assert(traceInterval >= 0);
+    partialTraceInterval = traceInterval;
+    LogFile::printf("WFSTDecoderLite::partialTraceInterval = %d frames\n", partialTraceInterval);
+}
+#endif
 
 };
 

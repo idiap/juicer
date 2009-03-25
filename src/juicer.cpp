@@ -139,6 +139,10 @@ char           *latticeDir=NULL ;
 int            blockSize = 8;
 #endif
 
+#ifdef PARTIAL_DECODING
+int            partialDecoding = 0;
+#endif
+
 // Consistency checking parameters
 char           *monoListFName=NULL ;
 char           *silMonophone=NULL ;
@@ -242,6 +246,10 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
 #ifdef OPT_BLOCK_CALC
     cmd->addICmdOption( "-blockSize" , &blockSize , 8 ,
                         "speed up GMM output calculation by computing a sequence of frames (1-20) a time.");
+#endif
+#ifdef PARTIAL_DECODING
+    cmd->addICmdOption( "-partialDecoding" , &partialDecoding, 0 ,
+                        "Perform continuous decoding every this number of frames.");
 #endif
     cmd->addSCmdOption( "-inputFName" , &inputFName , "" ,
                         "the file containing the list of files to be decoded" ) ;
@@ -676,6 +684,9 @@ int main( int argc , char *argv[] )
             network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
                 maxHyps);
             decoder->setMaxAllocModels(maxAllocModels);
+#ifdef PARTIAL_DECODING
+            decoder->setPartialDecodeOptions(partialDecoding);
+#endif
         } else 
 
         decoder = new WFSTDecoder(

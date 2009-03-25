@@ -99,6 +99,10 @@ public:
    void getBestHyp( int *numResultWords , int **resultWords , int **resultWordsTimes ) ;
 
    virtual void setMaxAllocModels(int maxAllocModels) {};
+
+#ifdef PARTIAL_DECODING
+   virtual void setPartialDecodeOptions(int traceInterval) {}
+#endif
    
 /*
    void setNetwork( Network *network_ ) ;
