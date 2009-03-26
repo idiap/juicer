@@ -10,6 +10,7 @@
 ## Process this file with automake to produce Makefile.in
 
 OPT = # add flags as you wish
+OPT += -DNDEBUG # for assert macro
 OPT += -DOPT_FLATMODEL
 OPT += -DOPT_INST_TEE
 OPT += -DOPT_KEEP_INST
