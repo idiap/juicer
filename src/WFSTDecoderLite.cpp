@@ -507,7 +507,6 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
                 }
             }
             // add output probability if above emitting threshold
-            //assert(res->score > LOG_ZERO);
             res->score -= normaliseScore;
             if (res->score > currEmitPruneThresh) {
                 ++nEmitHypsProcessed;
@@ -568,7 +567,6 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
             }
         }
         
-        // pruning?
         if (res->score <= LOG_ZERO) {
             *res = nullToken;
        } else {
