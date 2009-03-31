@@ -444,8 +444,9 @@ void HTKModels::initFromHTKParseResult()
 }
 
 
-void HTKModels::newFrame( int frame , const real *input )
+void HTKModels::newFrame( int frame , real **input, int nFrame)
 {
+    assert(nFrame > 0);
    if ( (frame > 0) && (frame != (currFrame+1)) )
       error("HTKModels::newFrame - invalid frame") ;
 
@@ -462,7 +463,7 @@ void HTKModels::newFrame( int frame , const real *input )
    }
 
    currFrame = frame ;
-   currInput = input ;
+   currInput = input[0] ;
 }
 
 
@@ -2386,6 +2387,10 @@ void HTKModels::createTrPandSEIndex() {
         tm.seIndexes = se;
         se += n;
     }
+}
+
+void HTKModels::setBlockSize(int bs) {
+    error("HTKModels::setBlockSize(int bs) not implemented\n");
 }
 
 }

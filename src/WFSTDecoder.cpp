@@ -272,12 +272,12 @@ void WFSTDecoder::init()
 }
 
 
-void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
+void WFSTDecoder::processFrame( real **inputVec, int currFrame_, int nFrames_)
 {
     // PNG - This could be maintained by the decoder alone rather than
     // the calling routine, but for now this is OK as it eases the
     // translation to real-time.
-    // printf("process frame %d\n", currFrame_);
+    // printf("process frame %d\n", currFrame_); fflush(stdout);
     currFrame = currFrame_;
     nFrames++;
 
@@ -297,9 +297,7 @@ void WFSTDecoder::processFrame( real *inputVec, int currFrame_ )
     //   process the new frame.
 
     // Inform the phoneModels/models of the new input vector
-#ifndef OPT_BLOCK_CALC
-   models->newFrame( currFrame , inputVec ) ;
-#endif
+   models->newFrame(currFrame, inputVec, nFrames_); 
 
    if ( doLatticeGeneration )
    {

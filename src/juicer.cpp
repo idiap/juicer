@@ -121,6 +121,7 @@ float          phoneStartBeam=0.0 ;
 float          wordEmitBeam=0.0 ;
 int            maxHyps=0 ;
 int            maxAllocModels=0 ;
+int            blockSize = 5;
 char           *inputFormat_s=NULL ;
 DSTDataFileFormat inputFormat ;
 char           *outputFormat_s=NULL ;
@@ -134,10 +135,6 @@ bool           removeSentMarks=false ;
 bool           modelLevelOutput=false ;
 bool           latticeGeneration=false ;
 char           *latticeDir=NULL ;
-
-#ifdef OPT_BLOCK_CALC
-int            blockSize = 5;
-#endif
 
 #ifdef PARTIAL_DECODING
 int            partialDecoding = 0;
@@ -243,10 +240,8 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
                         "Upper limit on the number of active emitting state hypotheses" ) ;
     cmd->addICmdOption( "-maxAllocModels" , &maxAllocModels , 10 ,
                         "Maximum of allocated models in the decoder, can be specified in 3 ways: 1 - 100: percentage of all possible models in a network; 100 - 8000: memory reserved for decoding models in MB; > 8000: upper limit of the number of allocated models");
-#ifdef OPT_BLOCK_CALC
     cmd->addICmdOption( "-blockSize" , &blockSize , 5 ,
                         "speed up GMM output calculation by computing a sequence of frames (1-20) a time.");
-#endif
 #ifdef PARTIAL_DECODING
     cmd->addICmdOption( "-partialDecoding" , &partialDecoding, 0 ,
                         "Perform continuous decoding every this number of frames.");
@@ -860,12 +855,13 @@ void setupModels( Models **models )
 #endif
 # ifdef OPT_FLATMODEL
         *models = new HTKFlatModels() ;
-#ifdef OPT_BLOCK_CALC
         (*models)->setBlockSize(blockSize);
-#endif
 # else
         *models = new HTKModels() ;
 # endif
+
+        (*models)->setBlockSize(blockSize);
+
 #ifdef HAVE_HTKLIB
         }
 #endif

@@ -20,6 +20,7 @@
 
 #include <assert.h>
 
+#include "stdlib.h"
 #include "HModels.h"
 #include "LogFile.h"
 
@@ -317,8 +318,9 @@ void HModels::outputStats( FILE *fd )
  * Implementing the Juicer Models API function
  * Tells this class that the decoder has moved to a new frame.
  */
-void HModels::newFrame( int frame , const real *input )
+void HModels::newFrame( int frame , real **input, int nFrame)
 {
+    assert(nFrame > 0);
 	/*
 	 * Store the index of this frame
 	 */
@@ -332,7 +334,7 @@ void HModels::newFrame( int frame , const real *input )
 
 	int *dim = (int*)currentFrameData.fv[1];
 	*dim = hSet.vecSize;
-	memcpy(currentFrameData.fv[1]+1,input,hSet.vecSize*sizeof(real));
+	memcpy(currentFrameData.fv[1]+1,input[0],hSet.vecSize*sizeof(real));
 	/*
 	 * Clear the state probability cache
 	 */
@@ -610,4 +612,8 @@ void HModels::createSEIndex() {
     }
 }
 
+void HModels::setBlockSize(int bs) {
+    fprintf(stderr,"HModels::setBlockSize(int bs) not implemented\n");
+    exit(-1);
+}
 }

@@ -42,12 +42,8 @@ namespace Juicer
 
         virtual void readBinary( const char *fName ) = 0 ;
         virtual void output( const char *fName, bool outputBinary ) = 0 ;
-#ifdef OPT_BLOCK_CALC
-        virtual void newFrame( int frame , const real **input, int nFrame) {} ;
-        virtual void setBlockSize(int bs) {};
-#else
-        virtual void newFrame( int frame , const real *input ) = 0 ;
-#endif
+        virtual void newFrame( int frame , real **input, int nFrame) = 0;
+        virtual void setBlockSize(int bs) = 0;
 
         virtual real calcOutput( int hmmInd , int stateInd ) = 0 ;
         virtual real calcOutput( int gmmInd ) = 0 ;

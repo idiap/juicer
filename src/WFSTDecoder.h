@@ -87,10 +87,7 @@ public:
 
    // Public Methods
    virtual void init() ;
-   virtual void processFrame( real *inputVec, int currFrame_ ) ;
-#ifdef OPT_BLOCK_CALC
-   virtual void processFrame( real **inputVec, int currFrame_, int nFrames) {};
-#endif
+   virtual void processFrame( real **inputVec, int currFrame_, int nFrames);
    virtual DecHyp *finish() ;
 
    bool modelLevelOutput() { return doModelLevelOutput ; } ;

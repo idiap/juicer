@@ -67,10 +67,8 @@ namespace Juicer {
 
 HTKFlatModels::HTKFlatModels() {
     fBuffer = NULL;
-#ifdef OPT_BLOCK_CALC
     fCacheT = NULL;
     fCache = NULL;
-#endif
 }
 
 HTKFlatModels::~HTKFlatModels() {
@@ -124,10 +122,8 @@ void HTKFlatModels::init()
 
     int model_len=sizeof(FMixture)*fnMixtures4+sizeof(real)*(fnGaussians4+ 
             fnGaussians*fvecSize4+fnGaussians*fvecSize4);
-#ifdef OPT_BLOCK_CALC
     model_len += sizeof(real)*nGMMs*fnBlock + sizeof(int)*nGMMs;
     printf("HTKFlatModels: fnBlock = %d\n", fnBlock);
-#endif
 
     printf("HTKFlatModels allocated %.2f MB for flat parameters\n", model_len/(1024.*1024));
 #ifdef HAVE_INTEL_IPP
@@ -141,10 +137,8 @@ void HTKFlatModels::init()
     fDets    = (real*)(fMixtures+fnMixtures4);
     fMeans      = fDets+fnGaussians4;
     fVars       = fMeans+fnGaussians*fvecSize4;
-#ifdef OPT_BLOCK_CALC
     fCacheT = (int*)(fVars+fnGaussians*fvecSize4);
     fCache = (real*)(fCacheT+nGMMs);
-#endif
 
     for (int i = 0; i < nMixtures; ++i) {
         fMixtures[i].compNum = mixtures[i].nComps;
@@ -230,7 +224,6 @@ real HTKFlatModels::calcOutput( int gmmInd ) { // new version of GMM obversion c
 }
     
 
-#ifdef OPT_BLOCK_CALC
 real HTKFlatModels::calcGMMOutput( int gmmInd )
 {
     int n = currFrame - fCacheT[gmmInd];
@@ -268,40 +261,6 @@ real HTKFlatModels::calcGMMOutput( int gmmInd )
         return fCache[gmmInd*fnBlock];
     }
 }
-#else
-real HTKFlatModels::calcGMMOutput( int gmmInd )
-{
-    if ( currGMMOutputs[gmmInd] <= LOG_ZERO ) {
-        // real* logCompWeights = gMMs[gmmInd].logCompWeights;
-        real logProb = LOG_ZERO;
-        real *means=fMean(gmmInd);
-        real *vars=fVar(gmmInd);
-        real *dets=fDet(gmmInd);
-        int nMix = fMixtures[gmmInd].compNum;
-
-#ifdef HAVE_INTEL_IPP
-        ippsLogGaussMixture_32f_D2(currInput,means,vars,nMix,fvecSize4, vecSize, dets, &logProb);
-#else
-        for (int i = 0; i < nMix; ++i) {
-            real* m = means;
-            real* v = vars;
-            const real* x=currInput;
-            real sumxmu = 0.0;
-            for (int j = 0; j < vecSize; ++j) {
-                real xmu = *(x++) - *(m++); 
-                sumxmu += xmu*xmu* *v++;
-            }
-            means += fvecSize4;
-            vars += fvecSize4;
-            logProb = HTKFlatModels::logAdd(logProb , -0.5*sumxmu +dets[i]) ;
-        }
-#endif
-        currGMMOutputs[gmmInd] = logProb;
-        return logProb;
-    }
-    return currGMMOutputs[gmmInd] ;
-}
-#endif
 
 // a version of Torch3's logAdd, included here to take advantage of Intel's C++ compiler 
 // without the need of re-compiling Torch lib
@@ -334,8 +293,7 @@ real HTKFlatModels::logAdd(real x, real y) {
     }
 }
 
-#ifdef OPT_BLOCK_CALC
-void HTKFlatModels::newFrame( int frame , const real **input, int nData) {
+void HTKFlatModels::newFrame( int frame , real **input, int nData) {
    if ( (frame > 0) && (frame != (currFrame+1)) )
       error("HTKFlatModels::newFrame - invalid frame") ;
    currFrame = frame ;
@@ -353,6 +311,5 @@ void HTKFlatModels::setBlockSize(int bs) {
         error("HTKFlatModels::setBlockSize fnBlock should be in [1, 20]");
     fnBlock = bs;
 }
-#endif
 
 }; // namespace juicer

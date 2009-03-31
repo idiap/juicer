@@ -254,7 +254,6 @@ void DecoderSingleTest::decodeUtterance(
     float* array;
     int offset = extStartFrame < 0 ? 0 : extStartFrame;
 
-#ifdef OPT_BLOCK_CALC
 #define BUF_LEN 512
     int preRead = 20;
     float* buffer[BUF_LEN];
@@ -285,14 +284,6 @@ void DecoderSingleTest::decodeUtterance(
         }
     }
 
-#else
-    while(frontend->GetArray(array, nFrames+offset))
-    {
-        decoder->processFrame(array, nFrames++);
-        if ((extEndFrame >= 0) && (nFrames+offset > extEndFrame))
-            break;
-    }
-#endif
 
     DecHyp* hyp = decoder->finish() ;
     endTime = clock() ;

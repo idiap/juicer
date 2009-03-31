@@ -96,7 +96,8 @@ namespace Juicer
         void readBinary( const char *fName ) ;
         void output( const char *fName , bool outputBinary ) ;
         void outputStats( FILE *fd=stdout ) ;
-        void newFrame( int frame , const real *input ) ;
+        void newFrame( int frame , real **input, int nFrame);
+        void setBlockSize(int bs);
         real calcOutput( int hmmInd , int stateInd ) ;
         real calcOutput( int gmmInd ) ;
 
