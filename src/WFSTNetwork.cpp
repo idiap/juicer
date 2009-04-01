@@ -1125,13 +1125,15 @@ void WFSTNetwork::writeBinary( const char *fname )
    strcpy( id , "JWNT" ) ;
 
    // 1. Write ID, initState , maxState, nStates, maxOutTransitions,
-   // wordEndMarker
+   // wordEndMarker,  silMarker , spMarker
    fwrite( (int *)id , sizeof(int) , 1 , fd ) ;
    fwrite( &initState , sizeof(int) , 1 , fd ) ;
    fwrite( &maxState , sizeof(int) , 1 , fd ) ;
    fwrite( &nStates , sizeof(int) , 1 , fd ) ;
    fwrite( &maxOutTransitions , sizeof(int) , 1 , fd ) ;
    fwrite( &wordEndMarker , sizeof(int) , 1 , fd ) ;
+   fwrite( &silMarker , sizeof(int) , 1 , fd ) ;
+   fwrite( &spMarker , sizeof(int) , 1 , fd ) ;
 
    // 2. Write states array
    int i ;
@@ -1215,6 +1217,7 @@ void WFSTNetwork::readBinary( const char *fname )
    char id[5] ;
 
    // 1. Read ID, initState , maxState, nStates, maxOutTransitions
+   // wordEndMarker,  silMarker , spMarker
    if ( fread( (int *)id , sizeof(int) , 1 , fd ) != 1 )
       error("WFSTNetwork::readBinary - error reading ID") ;
    id[4] = '\0' ;
@@ -1230,6 +1233,10 @@ void WFSTNetwork::readBinary( const char *fname )
       error("WFSTNetwork::readBinary - error reading maxOutTransitions") ;
    if ( fread( &wordEndMarker , sizeof(int) , 1 , fd ) != 1 )
       error("WFSTNetwork::readBinary - error reading wordEndMarker") ;
+   if ( fread( &silMarker , sizeof(int) , 1 , fd ) != 1 )
+      error("WFSTNetwork::readBinary - error reading silMarker") ;
+   if ( fread( &spMarker , sizeof(int) , 1 , fd ) != 1 )
+      error("WFSTNetwork::readBinary - error reading spMarker") ;
 
    // 2. Allocate and read the states array
    nStatesAlloc = maxState + 1 ;
