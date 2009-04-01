@@ -55,7 +55,13 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
     phoneStartPruneWin = phoneStartPruneWin_;
     wordPruneWin = wordPruneWin_;
 
-    LogFile::printf("WFSTDecoderLite (maxEmitHyps = %d, emit/p_start/p_end/w_end PruneWin (%f/%f/%f/%f)\n", maxEmitHyps, emitPruneWin_, phoneStartPruneWin_, phoneEndPruneWin_, wordPruneWin_);
+    LogFile::printf("WFSTDecoderLite initialised with:\n");
+    LogFile::printf("\tmaxEmitHyps = %d\n",maxEmitHyps);
+    emitPruneWin_ == LOG_ZERO ? LogFile::printf("\temitPruneWin = LOG_ZERO\n"):LogFile::printf("\temitPruneWin = %f\n", emitPruneWin_);
+    phoneStartPruneWin_ == LOG_ZERO ? LogFile::printf("\tphoneStartPruneWin = LOG_ZERO\n"):LogFile::printf("\tphoneStartPruneWin = %f\n", phoneStartPruneWin_);
+    phoneEndPruneWin_ == LOG_ZERO ? LogFile::printf("\tphoneEndPruneWin = LOG_ZERO\n"):LogFile::printf("\tphoneEndPruneWin = %f\n", phoneEndPruneWin_);
+    wordPruneWin_ == LOG_ZERO ? LogFile::printf("\twordPruneWin = LOG_ZERO\n"):LogFile::printf("\twordPruneWin = %f\n", wordPruneWin_);
+    
 
     setMaxAllocModels(10); // default is to keep 10% NetInsts out of all possible NetInsts
 
@@ -137,13 +143,9 @@ void WFSTDecoderLite::recognitionStart() {
 
         NetInst* inst = activeNetInstList;
         while (inst) {
-#ifdef OPT_KEEP_INST
             inst->nActiveHyps = 0;
             for (int i = 0; i < inst->nStates; ++i)
                 inst->states[i] = nullToken;
-#else
-            inst->trans->hook = NULL;
-#endif
             inst = inst->next;
         }
         activeNetInstList = NULL;
@@ -157,7 +159,6 @@ void WFSTDecoderLite::recognitionStart() {
         partialPaths.clear();
 #endif
 
-#ifdef OPT_KEEP_INST
 //        printf("nAllocInsts = %d, which is %.2f%% of all transitions\n",
 //                    nAllocInsts, 100.*nAllocInsts/network->getNumTransitions());
         if (nAllocInsts > maxAllocModels) {
@@ -168,12 +169,6 @@ void WFSTDecoderLite::recognitionStart() {
                 stateNPools[i]->purge_memory();
             nAllocInsts = 0;
         }
-#else
-        // free all NetInsts
-        for (int i = 1; i <= maxNStates; ++i)
-            stateNPools[i]->purge_memory();
-        nAllocInsts = 0;
-#endif
 
 
         // clear memory left from last utterance
@@ -635,7 +630,6 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
             } else {
                 // normal transition, pass tok to the entry state of it's attached instance
                 // create new NetInst if neccssary
-#ifdef OPT_KEEP_INST
                 NetInst* inst = (NetInst*)trans->hook;
                 if (inst == NULL) {
                     inst = attachNetInst(trans);
@@ -650,12 +644,6 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
                         ++nActiveInsts;
                     }
                 }
-#else
-                NetInst* inst = (NetInst*)trans->hook;
-                if (inst == NULL) {
-                    inst = attachNetInst(trans);
-                }
-#endif
 
                 // pass token to entry state
                 Token* res = inst->states;
@@ -682,13 +670,8 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
 #endif
                 }
 
-#ifdef OPT_INST_TEE
                 if (inst->teeWeight > LOG_ZERO) {
                     real teeWeight = inst->teeWeight;
-#else
-                real teeWeight = hmmModels->getTeeLogProb(inst->hmmIndex);
-                if (teeWeight > LOG_ZERO) {
-#endif
                     newScore += teeWeight;
                     // if there is a tee transition, pass the token on
                     // and propagate it to next transitions
@@ -696,7 +679,7 @@ void WFSTDecoderLite::propagateToken(Token* tok, WFSTTransition* trans) {
                     tmp.score = newScore;
                     tmp.acousticScore += teeWeight;
                     tmp.lmScore += trans->weight;
-                    if (trans->inLabel == network->silMarker || trans->inLabel == network->spMarker ) {
+                    if (inst->trans->outLabel != WFST_EPSILON) {
                         if ( newScore > currWordPruneThresh )
                             propagateToken(&tmp, trans);
                     } else {
@@ -866,9 +849,7 @@ NetInst* WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
         inst->states[i] = nullToken;
     trans->hook = inst;
     inst->trans = trans;
-#ifdef OPT_INST_TEE
     inst->teeWeight = hmmModels->getTeeLogProb(hmmIndex);
-#endif
     inst->nActiveHyps = 0;
     inst->next = newActiveNetInstList;
     newActiveNetInstList = inst;
@@ -886,26 +867,14 @@ NetInst* WFSTDecoderLite::returnNetInst(NetInst* inst, NetInst* prevInst) {
     if ( prevInst == NULL ) {
         // Model we are deactivating is at head of list.
         activeNetInstList = inst->next;
-#ifdef OPT_KEEP_INST
         for (int i = 0; i < inst->nStates; ++i)
             inst->states[i] = nullToken;
-#else
-        inst->trans->hook = NULL;
-        stateNPools[inst->nStates]->free(inst);
-        --nAllocInsts;
-#endif
         inst = activeNetInstList;
     } else {
         // Model we are deactivating is not at head of list.
         prevInst->next = inst->next;
-#ifdef OPT_KEEP_INST
         for (int i = 0; i < inst->nStates; ++i)
             inst->states[i] = nullToken;
-#else
-        inst->trans->hook = NULL;
-        stateNPools[inst->nStates]->free(inst);
-        --nAllocInsts;
-#endif
         inst = prevInst->next;
     }
 

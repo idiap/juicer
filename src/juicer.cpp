@@ -263,9 +263,9 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
     cmd->addBCmdOption( "-removeSentMarks" , &removeSentMarks , false ,
                         "removes sentence start and end markers from decoding result before outputting." ) ;
     cmd->addBCmdOption( "-modelLevelOutput" , &modelLevelOutput , false ,
-                        "outputs recognised models instead of recognised words." ) ;
+                        "outputs recognised models instead of recognised words (only available in -basicCore)." ) ;
     cmd->addSCmdOption( "-latticeDir" , &latticeDir , "" ,
-                        "the directory where output lattices will be placed" ) ;
+                        "the directory where output lattices will be placed (only available in -basicCore)" ) ;
 
     // modelLevelOutput == true related parameters
     cmd->addSCmdOption( "-monoListFName" , &monoListFName , "" ,
@@ -367,6 +367,10 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
             error("juicer: -monoListFName not specified when using -modelLevelOutput") ;
         if ( strcmp( tiedListFName , "" ) == 0 )
             error("juicer: -tiedListFName not specified when using -modelLevelOutput") ;
+        if (useBasicCore == false) {
+            fprintf(stderr, "Warning: -modelLevelOutput only available in basicCore, switched to basicCore from now on.\n");
+            useBasicCore = true;
+        }
     }
 
     if ( (latticeDir != NULL) && (strcmp( latticeDir , "") != 0) )
@@ -376,6 +380,10 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
         char str[10000] ;
         sprintf( str , "mkdir -p %s" , latticeDir ) ;
         system( str ) ;
+        if (useBasicCore == false) {
+            fprintf(stderr, "Warning: -latticeDir only available in basicCore, switched to basicCore from now on.\n");
+            useBasicCore = true;
+        }
     }
 }
 

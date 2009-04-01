@@ -76,9 +76,7 @@ namespace Juicer {
         int nStates;
         int nActiveHyps;
         WFSTTransition* trans;  // the transition this inst is attached to
-#ifdef OPT_INST_TEE
         real teeWeight;
-#endif
         Token states[];         // states[nStates] including non-emitting entry and exit states
                                 // NetInst + states[n] are allocated by stateNPools
     } NetInst;

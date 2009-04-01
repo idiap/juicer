@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include "log_add.h"
 
+
 #ifdef HAVE_INTEL_IPP
 #include <ippcore.h>
 #include <ipps.h>
@@ -26,6 +27,7 @@
 #endif
 
 #include "HTKFlatModels.h"
+#include "LogFile.h"
 
 #ifdef OPT_FAST_EXP
 // from "A Fast, Compact Approximation of the Exponential Function" by Nicol N. Schraudolph, 1999
@@ -96,8 +98,8 @@ void HTKFlatModels::init()
     int cpuMhz;
     ippGetCpuFreqMhz(&cpuMhz);
     const IppLibraryVersion* version = ippsGetLibVersion();
-    printf("Optimised code using INTEL Performance Primitives Lib [%s, %s]\n", version->Name, version->Version);
-    printf("CPU runs at %d Mhz\n", cpuMhz);
+    LogFile::printf("Optimised code using INTEL Performance Primitives Lib [%s, %s]\n", version->Name, version->Version);
+    LogFile::printf("CPU runs at %d Mhz\n", cpuMhz);
 #endif
 
     // now create our own GMM parameter structure from loaded structures from
@@ -123,9 +125,7 @@ void HTKFlatModels::init()
     int model_len=sizeof(FMixture)*fnMixtures4+sizeof(real)*(fnGaussians4+ 
             fnGaussians*fvecSize4+fnGaussians*fvecSize4);
     model_len += sizeof(real)*nGMMs*fnBlock + sizeof(int)*nGMMs;
-    printf("HTKFlatModels: fnBlock = %d\n", fnBlock);
-
-    printf("HTKFlatModels allocated %.2f MB for flat parameters\n", model_len/(1024.*1024));
+    LogFile::printf("\nHTKFlatModels allocated %.2f MB for flat parameters, blockSize=%d\n", model_len/(1024.*1024), fnBlock);
 #ifdef HAVE_INTEL_IPP
     fBuffer = ippMalloc(model_len);
 #else
