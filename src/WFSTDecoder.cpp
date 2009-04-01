@@ -26,6 +26,11 @@
     Date:    7 June 2006
 */
 
+#ifdef OPT_SINGLE_BEST
+    #define NO_BEST_START
+    #define NO_BEST_END
+#endif
+
 using namespace Torch;
 
 namespace Juicer {
@@ -111,7 +116,13 @@ WFSTDecoder::WFSTDecoder(
 )
 {
    int i ;
-
+    LogFile::printf("WFSTDecoder initialised with:\n");
+    LogFile::printf("\tmaxEmitHyps = %d\n",maxEmitHyps);
+    emitPruneWin_ == LOG_ZERO ? LogFile::printf("\temitPruneWin = LOG_ZERO\n"):LogFile::printf("\temitPruneWin = %f\n", emitPruneWin_);
+    phoneStartPruneWin_ == LOG_ZERO ? LogFile::printf("\tphoneStartPruneWin = LOG_ZERO\n"):LogFile::printf("\tphoneStartPruneWin = %f\n", phoneStartPruneWin_);
+    phoneEndPruneWin_ == LOG_ZERO ? LogFile::printf("\tphoneEndPruneWin = LOG_ZERO\n"):LogFile::printf("\tphoneEndPruneWin = %f\n", phoneEndPruneWin_);
+    wordPruneWin_ == LOG_ZERO ? LogFile::printf("\twordPruneWin = LOG_ZERO\n"):LogFile::printf("\twordPruneWin = %f\n", wordPruneWin_);
+    
    if ( (network = network_) == NULL )
       error("WFSTDecoder::WFSTDecoder(2) - network_ is NULL") ;
    if ( (models = models_) == NULL )
@@ -734,9 +745,8 @@ void WFSTDecoder::processActiveModelsEndStates()
         if ( endHyp->score > LOG_ZERO )
         {
             // VW - word based pruning
-            // Use a different purning threshold at word ends (sil and sp phones mark these)
-            if ( model->trans->inLabel == network->silMarker ||
-                 model->trans->inLabel == network->spMarker )
+            // Use a different purning threshold at word ends
+            if (model->trans->outLabel != WFST_EPSILON) 
             {
                 if ( endHyp->score > currWordPruneThresh )
                 {
@@ -759,7 +769,7 @@ void WFSTDecoder::processActiveModelsEndStates()
             resetDecHyp( endHyp ) ;
             if ( (--nActiveEndHyps) < 0 )
                 error("WFSTDecoder::processActiveModelsEndHyps"
-                      " - nActiveEndHyps < 0") ;
+                        " - nActiveEndHyps < 0") ;
 
             // Update the number of active hypotheses in model.
             // Deactivate model if no active hypotheses remain.
@@ -984,9 +994,8 @@ void WFSTDecoder::extendModelEndState( DecHyp *endHyp , WFSTTransition *trans)
 
 
                 // VW - word based pruning
-                // Use a different purning threshold at word ends (sil and sp phones mark these)
-                if ( nextModel->trans->inLabel == network->silMarker ||
-                        nextModel->trans->inLabel == network->spMarker )
+                // Use a different purning threshold at word ends
+                if (nextModel->trans->outLabel != WFST_EPSILON) 
                 {
                     if ( newScore > currWordPruneThresh )
                     {
@@ -1091,45 +1100,6 @@ DecHyp *WFSTDecoder::finish()
     }
 }
 
-
-#if 0 // Replaced by getNewModel()
-WFSTModel *WFSTDecoder::getModel( WFSTTransition *trans )
-{
-#ifdef DEBUG
-    if ( trans == NULL )
-        error("WFSTDecoder::getModel - trans is NULL") ;
-    if ( (trans->id < 0) || (trans->id >= activeModelsLookupLen) )
-        error("WFSTDecoder::getModel - trans->id out of range") ;
-#endif
-
-    // Do we already have an active model element for this transition ?
-    if ( activeModelsLookup[trans->id] == NULL )
-    {
-        // If we did not find a match, grab a new WFSTModel element
-        //   from the pool and add to lookup table and temp active list.
-        WFSTModel *model = modelPool->getElem( trans ) ;
-        model->next = newActiveModelsList ;
-        newActiveModelsList = model ;
-        if ( newActiveModelsListLastElem == NULL )
-            newActiveModelsListLastElem = model ;
-
-        activeModelsLookup[trans->id] = model ;
-        nActiveModels++ ;
-    }
-#ifdef DEBUG
-    else
-    {
-        if ( activeModelsLookup[trans->id]->trans != trans )
-            error(
-                "WFSTDecoder::getModel"
-                " - activeModelsLookup[...]->trans != trans"
-            ) ;
-    }
-#endif
-
-   return activeModelsLookup[trans->id] ;
-}
-#endif
 
 // zl: getModel (above) can be called thousands of times but only a
 // handful new model actually will be created. So move the new model
