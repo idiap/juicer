@@ -7,16 +7,8 @@
  * Copyright 2009 by The University of Sheffield
  *
  * See the file COPYING for the licence associated with this software.
- */
-
-/*
- * vi:ts=4:tw=78:shiftwidth=4:expandtab
- * vim600:fdm=marker
  *
  * WFSTDecoderLite.h  -  WFST decoder based on token-passing principle
- *
- * University of Edinburgh
- * Begin       : 03-Nov-2008
  * 
  */
 
@@ -68,7 +60,7 @@ namespace Juicer {
         Path* path; 
     } Token;
 
-    /* a NetInst is attached to each non-eplison transition */
+    /* an NetInst is attached to each non-eplison transition */
     typedef struct NetInst_ {
         struct NetInst_* next;
 

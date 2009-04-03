@@ -7,11 +7,6 @@
  * Copyright 2009 by The University of Sheffield
  *
  * See the file COPYING for the licence associated with this software.
- */
-
-/*
- * vi:ts=4:tw=78:shiftwidth=4:expandtab
- * vim600:fdm=marker
  *
  * WFSTDecoderLite.cpp  -  WFST decoder based on token-passing principle
  *
@@ -74,28 +69,26 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
         emitHypsHistogram = NULL;
 
     // initialise memory pools
-    {
 
-        maxNStates = 0;
-        for (int i = 0; i < hmmModels->getNumHMMs(); ++i)
-            if (hmmModels->getNumStates(i) > maxNStates)
-                maxNStates = hmmModels->getNumStates(i);
-        nStatePools = maxNStates;
+    maxNStates = 0;
+    for (int i = 0; i < hmmModels->getNumHMMs(); ++i)
+        if (hmmModels->getNumStates(i) > maxNStates)
+            maxNStates = hmmModels->getNumStates(i);
+    nStatePools = maxNStates;
 
-        pathPool = new BlockMemPool(sizeof(Path), MEMORY_POOL_REALLOC_AMOUNT);
-        stateNPools = new BlockMemPool*[maxNStates];
-        --stateNPools; /* address from 1 to maxNStates */
-        for (int i = 1; i <= maxNStates; ++i)
-            stateNPools[i] = new BlockMemPool(
-                sizeof(NetInst)  + sizeof(Token)*i,
-                MEMORY_POOL_REALLOC_AMOUNT/2
-            );
+    pathPool = new BlockMemPool(sizeof(Path), MEMORY_POOL_REALLOC_AMOUNT);
+    stateNPools = new BlockMemPool*[maxNStates];
+    --stateNPools; /* address from 1 to maxNStates */
+    for (int i = 1; i <= maxNStates; ++i)
+        stateNPools[i] = new BlockMemPool(
+            sizeof(NetInst)  + sizeof(Token)*i,
+            MEMORY_POOL_REALLOC_AMOUNT/2
+        );
 
-        nAllocInsts = 0;
+    nAllocInsts = 0;
 
-        dhhPool = NULL;   
-        bestDecHyp = NULL;
-    }
+    dhhPool = NULL;   
+    bestDecHyp = NULL;
 
 
     this->tokenBuf = new Token[maxNStates];
@@ -138,8 +131,6 @@ void WFSTDecoderLite::recognitionStart() {
 
     //  <<Free per-utterance memory>>
     {
-        // need to manually reset trans->hook as returnNetInst() is not used
-        // for freeing memory
 
         NetInst* inst = activeNetInstList;
         while (inst) {
@@ -159,12 +150,8 @@ void WFSTDecoderLite::recognitionStart() {
         partialPaths.clear();
 #endif
 
-//        printf("nAllocInsts = %d, which is %.2f%% of all transitions\n",
-//                    nAllocInsts, 100.*nAllocInsts/network->getNumTransitions());
         if (nAllocInsts > maxAllocModels) {
-//            printf("Freeing up %d NetInsts\n", nAllocInsts);
             network->resetTransitionHooks();
-            // free all NetInsts
             for (int i = 1; i <= maxNStates; ++i)
                 stateNPools[i]->purge_memory();
             nAllocInsts = 0;
@@ -308,7 +295,7 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
 }
 
 void WFSTDecoderLite::processFrame(real **inputVec, int frame_, int nFrames_) {
-    // fprintf(stderr, "processing frame %d, lastPartialTraceFrame:%d\n", currFrame, lastPathCollectFrame); fflush(stderr);
+    // fprintf(stderr, "processing frame %d\n", currFrame); fflush(stderr);
 
     currFrame = frame_;
 
@@ -323,7 +310,6 @@ void WFSTDecoderLite::processFrame(real **inputVec, int frame_, int nFrames_) {
         if (emitHypsHistogram) {
 
             currEmitPruneThresh = emitHypsHistogram->calcThresh(maxEmitHyps);
-            // printf("%03d, emitHypsHistogram->calcThresh(%d) = %f\n", currFrame, maxEmitHyps, currEmitPruneThresh);
             currEmitPruneThresh -= normaliseScore;
             if (emitPruneWin > 0.0 && currEmitPruneThresh < -emitPruneWin)
                 currEmitPruneThresh = -emitPruneWin;
@@ -381,8 +367,6 @@ void WFSTDecoderLite::processFrame(real **inputVec, int frame_, int nFrames_) {
 
 
     } // end of <<Do hmm internal propagation for each active inst>>
-
-    //printf("%03d, n(Active/Emit/End)Hyps = (%d/%d/%d)\n", currFrame, nActiveEmitHyps + nActiveEndHyps, nActiveEmitHyps, nActiveEndHyps);
 
     // Update end pruning thresholds
     // bestEndScore has now been updated during hmm internal propagation
@@ -452,7 +436,7 @@ void WFSTDecoderLite::processFrame(real **inputVec, int frame_, int nFrames_) {
             // printf("pathRatio = %f, nPath = %d, nPathNew = %d\n", pathRatio, nPath, nPathNew);
             collectPaths();
 #ifdef PARTIAL_DECODING
-            // trace every 300 frames
+            // trace every partialTraceInterval frames
             if (partialTraceInterval > 0 && (currFrame - lastPartialTraceFrame > partialTraceInterval))
                 tracePartialPath();
 #endif

@@ -29,6 +29,10 @@
 	Date:	7 June 2006		
 */
 
+#ifdef OPT_SINGLE_BEST
+    #define NO_BEST_START
+    #define NO_BEST_END
+#endif
 
 namespace Juicer {
 
