@@ -229,20 +229,17 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
 
 #ifdef PARTIAL_DECODING
     // perform one more partial tracing from the best token
-    {
+    if (partialTraceInterval > 0) {
         Path* lastTracedPath = partialPaths.empty() ? NULL : (*partialPaths.rbegin());
         if (best.path && best.path != lastTracedPath) {
             // only trace back if there is a token survrived
             traceWinningPaths(best.path);
         }
-
-        if (partialTraceInterval > 0) {
-            LogFile::printf("Partial paths recovered at frames: ");
-            for (vector<Path*>::iterator it = partialPaths.begin(); it != partialPaths.end(); ++it) {
-                LogFile::printf("%03d ", (*it)->frame);
-            }
-            LogFile::printf("\n");
+        LogFile::printf("Partial paths recovered at frames: ");
+        for (vector<Path*>::iterator it = partialPaths.begin(); it != partialPaths.end(); ++it) {
+            LogFile::printf("%03d ", (*it)->frame);
         }
+        LogFile::printf("\n");
     }
 #endif
 
