@@ -230,8 +230,7 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
 #ifdef PARTIAL_DECODING
     // perform one more partial tracing from the best token
     if (partialTraceInterval > 0) {
-        Path* lastTracedPath = partialPaths.empty() ? NULL : (*partialPaths.rbegin());
-        if (best.path && best.path != lastTracedPath) {
+        if (best.score > LOG_ZERO) {
             // only trace back if there is a token survrived
             traceWinningPaths(best.path);
         }
@@ -248,6 +247,7 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
     // <<Convert best token to DecHyp structure>>
     {
         if (best.score == LOG_ZERO) {
+            assert(best.path == NULL);
             fprintf(stderr, "WARNING: no token survived at the end of decoding\n");
             return NULL;
         } else {
@@ -942,11 +942,12 @@ bool WFSTDecoderLite::tracePartialPath() {
 // trace winning paths from |path| (including those can not be discovered by tracePartialPath())
 // up to the last traced path, and added them to partialPaths in order
 void WFSTDecoderLite::traceWinningPaths(Path* path) {
+    assert(path);
+
     Path* lastTracedPath = partialPaths.empty() ? NULL : (*partialPaths.rbegin());
     vector<Path*> paths;
 
-    assert(path);
-    assert (path != lastTracedPath);
+    if (path == lastTracedPath) return;
 
     paths.push_back(path);
     while (lastTracedPath && lastTracedPath != path->prev) {
