@@ -13,11 +13,12 @@
 #include "ArraySink.h"
 #include "ALSASource.h"
 
+
+#include "config.h"
+
 #ifdef HAVE_HTKLIB
 # include "HModels.h"
 #endif
-
-#include "config.h"
 
 using namespace Tracter;
 
