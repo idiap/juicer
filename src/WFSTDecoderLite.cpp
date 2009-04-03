@@ -146,10 +146,6 @@ void WFSTDecoderLite::recognitionStart() {
         pathPool->purge_memory();
         resetPathLists();
 
-#ifdef PARTIAL_DECODING
-        partialPaths.clear();
-#endif
-
         if (nAllocInsts > maxAllocModels) {
             network->resetTransitionHooks();
             for (int i = 1; i <= maxNStates; ++i)
@@ -217,7 +213,6 @@ void WFSTDecoderLite::recognitionStart() {
 }
 
 DecHyp* WFSTDecoderLite::recognitionFinish() {
-    Token best = nullToken;
     LogFile::printf(
             "\nStatistics:\n  nFrames=%d\n  avgActiveEmitHyps=%.2f\n"
             "  avgActiveEndHyps=%.2f\n  avgActiveModels=%.2f\n"
@@ -230,17 +225,24 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
             ((real)totalProcEndHyps)/(currFrame+1)
             ) ;
 
-    best = bestFinalToken; 
+    Token best = bestFinalToken; 
 
 #ifdef PARTIAL_DECODING
-    // perform one more partial tracing, from best token
-    traceWinningPaths(best.path);
-    if (partialTraceInterval > 0) {
-        LogFile::printf("Partial paths recovered at frames: ");
-        for (vector<Path*>::iterator it = partialPaths.begin(); it != partialPaths.end(); ++it) {
-        LogFile::printf("%03d ", (*it)->frame);
+    // perform one more partial tracing from the best token
+    {
+        Path* lastTracedPath = partialPaths.empty() ? NULL : (*partialPaths.rbegin());
+        if (best.path && best.path != lastTracedPath) {
+            // only trace back if there is a token survrived
+            traceWinningPaths(best.path);
         }
-        LogFile::printf("\n");
+
+        if (partialTraceInterval > 0) {
+            LogFile::printf("Partial paths recovered at frames: ");
+            for (vector<Path*>::iterator it = partialPaths.begin(); it != partialPaths.end(); ++it) {
+                LogFile::printf("%03d ", (*it)->frame);
+            }
+            LogFile::printf("\n");
+        }
     }
 #endif
 
@@ -945,6 +947,10 @@ bool WFSTDecoderLite::tracePartialPath() {
 void WFSTDecoderLite::traceWinningPaths(Path* path) {
     Path* lastTracedPath = partialPaths.empty() ? NULL : (*partialPaths.rbegin());
     vector<Path*> paths;
+
+    assert(path);
+    assert (path != lastTracedPath);
+
     paths.push_back(path);
     while (lastTracedPath && lastTracedPath != path->prev) {
         paths.push_back(path->prev);
