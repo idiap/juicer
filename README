@@ -1,15 +1,59 @@
-If you got juicer as a tarball then it includes a standard gnu build
-environment.  Just follow the instructions in INSTALL, although you
-might wish to use a VPATH build described below.
+Building the Juicer LVCSR Decoder
+=================================
 
+http://www.idiap.ch/software/juicer/
+
+
+Creating configure 
+------------------
+(skip this if you got juicer as a tarball)
 If you got juicer from git, you need autoconf and automake.  The
 following commands are necessary to boot up the gnu build environment:
 
- autoheader
- aclocal
- libtoolize
- autoconf
- automake -a
+     autoheader
+     aclocal
+     libtoolize
+     autoconf
+     automake -a
+
+Required Libs
+-------------
+The following libs need to be built and installed prior to building juicer:
+1. Tracter
+    http://www.idiap.ch/software/tracter/
+2. Torch3
+    http://www.torch.ch/
+   If Torch3 is not detected automatically, you can use --with-torch3 option:
+   eg: configure --with-torch3=/path/to/Torch3/
+
+Optional Libs
+-------------
+1. Intel Integrated Performance Primitives lib (Intel IPP Lib)
+    Juicer can use the Intel IPP Lib for faster GMM calculation. After
+    installing Intel IPP Lib, use the following configure option to activate
+    IPP support:
+    configure --with-ipproot=DIR
+    where DIR is the root directory of the installed IPP lib, usually defined
+    in environment varialbe $IPPROOT
+    eg: configure --with-ipproot=$IPPROOT
+
+2. HTK
+   Juicer can be linked against HTK to use HTK's GMM calculation routines.
+   It will offer compatibility for programs developed with HTK.
+   configure --with-htk-includes=DIR --with-htk-libs=DIR
+   eg.  configure --with-htk-includes=-I/path/to/HTKLib/ \
+                  --with-htk-libs="-L/path/to/HTKLib/ /path/to/HTKLib/HTKLib.a"
+
+3. By default juicer will build swig wrapper for java, this can be disabled by:
+   configure --enable-swig=no
+   if you have problem compiling juicer_wrap.cxx
+
+
+Building Juicer
+---------------
+If you got juicer as a tarball then it includes a standard gnu build
+environment.  Just follow the instructions in INSTALL, although you
+might wish to use a VPATH build described below.
 
 Then, assuming you want to use this as a working repository, I suggest
 you use a VPATH style build.  This builds in a separate tree allowing
@@ -22,11 +66,8 @@ several parallel builds that don't mess up the source directory:
 
 The executables will appear in build/src
 
-To use the raw HTK model mechanism, add these options, with text to
-suit your site, to configure:
 
-  --with-htk-includes="-I/path/to/HTK/HTK_V3.4/include"
-  --with-htk-libs="-L/path/to/HTK/HTK_V3.4/lib -lhtk"
+
 
 
 Documentation is provided in doxygen form.  From the build directory,
