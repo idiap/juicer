@@ -265,8 +265,8 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
                 tmp->prev = NULL ;
 
                 tmp->state = p->label;
-                tmp->score = p->score;
                 tmp->time = p->frame;
+                tmp->score = p->score;
                 tmp->acousticScore = p->acousticScore;
                 tmp->lmScore = p->lmScore;
 
@@ -276,8 +276,8 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
                     // need to update the last hypothesis as the best hypothesis can contain
                     // added final transition weights
                     tmp->lmScore = best.lmScore;
-                    tmp->score = best.score;
                     tmp->acousticScore = best.acousticScore;
+                    tmp->score = best.score;
 
                     bestDecHyp->score = best.score;
                     bestDecHyp->lmScore = best.lmScore;
@@ -950,7 +950,7 @@ void WFSTDecoderLite::traceWinningPaths(Path* path) {
     if (path == lastTracedPath) return;
 
     paths.push_back(path);
-    while (lastTracedPath && lastTracedPath != path->prev) {
+    while (lastTracedPath != path->prev) {
         paths.push_back(path->prev);
         path = path->prev;
     }
