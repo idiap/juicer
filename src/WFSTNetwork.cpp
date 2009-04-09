@@ -1103,11 +1103,17 @@ void WFSTNetwork::writeFSM( const char *fsmFName , const char *inSymsFName ,
 
 void WFSTNetwork::writeBinary( const char *fname )
 {
+    // always save original weight w/o insPenalty, this is done before weight scaling
+    if (insPenalty != 0.0) {
+        for ( int i=0 ; i<nTransitions ; i++ )
+        {
+            if (transitions[i].outLabel > 0)
+                transitions[i].weight -= insPenalty ;
+        }
+    }
+
    // If we have scaled all transition weights, unscale them before we write
    // them to binary file.
-
-    // Yet to propagate the insertion penalty
-    assert(insPenalty == 0.0);
 
    if ( transWeightScalingFactor != 1.0 )
    {
@@ -1204,6 +1210,15 @@ void WFSTNetwork::writeBinary( const char *fname )
       {
          transitions[i].weight *= transWeightScalingFactor ;
       }
+   }
+
+   // restore insPenalty, this is done after weight scaling
+   if (insPenalty != 0.0) {
+       for ( int i=0 ; i<nTransitions ; i++ )
+       {
+           if (transitions[i].outLabel > 0)
+               transitions[i].weight += insPenalty ;
+       }
    }
 }
 
@@ -1341,6 +1356,14 @@ void WFSTNetwork::readBinary( const char *fname )
       {
          transitions[i].weight *= transWeightScalingFactor ;
       }
+   }
+    // restore insPenalty, this is done after weight scaling
+   if (insPenalty != 0.0) {
+       for ( int i=0 ; i<nTransitions ; i++ )
+       {
+           if (transitions[i].outLabel > 0)
+               transitions[i].weight += insPenalty ;
+       }
    }
 }
 
