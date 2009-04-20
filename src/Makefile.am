@@ -36,6 +36,7 @@ lib_LTLIBRARIES = libjuicer.la
 JUICER_SOURCES = \
 	WFSTDecoder.cpp \
 	WFSTDecoderLite.cpp \
+	WFSTDecoderLiteThreading.cpp \
 	WFSTNetwork.cpp \
 	WFSTModel.cpp \
 	WFSTLattice.cpp \
@@ -49,6 +50,7 @@ JUICER_SOURCES = \
 	DecPhoneInfo.cpp \
 	HTKModels.cpp \
 	HTKFlatModels.cpp \
+	HTKFlatModelsThreading.cpp \
 	DecoderBatchTest.cpp \
 	DecoderSingleTest.cpp \
 	DecHypHistPool.cpp \

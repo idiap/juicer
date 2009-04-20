@@ -3,7 +3,7 @@
  *
  * See the file COPYING for the licence associated with this software.
  *
- * HTKFlatModels.cpp  -  store GMM parameters in flat arrays for fast
+ * HTKFlatModels.cpp  -  store GMM parameters fQueue flat arrays for fast
  * computation, derived from HTKModels.
  * by Zhang Le
  */
@@ -35,7 +35,7 @@
 static union {
     double d;
     struct {
-//  WORDS_BIGENDIAN should be defined automatically in config.h during configure
+//  WORDS_BIGENDIAN should be defined automatically fQueue config.h during configure
 #ifdef WORDS_BIGENDIAN
         int i,j;
 #else
@@ -62,7 +62,6 @@ static union {
 
 // end macro definitions
 
-
 using namespace Torch;
 
 namespace Juicer {
@@ -79,13 +78,13 @@ HTKFlatModels::~HTKFlatModels() {
 #else
     free(fBuffer);
 #endif
-
 }
 
 void HTKFlatModels::readBinary( const char *fName ) {
     HTKModels::readBinary(fName);
     init();
 }
+
 void HTKFlatModels::Load( const char *htkModelsFName , bool removeInitialToFinalTransitions_ ) {
     HTKModels::Load(htkModelsFName, removeInitialToFinalTransitions_);
     init();
@@ -174,7 +173,6 @@ void HTKFlatModels::init()
             fDet(i)[j] += logCompWeights[j];
         }
     }
-
 }
 
 real HTKFlatModels::calcOutput( int hmmInd , int stateInd )
@@ -308,7 +306,7 @@ void HTKFlatModels::newFrame( int frame , real **input, int nData) {
 
 void HTKFlatModels::setBlockSize(int bs) {
     if (bs < 1 || bs > 20)
-        error("HTKFlatModels::setBlockSize fnBlock should be in [1, 20]");
+        error("HTKFlatModels::setBlockSize fnBlock should be fQueue [1, 20]");
     fnBlock = bs;
 }
 

@@ -41,11 +41,13 @@
 #endif
 #ifdef OPT_FLATMODEL
 # include "HTKFlatModels.h"
+# include "HTKFlatModelsThreading.h"
 #else
 # include "HTKModels.h"
 #endif
 
 #include "WFSTDecoderLite.h"
+#include "WFSTDecoderLiteThreading.h"
 
 #ifdef WITH_ONTHEFLY
 # include "WFSTOnTheFlyDecoder.h"
@@ -65,6 +67,23 @@
 
 using namespace Torch ;
 using namespace Juicer ;
+
+
+typedef struct GMMThreadParam_ {
+    // pointers to global resources
+    HTKFlatModelsThreading* models;
+
+    // per-thread resources
+    bool running; 
+} GMMThreadParam;
+
+void* GMMThread(void* arg) {
+    GMMThreadParam* p = (GMMThreadParam*)arg;
+    LogFile::printf("GMM Thread up and running...\n");
+    p->models->calcStates();
+    LogFile::printf("GMM Thread quitting...\n");
+    pthread_exit(NULL);
+}
 
 // Version string
 bool version = false;
@@ -136,6 +155,7 @@ bool           modelLevelOutput=false ;
 bool           latticeGeneration=false ;
 char           *latticeDir=NULL ;
 
+bool           use2Threads = false;
 #ifdef PARTIAL_DECODING
 int            partialDecoding = 0;
 #endif
@@ -242,6 +262,8 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
                         "Maximum of allocated models in the decoder, can be specified in 3 ways: 1 - 100: percentage of all possible models in a network; 100 - 8000: memory reserved for decoding models in MB; > 8000: upper limit of the number of allocated models");
     cmd->addICmdOption( "-blockSize" , &blockSize , 5 ,
                         "speed up GMM output calculation by computing a sequence of frames (1-20) a time.");
+    cmd->addBCmdOption( "-threading" , &use2Threads , false,
+                        "speed up decoding via threading, where GMM calculation is handled in a separate thread." ) ;
 #ifdef PARTIAL_DECODING
     cmd->addICmdOption( "-partialDecoding" , &partialDecoding, 0 ,
                         "Perform continuous decoding every this number of frames.");
@@ -385,6 +407,14 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
             useBasicCore = true;
         }
     }
+
+    if (use2Threads) {
+        if (useBasicCore == true) {
+            fprintf(stderr, "Warning: 2 thread decoding is not available in basicCore, switched to default core from now on.\n");
+            useBasicCore = false;
+        }
+    }
+
 }
 
 bool fileExists( const char *fname )
@@ -397,6 +427,7 @@ bool fileExists( const char *fname )
 }
 
 void setupModels( Models **models ) ;
+void setupNetworks(WFSTNetwork** network_, WFSTNetwork** clNetwork_, WFSTSortedInLabelNetwork** gNetwork_);
 
 #ifdef HAVE_HTKLIB
 /** 
@@ -497,20 +528,348 @@ int main( int argc , char *argv[] )
             htkModelsFName , monoListFName , priorsFName , statesPerModel ) ;
     }
 
+    if (use2Threads) {
+        #ifndef OPT_FLATMODEL
+            #error GMM threading code requires HTKFlatModels
+        #endif
+        // let GMM thread run before loading network to ensure it will be in running state when
+        // decoding starts
+        pthread_t gmm_thread;
+        GMMThreadParam gmm_thread_param;
+        gmm_thread_param.models = (HTKFlatModelsThreading*)models;
+        gmm_thread_param.running = true;
+        if (pthread_create(&gmm_thread, NULL, GMMThread, &gmm_thread_param)) {
+            fprintf(stderr, "juicer.cpp fail to create gmm_thread\n");
+            exit(-1);
+        }
+    }
+
     // load network
     LogFile::puts( "loading transducer network .... " ) ;
     WFSTNetwork *network=NULL ;
+    WFSTNetwork *clNetwork = NULL ;
+    WFSTSortedInLabelNetwork *gNetwork = NULL ;
+    setupNetworks(&network, &clNetwork, &gNetwork);
+
+    // Create front-end.
+    FrontEndFormat source;
+    switch (inputFormat)
+    {
+    case DST_FEATS_FACTORY:
+        source = FRONTEND_FACTORY;
+        break;
+    case DST_FEATS_HTK:
+        source = FRONTEND_HTK;
+        break;
+    case DST_PROBS_LNA8BIT:
+        source = FRONTEND_LNA;
+        break;
+    default:
+        assert(0);
+    }
+    FrontEnd *frontend = new FrontEnd(models->getInputVecSize(), source);
+#ifdef HAVE_HTKLIB
+    if ( frontend->isHTKLibSource )
+    {
+        if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
+            HError( 9999 , "Juicer: HTKLibSource selected but no HTK config provided" );
+        if ( useHModels ) 
+        {
+            frontend->useHModels=true;
+            frontend->HTKLIBModels = HTKLIBModels;
+        }
+    }
+#endif
+
+    // create decoder
+    LogFile::puts( "creating Decoder .... " ) ;
+    WFSTDecoder *decoder = NULL ;
+    if ( !onTheFlyComposition )  {
+        if (!useBasicCore) {
+            if (use2Threads)
+                decoder = new WFSTDecoderLiteThreading(
+                        network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
+                        maxHyps);
+            else
+                decoder = new WFSTDecoderLite(
+                        network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
+                        maxHyps);
+            decoder->setMaxAllocModels(maxAllocModels);
+#ifdef PARTIAL_DECODING
+            decoder->setPartialDecodeOptions(partialDecoding);
+#endif
+        } else 
+
+        decoder = new WFSTDecoder(
+	    network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
+            maxHyps , modelLevelOutput , latticeGeneration ) ;
+    }
+    else  {
+#ifdef WITH_ONTHEFLY
+        decoder = new WFSTOnTheFlyDecoder(
+            clNetwork, gNetwork, models, mainBeam, phoneEndBeam,
+            maxHyps, modelLevelOutput, latticeGeneration,
+            doLabelAndWeightPushing, true ) ;
+#else
+        printf("On the fly not compiled in\n");
+        assert(0);
+#endif
+    }
+    LogFile::puts( "done\n" ) ;
+
+    // setup phoneLookup
+    PhoneLookup *phoneLookup=NULL ;
+    if ( modelLevelOutput )
+    {
+        phoneLookup = new PhoneLookup(
+            monoListFName , silMonophone , pauseMonophone ,
+            tiedListFName , cdSepChars ) ;
+
+        // Add the model indices to the PhoneLookup
+        int i ;
+        for ( i=0 ; i<models->getNumHMMs() ; i++ )
+        {
+            const char* hmmName = models->getHMMName( i ) ;
+            phoneLookup->addModelInd( hmmName , i ) ;
+        }
+        phoneLookup->verifyAllModels() ;
+    }
+
+    // create batch tester
+    LogFile::puts( "creating DecoderBatchTest .... " ) ;
+    DecoderBatchTest *tester = new DecoderBatchTest(
+        vocab , phoneLookup , frontend , decoder , inputFName , inputFormat ,
+        models->getInputVecSize() , outputFName , outputFormat , refFName ,
+        removeSentMarks , framesPerSec ) ;
+    tester->loop = dbtLoop;
+
+    if ( latticeGeneration )
+    {
+        tester->activateLatticeGeneration( latticeDir ) ;
+        LogFile::puts( "lattice generation activated ..." ) ;
+    }
+    LogFile::puts( "done\n\njuicer initialisation complete\n\n" ) ;
+
+
+    // run the decoder
+    tester->run();
+
+    if (use2Threads)
+        ((HTKFlatModelsThreading*)models)->stop();
+
+    // cleanup and exit
+    delete tester ;
+    delete phoneLookup ;
+    delete decoder ;
+    delete network ;
+    delete models ;
+    delete vocab ;
+
+    // Clean up for on-the-fly composition
+    delete clNetwork ;
+    delete gNetwork ;
+
+    LogFile::date( "juicer finished at" ) ;
+    LogFile::close() ;
+    return 0 ;
+}
+
+
+void setupModels( Models **models )
+{
+    if ( (htkModelsFName != NULL) && (htkModelsFName[0] != '\0') )
+    {
+        // Check for correct input format
+        if ( (inputFormat != DST_FEATS_HTK) &&
+             (inputFormat != DST_FEATS_FACTORY) )
+            error("juicer: setupModels - "
+                  "htkModelsFName defined but inputFormat not htk") ;
+
+        // HTK MMF model input - i.e. a HMM/GMM system
+#ifdef HAVE_HTKLIB
+        if ( useHModels ) 
+        {
+            if ( (tiedListFName == NULL) || (tiedListFName[0] == '\0') ) 
+            {
+                useHModels=false;
+                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no (tied) model list was provided\n" );
+            }
+            if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
+            {
+                useHModels=false;
+                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no HTK config was provided\n" );
+            }
+        } else {
+            if ( ( (speakerNamePattern!=NULL) && (speakerNamePattern[0]!='\0') ) ||
+                 ( (parentXformDir!=NULL) && (parentXformDir[0]!='\0') ) ||
+                 ( (inputXformDir!=NULL) && (inputXformDir[0]!='\0') )  )
+                error( "speakerNamePattern, inputXformDir and parentXformDir require the -useHModels option\n" );
+
+        }
+        if ( useHModels )
+        {
+            LogFile::printf( "Using HModels.\n");
+            HTKLIBModels = new HModels(tiedListFName);
+            xfInfo.usePaXForm = FALSE;
+            xfInfo.useInXForm = FALSE;
+            HTKLIBModels->xfInfo = &xfInfo;
+            *models = HTKLIBModels;
+            if ( (speakerNamePattern!=NULL) && (speakerNamePattern[0]!='\0') )
+            {
+                // We have a colon separated list.
+                // Make a copy of the list and carve it up
+                char *str = new char[strlen(speakerNamePattern)+1] ;
+                strcpy( str , speakerNamePattern ) ;
+                // Extract the paths
+                char *ptr = strtok( str , ":" ) ;
+                char *pattern = new char[strlen(ptr)+1] ;
+                strcpy( pattern , ptr ) ;
+                xfInfo.outSpkrPat = pattern;
+                LogFile::printf("\tOut speaker pattern    = %s\n", pattern);
+                ptr = strtok( NULL , ":" ) ;
+                if ( ptr !=NULL )
+                {
+                    char *pattern = new char[strlen(ptr)+1] ;
+                    strcpy( pattern , ptr ) ;
+                    xfInfo.inSpkrPat = pattern;
+                    LogFile::printf("\tIn speaker pattern     = %s\n", pattern);
+                    ptr = strtok( NULL , ":" ) ;
+                    if ( ptr !=NULL )
+                    {
+                        char *pattern = new char[strlen(ptr)+1] ;
+                        strcpy( pattern , ptr ) ;
+                        xfInfo.paSpkrPat = pattern;
+                        LogFile::printf("\tParent speaker pattern = %s\n", pattern);
+                    }
+                }
+                delete [] str;
+                if (xfInfo.inSpkrPat == NULL) 
+                {
+                    xfInfo.inSpkrPat = xfInfo.outSpkrPat; 
+                    LogFile::printf("\tIn speaker pattern     = %s\n", xfInfo.inSpkrPat);
+                }
+                if (xfInfo.paSpkrPat == NULL)
+                {
+                    xfInfo.paSpkrPat = xfInfo.outSpkrPat; 
+                    LogFile::printf("\tParent speaker pattern = %s\n", xfInfo.paSpkrPat);
+                }
+            }
+            if ( (parentXformDir!=NULL) && (parentXformDir[0]!='\0') )
+            {
+                if ( xfInfo.paSpkrPat == NULL )
+                    error("Parent transform specified without a corresponding mask");
+                xfInfo.usePaXForm = TRUE;
+                xfInfo.paXFormDir = parentXformDir; 
+                if ( (parentXformExt!=NULL) && (parentXformExt[0]!='\0') )
+                    xfInfo.paXFormExt = parentXformExt; 
+            }
+            if ( (inputXformDir!=NULL) && (inputXformDir[0]!='\0') )
+            {
+                if ( xfInfo.inSpkrPat == NULL )
+                    error("Input transform specified without a corresponding mask");
+                HTKLIBModels->inputXformDir=inputXformDir;
+                if ( (inputXformExt!=NULL) && (inputXformExt[0]!='\0') )
+                    xfInfo.inXFormExt = inputXformExt; 
+            }
+        } else {
+#endif
+# ifdef OPT_FLATMODEL
+        if (use2Threads)
+            *models = new HTKFlatModelsThreading() ;
+        else
+            *models = new HTKFlatModels() ;
+        (*models)->setBlockSize(blockSize);
+# else
+        *models = new HTKModels() ;
+# endif
+
+        (*models)->setBlockSize(blockSize);
+
+#ifdef HAVE_HTKLIB
+        }
+#endif
+
+#ifdef USE_BINARY_MODELS
+        char *modelsBinFName = new char[strlen(htkModelsFName)+5] ;
+        sprintf( modelsBinFName , "%s.bin" , htkModelsFName ) ;
+        if ( fileExists( modelsBinFName ) )
+        {
+            LogFile::puts( "from pre-existing binary file .... " ) ;
+            (*models)->readBinary( modelsBinFName ) ;
+        }
+        else
+        {
+#endif
+            LogFile::puts( "from ascii HTK MMF file .... " ) ;
+            (*models)->Load( htkModelsFName , false /*fixTeeModels*/ ) ;
+#ifdef USE_BINARY_MODELS
+            if ( writeBinaryFiles )
+            {
+                LogFile::puts( "writing new binary file .... " ) ;
+                (*models)->output( modelsBinFName , true ) ;
+            }
+            else
+            {
+                LogFile::puts( "binary file writing inhibited ....\n");
+            }
+        }
+        delete [] modelsBinFName ;
+#endif
+    }
+    else if ( (priorsFName != NULL) && (priorsFName[0] != '\0') )
+    {
+        // File containing priors for ANN outputs - a hybrid HMM/ANN
+        // system In this case we assume that the ordering in
+        // monoListFName corresponds to the order of values in LNA
+        // input frames.
+
+        // Check for correct input format
+        if ( inputFormat != DST_PROBS_LNA8BIT )
+            error("juicer: setupModels - "
+                  "aNNPriorsFName defined but inputFormat not lna") ;
+        if ( (monoListFName == NULL) || (monoListFName[0] == '\0') )
+            error("juicer: setupModels - "
+                  "aNNPriorsFName defined but no monoListFName defined") ;
+        if ( statesPerModel <= 2 )
+            error("juicer: setupModels - "
+                  "aNNPriorsFName defined but statesPerModel <= 2") ;
+
+#ifdef HAVE_HTKLIB
+        if ( useHModels ) 
+        {
+            if ( (tiedListFName == NULL) || (tiedListFName[0] == '\0') )
+                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no (tied) model list was provided\n" );
+            if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
+                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no HTK config was provided\n" );
+        }
+        if ( useHModels && (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (tiedListFName != NULL) && (tiedListFName[0] != '\0') )
+        {
+            assert(0);  // makes no sense right now to have HTK models and LNA
+        } else {
+#endif
+#ifdef OPT_FLATMODEL
+        //  not implemented, use HTKModels instead now
+        *models = new HTKModels();
+#else
+        *models = new HTKModels() ;
+#endif
+#ifdef HAVE_HTKLIB
+        }
+#endif
+        (*models)->Load( monoListFName , priorsFName , statesPerModel ) ;
+    }
+}
+
+void setupNetworks(WFSTNetwork** network_, WFSTNetwork** clNetwork_, WFSTSortedInLabelNetwork** gNetwork_) {
+    WFSTNetwork *network=NULL ;
+    WFSTNetwork *clNetwork = NULL ;
+    WFSTSortedInLabelNetwork *gNetwork = NULL ;
 #ifdef USE_BINARY_WFST
     char *netBinFName = new char[strlen(fsmFName)+5] ;
     sprintf( netBinFName , "%s.bin" , fsmFName ) ;
     char *clNetBinFName = NULL ;
     char *gNetBinFName = NULL ;
 #endif
-
-    // Networks for on-the-fly composition
-    // Changes
-    WFSTNetwork *clNetwork = NULL ;
-    WFSTSortedInLabelNetwork *gNetwork = NULL ;
 
     // Load network: Either static or on-the-fly composition
     if ( !onTheFlyComposition )  {
@@ -648,301 +1007,9 @@ int main( int argc , char *argv[] )
         ) ;
     }
 
-    // Create front-end.
-    FrontEndFormat source;
-    switch (inputFormat)
-    {
-    case DST_FEATS_FACTORY:
-        source = FRONTEND_FACTORY;
-        break;
-    case DST_FEATS_HTK:
-        source = FRONTEND_HTK;
-        break;
-    case DST_PROBS_LNA8BIT:
-        source = FRONTEND_LNA;
-        break;
-    default:
-        assert(0);
-    }
-    FrontEnd *frontend = new FrontEnd(models->getInputVecSize(), source);
-#ifdef HAVE_HTKLIB
-    if ( frontend->isHTKLibSource )
-    {
-        if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
-            HError( 9999 , "Juicer: HTKLibSource selected but no HTK config provided" );
-        if ( useHModels ) 
-        {
-            frontend->useHModels=true;
-            frontend->HTKLIBModels = HTKLIBModels;
-        }
-    }
-#endif
-
-    // create decoder
-    LogFile::puts( "creating WFSTDecoder .... " ) ;
-    WFSTDecoder *decoder = NULL ;
-    if ( !onTheFlyComposition )  {
-        if (!useBasicCore) {
-            decoder = new WFSTDecoderLite(
-            network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
-                maxHyps);
-            decoder->setMaxAllocModels(maxAllocModels);
-#ifdef PARTIAL_DECODING
-            decoder->setPartialDecodeOptions(partialDecoding);
-#endif
-        } else 
-
-        decoder = new WFSTDecoder(
-	    network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
-            maxHyps , modelLevelOutput , latticeGeneration ) ;
-    }
-    else  {
-#ifdef WITH_ONTHEFLY
-        decoder = new WFSTOnTheFlyDecoder(
-            clNetwork, gNetwork, models, mainBeam, phoneEndBeam,
-            maxHyps, modelLevelOutput, latticeGeneration,
-            doLabelAndWeightPushing, true ) ;
-#else
-        printf("On the fly not compiled in\n");
-        assert(0);
-#endif
-    }
-    LogFile::puts( "done\n" ) ;
-
-    // setup phoneLookup
-    PhoneLookup *phoneLookup=NULL ;
-    if ( modelLevelOutput )
-    {
-        phoneLookup = new PhoneLookup(
-            monoListFName , silMonophone , pauseMonophone ,
-            tiedListFName , cdSepChars ) ;
-
-        // Add the model indices to the PhoneLookup
-        int i ;
-        for ( i=0 ; i<models->getNumHMMs() ; i++ )
-        {
-            const char* hmmName = models->getHMMName( i ) ;
-            phoneLookup->addModelInd( hmmName , i ) ;
-        }
-        phoneLookup->verifyAllModels() ;
-    }
-
-    // create batch tester
-    LogFile::puts( "creating DecoderBatchTest .... " ) ;
-    DecoderBatchTest *tester = new DecoderBatchTest(
-        vocab , phoneLookup , frontend , decoder , inputFName , inputFormat ,
-        models->getInputVecSize() , outputFName , outputFormat , refFName ,
-        removeSentMarks , framesPerSec ) ;
-    tester->loop = dbtLoop;
-
-    if ( latticeGeneration )
-    {
-        tester->activateLatticeGeneration( latticeDir ) ;
-        LogFile::puts( "lattice generation activated ..." ) ;
-    }
-    LogFile::puts( "done\n\njuicer initialisation complete\n\n" ) ;
-
-    // run the decoder
-    tester->run() ;
-
-    // cleanup and exit
-    delete tester ;
-    delete phoneLookup ;
-    delete decoder ;
-    delete network ;
-    delete models ;
-    delete vocab ;
-
-    // Clean up for on-the-fly composition
-    delete clNetwork ;
-    delete gNetwork ;
-
-    LogFile::date( "juicer finished at" ) ;
-    LogFile::close() ;
-    return 0 ;
-}
-
-
-void setupModels( Models **models )
-{
-    if ( (htkModelsFName != NULL) && (htkModelsFName[0] != '\0') )
-    {
-        // Check for correct input format
-        if ( (inputFormat != DST_FEATS_HTK) &&
-             (inputFormat != DST_FEATS_FACTORY) )
-            error("juicer: setupModels - "
-                  "htkModelsFName defined but inputFormat not htk") ;
-
-        // HTK MMF model input - i.e. a HMM/GMM system
-#ifdef HAVE_HTKLIB
-        if ( useHModels ) 
-        {
-            if ( (tiedListFName == NULL) || (tiedListFName[0] == '\0') ) 
-            {
-                useHModels=false;
-                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no (tied) model list was provided\n" );
-            }
-            if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
-            {
-                useHModels=false;
-                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no HTK config was provided\n" );
-            }
-        } else {
-            if ( ( (speakerNamePattern!=NULL) && (speakerNamePattern[0]!='\0') ) ||
-                 ( (parentXformDir!=NULL) && (parentXformDir[0]!='\0') ) ||
-                 ( (inputXformDir!=NULL) && (inputXformDir[0]!='\0') )  )
-                error( "speakerNamePattern, inputXformDir and parentXformDir require the -useHModels option\n" );
-
-        }
-        if ( useHModels )
-        {
-            LogFile::printf( "Using HModels.\n");
-            HTKLIBModels = new HModels(tiedListFName);
-            xfInfo.usePaXForm = FALSE;
-            xfInfo.useInXForm = FALSE;
-            HTKLIBModels->xfInfo = &xfInfo;
-            *models = HTKLIBModels;
-            if ( (speakerNamePattern!=NULL) && (speakerNamePattern[0]!='\0') )
-            {
-                // We have a colon separated list.
-                // Make a copy of the list and carve it up
-                char *str = new char[strlen(speakerNamePattern)+1] ;
-                strcpy( str , speakerNamePattern ) ;
-                // Extract the paths
-                char *ptr = strtok( str , ":" ) ;
-                char *pattern = new char[strlen(ptr)+1] ;
-                strcpy( pattern , ptr ) ;
-                xfInfo.outSpkrPat = pattern;
-                LogFile::printf("\tOut speaker pattern    = %s\n", pattern);
-                ptr = strtok( NULL , ":" ) ;
-                if ( ptr !=NULL )
-                {
-                    char *pattern = new char[strlen(ptr)+1] ;
-                    strcpy( pattern , ptr ) ;
-                    xfInfo.inSpkrPat = pattern;
-                    LogFile::printf("\tIn speaker pattern     = %s\n", pattern);
-                    ptr = strtok( NULL , ":" ) ;
-                    if ( ptr !=NULL )
-                    {
-                        char *pattern = new char[strlen(ptr)+1] ;
-                        strcpy( pattern , ptr ) ;
-                        xfInfo.paSpkrPat = pattern;
-                        LogFile::printf("\tParent speaker pattern = %s\n", pattern);
-                    }
-                }
-                delete [] str;
-                if (xfInfo.inSpkrPat == NULL) 
-                {
-                    xfInfo.inSpkrPat = xfInfo.outSpkrPat; 
-                    LogFile::printf("\tIn speaker pattern     = %s\n", xfInfo.inSpkrPat);
-                }
-                if (xfInfo.paSpkrPat == NULL)
-                {
-                    xfInfo.paSpkrPat = xfInfo.outSpkrPat; 
-                    LogFile::printf("\tParent speaker pattern = %s\n", xfInfo.paSpkrPat);
-                }
-            }
-            if ( (parentXformDir!=NULL) && (parentXformDir[0]!='\0') )
-            {
-                if ( xfInfo.paSpkrPat == NULL )
-                    error("Parent transform specified without a corresponding mask");
-                xfInfo.usePaXForm = TRUE;
-                xfInfo.paXFormDir = parentXformDir; 
-                if ( (parentXformExt!=NULL) && (parentXformExt[0]!='\0') )
-                    xfInfo.paXFormExt = parentXformExt; 
-            }
-            if ( (inputXformDir!=NULL) && (inputXformDir[0]!='\0') )
-            {
-                if ( xfInfo.inSpkrPat == NULL )
-                    error("Input transform specified without a corresponding mask");
-                HTKLIBModels->inputXformDir=inputXformDir;
-                if ( (inputXformExt!=NULL) && (inputXformExt[0]!='\0') )
-                    xfInfo.inXFormExt = inputXformExt; 
-            }
-        } else {
-#endif
-# ifdef OPT_FLATMODEL
-        *models = new HTKFlatModels() ;
-        (*models)->setBlockSize(blockSize);
-# else
-        *models = new HTKModels() ;
-# endif
-
-        (*models)->setBlockSize(blockSize);
-
-#ifdef HAVE_HTKLIB
-        }
-#endif
-
-#ifdef USE_BINARY_MODELS
-        char *modelsBinFName = new char[strlen(htkModelsFName)+5] ;
-        sprintf( modelsBinFName , "%s.bin" , htkModelsFName ) ;
-        if ( fileExists( modelsBinFName ) )
-        {
-            LogFile::puts( "from pre-existing binary file .... " ) ;
-            (*models)->readBinary( modelsBinFName ) ;
-        }
-        else
-        {
-#endif
-            LogFile::puts( "from ascii HTK MMF file .... " ) ;
-            (*models)->Load( htkModelsFName , false /*fixTeeModels*/ ) ;
-#ifdef USE_BINARY_MODELS
-            if ( writeBinaryFiles )
-            {
-                LogFile::puts( "writing new binary file .... " ) ;
-                (*models)->output( modelsBinFName , true ) ;
-            }
-            else
-            {
-                LogFile::puts( "binary file writing inhibited ....\n");
-            }
-        }
-        delete [] modelsBinFName ;
-#endif
-    }
-    else if ( (priorsFName != NULL) && (priorsFName[0] != '\0') )
-    {
-        // File containing priors for ANN outputs - a hybrid HMM/ANN
-        // system In this case we assume that the ordering in
-        // monoListFName corresponds to the order of values in LNA
-        // input frames.
-
-        // Check for correct input format
-        if ( inputFormat != DST_PROBS_LNA8BIT )
-            error("juicer: setupModels - "
-                  "aNNPriorsFName defined but inputFormat not lna") ;
-        if ( (monoListFName == NULL) || (monoListFName[0] == '\0') )
-            error("juicer: setupModels - "
-                  "aNNPriorsFName defined but no monoListFName defined") ;
-        if ( statesPerModel <= 2 )
-            error("juicer: setupModels - "
-                  "aNNPriorsFName defined but statesPerModel <= 2") ;
-
-#ifdef HAVE_HTKLIB
-        if ( useHModels ) 
-        {
-            if ( (tiedListFName == NULL) || (tiedListFName[0] == '\0') )
-                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no (tied) model list was provided\n" );
-            if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
-                LogFile::puts( "\nWARNING: Can't use HTKLib's likelihood calculation because no HTK config was provided\n" );
-        }
-        if ( useHModels && (htkConfigFName != NULL) && (htkConfigFName[0] != '\0') && (tiedListFName != NULL) && (tiedListFName[0] != '\0') )
-        {
-            assert(0);  // makes no sense right now to have HTK models and LNA
-        } else {
-#endif
-#ifdef OPT_FLATMODEL
-        //  not implemented, use HTKModels instead now
-        *models = new HTKModels();
-#else
-        *models = new HTKModels() ;
-#endif
-#ifdef HAVE_HTKLIB
-        }
-#endif
-        (*models)->Load( monoListFName , priorsFName , statesPerModel ) ;
-    }
+    *network_ = network;
+    *clNetwork_ = clNetwork;
+    *gNetwork_ = gNetwork;
 }
 
 

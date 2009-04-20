@@ -10,10 +10,6 @@
  *
  * HTKFlatModels.h  -  store GMM parameters in flat arrays for fast
  * computation, derived from HTKModels.
- *
- * by Zhang Le
- * Begin       : 02-Oct-2008
- * Last Change : 31-Mar-2009.
  * 
  */
 
@@ -34,9 +30,8 @@ namespace Juicer {
         public:
             HTKFlatModels();
             virtual ~HTKFlatModels();
+            virtual void init(); // initialise private data from loaded HTKModels
             void readBinary( const char *fName );
-            void init(); // initialise private data from loaded HTKModels
-
             void Load( const char *htkModelsFName ,
                     bool removeInitialToFinalTransitions_=false ) ;
             real calcOutput( int gmmInd ) ; // new version of GMM obversion calculation
@@ -44,7 +39,7 @@ namespace Juicer {
             void newFrame( int frame , real **input, int nFrame);
             void setBlockSize(int bs);
 
-        private:
+        protected:
             int fvecSize4;
             int fnMixtures4;
             int fnGaussians; 

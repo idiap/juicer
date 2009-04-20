@@ -73,7 +73,6 @@ namespace Juicer {
                                 // NetInst + states[n] are allocated by stateNPools
     } NetInst;
     
-    
     class WFSTDecoderLite : public WFSTDecoder {
         public:
             WFSTDecoderLite(WFSTNetwork*network_ , 
@@ -98,7 +97,7 @@ namespace Juicer {
             // although most variables are the same as in WFSTDecoder,
             // they are re-declared here instead of inheriting from WFSTDecoder,
             // just in case this may replace WFSTDecoder completely
-        private:
+        protected:
             // essential variables for decoding
             // need to be reset for each utterance
             Token* tokenBuf;      /* temp updated tokens */
@@ -180,11 +179,13 @@ namespace Juicer {
             void movePathYesRefList(Path* p);
             void movePathYesRefListTail(Path* p);
             void resetPathLists();
-            void HMMInternalPropagation(NetInst* inst);
             void propagateToken(Token* tok, WFSTTransition* trans);
             NetInst* attachNetInst(WFSTTransition* trans);
             void joinNewActiveInstList();
             NetInst* returnNetInst(NetInst* inst, NetInst* prevInst);
+            virtual void doHMMInternalPropagation(); // to be overloaded in WFSTDecoderLiteThreading
+            void doHMMExternalPropagation();
+            void HMMInternalPropagation(NetInst* inst);
 
 #ifdef PARTIAL_DECODING
             vector<Path*> partialPaths; // list of joint Path node in the hypothesis network

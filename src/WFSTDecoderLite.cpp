@@ -22,6 +22,9 @@
 #include "LogFile.h"
 #include "WFSTDecoderLite.h"
 
+// HTKFlatModels.h is required for 2-thread GMM computation
+#include "HTKFlatModels.h"
+
 #define MEMORY_POOL_REALLOC_AMOUNT 5000
 
 using namespace std;
@@ -295,12 +298,10 @@ DecHyp* WFSTDecoderLite::recognitionFinish() {
 
 void WFSTDecoderLite::processFrame(real **inputVec, int frame_, int nFrames_) {
     // fprintf(stderr, "processing frame %d\n", currFrame); fflush(stderr);
-
     currFrame = frame_;
 
     hmmModels->newFrame(currFrame, inputVec, nFrames_); 
     bestFinalToken = nullToken; 
-
 
     //    <<Update start & emit pruning thresholds>>
     {
@@ -325,47 +326,7 @@ void WFSTDecoderLite::processFrame(real **inputVec, int frame_, int nFrames_) {
 #endif
     } // end of <<Update start & emit pruning thresholds>>
 
-    // <<Do hmm internal propagation for each active inst>>
-    {
-
-        nActiveEmitHyps = 0;
-        nActiveEndHyps = 0;
-        nEmitHypsProcessed = 0;
-        nEndHypsProcessed = 0;
-
-        bestEmitScore = LOG_ZERO; /* bestEmitScore & bestEndScore will be updated in HMMInternalPropagation() */
-#ifndef OPT_SINGLE_BEST
-        bestEndScore = LOG_ZERO;
-#endif
-
-        NetInst* prevInst = NULL;
-        NetInst* inst = activeNetInstList;
-        while (inst) {
-            // language model pruning
-            Token* entry = inst->states;
-            if (entry->score > LOG_ZERO && entry->score < currStartPruneThresh) {
-                *entry = nullToken;
-                --inst->nActiveHyps;
-            }
-
-            HMMInternalPropagation(inst);
-
-            // post-emitting pruning
-            assert(inst->nActiveHyps >= 0);
-            if (inst->nActiveHyps == 0) {
-                inst = returnNetInst(inst, prevInst);
-            } else {
-                prevInst = inst;
-                inst = inst->next;
-            }
-        }
-
-        totalActiveEmitHyps += nActiveEmitHyps;
-        totalActiveEndHyps += nActiveEndHyps;
-        totalProcEmitHyps += nEmitHypsProcessed;
-
-
-    } // end of <<Do hmm internal propagation for each active inst>>
+    doHMMInternalPropagation();
 
     // Update end pruning thresholds
     // bestEndScore has now been updated during hmm internal propagation
@@ -377,52 +338,7 @@ void WFSTDecoderLite::processFrame(real **inputVec, int frame_, int nFrames_) {
     currWordPruneThresh = (wordPruneWin > 0.0 ? (bestEmitScore - wordPruneWin) : LOG_ZERO) ;
 #endif
 
-    // <<Do external propagation (exit states) for each active inst (inc. tee and eplison transition)>>
-    {
-        nEndHypsProcessed = 0;
-#ifndef OPT_SINGLE_BEST
-        bestStartScore = LOG_ZERO; /* bestStartScore will be updated in propagateToken */
-#endif
-
-        NetInst* prevInst = NULL;
-        NetInst* inst = activeNetInstList;
-        while (inst) {
-            WFSTTransition* trans = inst->trans;
-            Token* exit_tok = &inst->states[inst->nStates - 1];
-            if (exit_tok->score > LOG_ZERO) {
-                // VW - word based pruning
-                // Use a different purning threshold when a word is emitted
-                if (inst->trans->outLabel == WFST_EPSILON) {
-                    if (exit_tok->score > currEndPruneThresh) {
-                        ++nEndHypsProcessed;
-                        propagateToken(exit_tok, trans);
-                    }
-                } else {
-                    if (exit_tok->score > currWordPruneThresh) {
-                        ++nEndHypsProcessed;
-                        propagateToken(exit_tok, trans);
-                    }
-                }
-
-                *exit_tok = nullToken; // de-active exit_tok
-                assert(inst->nActiveHyps >= 0);
-                if (--inst->nActiveHyps == 0) {
-                    inst = returnNetInst(inst, prevInst);
-                } else {
-                    prevInst = inst;
-                    inst = inst->next;
-                }
-            } else {
-                prevInst = inst;
-                inst = inst->next;
-            }
-        }
-
-        totalProcEndHyps += nEndHypsProcessed;
-
-        joinNewActiveInstList();
-        totalActiveModels += nActiveInsts;
-    }
+    doHMMExternalPropagation();
 
     // path collection
     // To speed up token assginment, the unused paths are collocted in a 
@@ -532,7 +448,6 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
                 *res = *cur;
                 res->score = tmpScore;
                 res->acousticScore += trP[i][N_1];
-    
                 // non-emit states can not have higher score so no need to compare with bestEmitScore
             }
         }
@@ -544,8 +459,9 @@ void WFSTDecoderLite::HMMInternalPropagation(NetInst* inst) {
             if (res->score > bestEndScore)
                 bestEndScore = res->score;
 #else
-            if (res->score > bestEmitScore)
-                bestEmitScore = res->score;
+            // non-emit states can not have higher score so no need to compare with bestEmitScore
+            // if (res->score > bestEmitScore)
+            //     bestEmitScore = res->score;
 #endif
             ++inst->nActiveHyps;
             ++nActiveEndHyps;
@@ -965,6 +881,92 @@ void WFSTDecoderLite::setPartialDecodeOptions(int traceInterval) {
     LogFile::printf("WFSTDecoderLite::partialTraceInterval = %d frames\n", partialTraceInterval);
 }
 #endif
+
+void WFSTDecoderLite::doHMMInternalPropagation() {
+    nActiveEmitHyps = 0;
+    nActiveEndHyps = 0;
+    nEmitHypsProcessed = 0;
+    nEndHypsProcessed = 0;
+
+    bestEmitScore = LOG_ZERO; /* bestEmitScore & bestEndScore will be updated in HMMInternalPropagation() */
+#ifndef OPT_SINGLE_BEST
+    bestEndScore = LOG_ZERO;
+#endif
+
+    NetInst* prevInst = NULL;
+    NetInst* inst = activeNetInstList;
+    while (inst) {
+        // language model pruning
+        Token* entry = inst->states;
+        if (entry->score > LOG_ZERO && entry->score < currStartPruneThresh) {
+            *entry = nullToken;
+            --inst->nActiveHyps;
+        }
+
+        HMMInternalPropagation(inst);
+
+        // post-emitting pruning
+        assert(inst->nActiveHyps >= 0);
+        if (inst->nActiveHyps == 0) {
+            inst = returnNetInst(inst, prevInst);
+        } else {
+            prevInst = inst;
+            inst = inst->next;
+        }
+    }
+
+    totalActiveEmitHyps += nActiveEmitHyps;
+    totalActiveEndHyps += nActiveEndHyps;
+    totalProcEmitHyps += nEmitHypsProcessed;
+}
+
+void WFSTDecoderLite::doHMMExternalPropagation() {
+    // Do external propagation (exit states) for each active inst (inc. tee and eplison transition)
+    nEndHypsProcessed = 0;
+#ifndef OPT_SINGLE_BEST
+    bestStartScore = LOG_ZERO; /* bestStartScore will be updated in propagateToken */
+#endif
+
+    NetInst* prevInst = NULL;
+    NetInst* inst = activeNetInstList;
+    while (inst) {
+        WFSTTransition* trans = inst->trans;
+        Token* exit_tok = &inst->states[inst->nStates - 1];
+        if (exit_tok->score > LOG_ZERO) {
+            // VW - word based pruning
+            // Use a different purning threshold when a word is emitted
+            if (inst->trans->outLabel == WFST_EPSILON) {
+                if (exit_tok->score > currEndPruneThresh) {
+                    ++nEndHypsProcessed;
+                    propagateToken(exit_tok, trans);
+                }
+            } else {
+                if (exit_tok->score > currWordPruneThresh) {
+                    ++nEndHypsProcessed;
+                    propagateToken(exit_tok, trans);
+                }
+            }
+
+            *exit_tok = nullToken; // de-active exit_tok
+            assert(inst->nActiveHyps >= 0);
+            if (--inst->nActiveHyps == 0) {
+                inst = returnNetInst(inst, prevInst);
+            } else {
+                prevInst = inst;
+                inst = inst->next;
+            }
+        } else {
+            prevInst = inst;
+            inst = inst->next;
+        }
+    }
+
+    totalProcEndHyps += nEndHypsProcessed;
+
+    joinNewActiveInstList();
+    totalActiveModels += nActiveInsts;
+}
+
 
 };
 
