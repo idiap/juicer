@@ -10,7 +10,7 @@
 #include "sys/types.h"
 #include "sys/stat.h"
 
-
+#include "WFSTDecoderLiteThreading.h"
 /*
    Author:		Darren Moore (moore@idiap.ch)
                         Modified by John Dines to support LNA16bit
@@ -239,6 +239,7 @@ void DecoderSingleTest::decodeUtterance(
 {
     clock_t startTime , endTime ;
 
+
 #ifdef DEBUG
     if ( (mode != DBT_MODE_WFSTDECODE_WORDS) &&
          (mode != DBT_MODE_WFSTDECODE_PHONES) )
@@ -288,6 +289,13 @@ void DecoderSingleTest::decodeUtterance(
     DecHyp* hyp = decoder->finish() ;
     endTime = clock() ;
     decodeTime = (real)(endTime-startTime) / CLOCKS_PER_SEC ;
+
+
+    if (dynamic_cast<WFSTDecoderLiteThreading*>(decoder)) {
+        // the decoder in question is WFSTDecoderLiteThreading
+        // we are using two threads in decoding
+        decodeTime /= 2;
+    }
 
     // Time stamp and speaker ID
     // time stamp must be after the first frame of decode

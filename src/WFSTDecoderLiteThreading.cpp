@@ -111,10 +111,6 @@ void WFSTDecoderLiteThreading::doHMMInternalPropagation() {
             }
         }
 
-        totalActiveEmitHyps += nActiveEmitHyps;
-        totalActiveEndHyps += nActiveEndHyps;
-        totalProcEmitHyps += nEmitHypsProcessed;
-
 
     {
         // process all hmm emitting states in queue
@@ -167,6 +163,11 @@ void WFSTDecoderLiteThreading::doHMMInternalPropagation() {
         }
         threadHMMModels->sync();
     }
+
+    totalActiveEmitHyps += nActiveEmitHyps;
+    totalActiveEndHyps += nActiveEndHyps;
+    totalProcEmitHyps += nEmitHypsProcessed;
+
 }
 
 // internal propagation: scan all emitting states and add states to wait queue 
