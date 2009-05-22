@@ -2,42 +2,38 @@
 
 \section intro Introduction
 
-Juicer is a Weighted Finite State Transducer (WFST) based decoder
-for Automatic Speech Recognition (ASR).  It has been developed at
-Idiap under the <a href="http://www.amiproject.org/">AMI and AMIDA</a>
-projects in collaboration with the universities of Sheffield and
-Edinburgh.
+Juicer is a Weighted Finite State Transducer (WFST) based decoder for
+Automatic Speech Recognition (ASR).  It has been developed as a
+collaboration between Idiap and the universities of Sheffield and
+Edinburgh under the <a href="http://www.amiproject.org/">AMI and
+AMIDA</a> projects.
 
 Juicer has been successfully used in the AMI consortium entries in
 the recent NIST RT evaluations.  It is used as a real-time
 demonstration engine in AMIDA, and increasingly as the main research
-engine in other projects at Idiap.
+engine in other projects.
 
 \section pubs Publications involving Juicer
 
-A <a
+ - A <a
 href="http://publications.idiap.ch/index.php/publications/show/318">user
 guide</a>, will be updated soon.
-
-<a
+ - <a
 href="http://publications.idiap.ch/index.php/publications/show/1389">Silence
 modelling in WFSTs</a> at Interspeech 2008.
-
-A <a
+ - A <a
 href="http://publications.idiap.ch/index.php/publications/show/279">paper
 about Juicer</a> from MLMI 2006.
-
-A presentation by Thomas Hain on the <a
+ - A presentation by Thomas Hain on the <a
 href="http://www.itl.nist.gov/iad/894.01/tests/rt/2006-spring/pdfs/hain.pdf">RT06
 system</a>.
-
-Another <a
+ - Another <a
 href="http://publications.idiap.ch/index.php/publications/show/241">paper
 about dynamic composition of WFSTs</a>.
-
-A <a
+ - A <a
 href="http://publications.idiap.ch/index.php/publications/show/144">tutorial
 about WFSTs</a>.
+ .
 
 Note that the static WFST decoder in juicer has been improved
 significantly since most of these documents were written.  In
@@ -61,15 +57,18 @@ probably works too.
 \section authors Authors
 
 Juicer was originally written by <a
-href="http://www.ict.csiro.au/staff/Darren.Moore/">Darren Moore</a>.
-Dynamic composition (on-the-fly) was added by Octavian Cheng (although
-this is not currently maintained).  <a
-href="http://www.idiap.ch/~dines">John Dines</a> also contributed.
+href="http://www.ict.csiro.au/staff/Darren.Moore/">Darren Moore</a>
+whilst he was at Idiap, although a significant part of his work was
+done under the AMI training program at Sheffield.  Dynamic composition
+(on-the-fly) was added by Octavian Cheng (although this is not
+currently maintained).  <a href="http://www.idiap.ch/~dines">John
+Dines</a> also contributed.
 
 More recently, the package has been overhauled by, and is maintained
-by, <a href="http://www.idiap.ch/~pgarner">Phil Garner</a>.
-Significant contributions have been (and are being) made by <a
-href="http://www.dcs.shef.ac.uk/~vinny">Vinny Wan</a> and Zhang Le.
+by, <a href="http://www.idiap.ch/~pgarner">Phil Garner</a>.  Most of
+the HTK compatibility work is by <a
+href="http://www.dcs.shef.ac.uk/~vinny">Vinny Wan</a>.  Le Zhang
+recently wrote the "Lite" (and fast) decoder core.
 
 
 */

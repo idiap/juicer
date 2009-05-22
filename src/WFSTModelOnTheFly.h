@@ -19,11 +19,13 @@
 namespace Juicer {
 
 
-/**
+/*
  * The following are the data structures added for doing dynamic
  * composition
- *
- * Changes Octavian 20060417 20060531 20060630 This structure contains
+ */
+    // Changes Octavian 20060417 20060531 20060630
+/**
+ * This structure contains
  * a gState Index, a matchedOutLabel and a pointer of a
  * hypothesis. The pair (gState, matchedOutLabel) will be the key
  * (index) for finding hypotheses. It is a linked list node, hence it
@@ -32,7 +34,6 @@ namespace Juicer {
  * HMM. Because now each state will have more than 1 hypotheses. Each
  * hypothesis has a different gState number.
  *
- * Changes Danil - modified for compatibility with SWIG.
  */
 union NodeToDecHypOnTheFly_ptr {
    struct NodeToDecHypOnTheFly *next ;
@@ -54,7 +55,8 @@ struct NodeToDecHypOnTheFly
    struct NodeToDecHypOnTheFly *right ;
 } ;
 
-/** Changes Octavian 20060417
+// Changes Octavian 20060417
+/**
  * This structure contains a linked list of nodes.
  * This list serves as a map of gStateIndex to a hyp
  * It is the structure to maintain the linked list of NodeToDecHypOntheFly
@@ -66,7 +68,8 @@ struct NodeToDecHypOnTheFlyList
    struct NodeToDecHypOnTheFly *tail ;
 } ;
 
-/** Changes Octavian 20060417
+// Changes Octavian 20060417
+/**
  * A block memory pool for storing NodeToDecHypOnTheFly nodes
  */
 class NodeToDecHypOnTheFlyPool
@@ -150,7 +153,8 @@ class NodeToDecHypOnTheFlyMapPool
 } ;
 */
 
-/** Changes Octavian 20060417 20060423 20060630
+ // Changes Octavian 20060417 20060423 20060630
+/**
  * A data structure which represents an active model (ie a model which has
  * hypotheses)
  * Basic attribes are similar to WFSTModel
@@ -349,7 +353,8 @@ public:
    
 };
 
-/** Changes Octavian 20060417
+// Changes Octavian 20060417
+/**
  * A structure similar to WFSTModelFNSPool
  */
 struct WFSTModelOnTheFlyFNSPool		// FNS = Fixed Number of States
@@ -365,7 +370,8 @@ struct WFSTModelOnTheFlyFNSPool		// FNS = Fixed Number of States
 } ;
 
 
-/** Changes Octavian 20060417
+// Changes Octavian 20060417
+/**
  */
 class WFSTModelOnTheFlyPool : public WFSTModelPool
 {

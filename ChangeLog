@@ -1,3 +1,13 @@
+0.11.0
+	After the RT09 evaluations
+	o Faster WFSTDecoderLite core
+	o Experimental threading core
+	o IPP support
+	o Output probability look-ahead (good with IPP)
+
+0.10.0
+	Lock the (internal) version for RT09 evaluations.
+
 0.9.0
 	Many performance enhancements.
 	HTKFlatModels for faster access.

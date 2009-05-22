@@ -2,7 +2,7 @@
 # ...and manually buggered up by Phil Garner
 
 AC_PREREQ(2.59)
-AC_INIT([Juicer], [0.10.0])
+AC_INIT([Juicer], [0.11.0])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_SRCDIR([src/juicer.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -102,7 +102,8 @@ AC_SUBST([HTK_INCLUDES], [$with_htk_includes])
 AC_SUBST([HTK_LIBS], [$with_htk_libs])
 AM_CONDITIONAL([WITH_HTK], [test "$with_htk_includes" != ""])
 
-# use GMM computation routines from Intel Integrated Performance Primitives (IPP)
+# use GMM computation routines from Intel Integrated Performance
+# Primitives (IPP)
 AC_ARG_WITH(ipproot,
   [AS_HELP_STRING(
     [--with-ipproot=DIR],
@@ -143,11 +144,13 @@ AC_ARG_ENABLE(swig,
   [AS_HELP_STRING(
     [--enable-swig],
     [Enable compilation of swig generated JNI interface]
-  )]
+  )],
+  [enable_swig=$enableval],
+  [enable_swig=no]
 )
 AC_MSG_CHECKING([whether to use swig JNI interface])
-AC_MSG_RESULT([$enableval])
-AM_CONDITIONAL([WITH_SWIG], [test "$enableval" = "yes"])
+AC_MSG_RESULT([$enable_swig])
+AM_CONDITIONAL([WITH_SWIG], [test "$enable_swig" = "yes"])
 
 #
 # Many of these were added by autoscan, then removed by me (Phil).

@@ -44,9 +44,8 @@ Optional Libs
    eg.  configure --with-htk-includes=-I/path/to/HTKLib/ \
                   --with-htk-libs="-L/path/to/HTKLib/ /path/to/HTKLib/HTKLib.a"
 
-3. By default juicer will build swig wrapper for java, this can be disabled by:
-   configure --enable-swig=no
-   if you have problem compiling juicer_wrap.cxx
+3. A SWIG wrapper for java can be build using:
+   configure --enable-swig=yes
 
 
 Building Juicer
