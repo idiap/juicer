@@ -98,10 +98,12 @@ namespace Juicer
             return mSink->GetArray(ioData, iIndex);
         }
 
-        void SetSource(char* iFileName)
+        void SetSource(
+            char* iFileName, TimeType iBeginTime = -1, TimeType iEndTime = -1
+        )
         {
             assert(iFileName);
-            mSource->Open(iFileName);
+            mSource->Open(iFileName, iBeginTime, iEndTime);
             mSink->Reset();
         }
 
