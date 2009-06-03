@@ -99,11 +99,15 @@ namespace Juicer
         }
 
         void SetSource(
-            char* iFileName, TimeType iBeginTime = -1, TimeType iEndTime = -1
+            char* iFileName, IndexType iBeginFrame = 0, IndexType iEndFrame = 0
         )
         {
             assert(iFileName);
-            mSource->Open(iFileName, iBeginTime, iEndTime);
+            TimeType b = mSink->TimeStamp(iBeginFrame);
+            TimeType e = mSink->TimeStamp(iEndFrame);
+            //printf("Begin frame %ld -> time %lld\n", iBeginFrame, b);
+            //printf( "End   frame %ld -> time %lld\n", iEndFrame, e);
+            mSource->Open(iFileName, b, e);
             mSink->Reset();
         }
 

@@ -223,7 +223,11 @@ void DecoderSingleTest::openSource(FrontEnd *frontend)
     } else {
 #endif
         assert(dataFName);
-        frontend->SetSource(dataFName);
+        frontend->SetSource(dataFName, extStartFrame, extEndFrame);
+
+        // This is a hack - should deal with them properly later.
+        extStartFrame = -1;
+        extEndFrame = -1;
 #ifdef HAVE_HTKLIB
     }
 #endif
