@@ -7,11 +7,11 @@
 #ifndef FRONTEND_H
 #define FRONTEND_H
 
-#include "ASRFactory.h"
-#include "HTKSource.h"
-#include "LNASource.h"
-#include "ArraySink.h"
-#include "ALSASource.h"
+#include <ASRFactory.h>
+#include <HTKSource.h>
+#include <LNASource.h>
+#include <FrameSink.h>
+#include <ALSASource.h>
 
 
 #include "config.h"
@@ -40,7 +40,7 @@ namespace Juicer
     public:
         FrontEnd(int iInputVecSize, FrontEndFormat iFormat)
         {
-            Plugin<float>* source;
+            Component<float>* source;
             switch (iFormat)
             {
             case FRONTEND_HTK:
@@ -66,10 +66,10 @@ namespace Juicer
             default:
                 assert(0);
             }
-            mSink = new ArraySink<float>(source);
+            mSink = new FrameSink<float>(source);
             mSpeakerIDSink = 0;
-            printf("iInputVecSize %d GetArraySize %d\n", iInputVecSize, mSink->GetArraySize());
-            assert(iInputVecSize == mSink->GetArraySize());
+            printf("iInputVecSize %d FrameSize %d\n", iInputVecSize, mSink->Frame().size);
+            assert(iInputVecSize == mSink->Frame().size);
 
 #ifdef HAVE_HTKLIB
             // Set flag in frontend to true if the environment variable ASRFactory_Source=HTKLib  
@@ -95,7 +95,9 @@ namespace Juicer
         {
             if (iIndex == 0)
                 mSink->Reset();
-            return mSink->GetArray(ioData, iIndex);
+            //return mSink->Read(ioData, iIndex);
+            ioData = (float*)mSink->Read(iIndex);
+            return ioData;
         }
 
         void SetSource(
@@ -122,19 +124,18 @@ namespace Juicer
             //printf("GetSpeakerID for index %d\n", iIndex);
             if (!mSpeakerIDSink)
             {
-                Plugin<float>* p = mFactory.GetSpeakerIDSource();
+                Component<float>* p = mFactory.GetSpeakerIDSource();
                 if (p)
                 {
-                    mSpeakerIDSink = new ArraySink<float>(p);
+                    mSpeakerIDSink = new FrameSink<float>(p);
                     mSpeakerIDSink->Reset();
                 }
                 else
                     return "xxx";
             }
             assert(mSpeakerIDSink);
-            float* data;
-            int get = mSpeakerIDSink->GetArray(data, iIndex);
-            if (get)
+            const float* data = mSpeakerIDSink->Read(iIndex);
+            if (data)
                 return (char*)data;
             return "yyy";
         }
@@ -147,8 +148,8 @@ namespace Juicer
 
     private:
         Tracter::ISource* mSource;
-        ArraySink<float>* mSink;
-        ArraySink<float>* mSpeakerIDSink;
+        FrameSink<float>* mSink;
+        FrameSink<float>* mSpeakerIDSink;
         ASRFactory mFactory;
     };
 }
