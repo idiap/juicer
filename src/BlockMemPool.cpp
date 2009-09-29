@@ -5,6 +5,7 @@
  * See the file COPYING for the licence associated with this software.
  */
 
+#include <cassert>
 #include "BlockMemPool.h"
 
 /*
@@ -70,6 +71,7 @@ void *BlockMemPool::getElem()
 		freeElems = (char **)realloc(
             freeElems , (nTotal+reallocAmount)*sizeof(char *)
         );
+        assert(freeElems);
 		allocs = (char **)realloc( allocs , (nAllocs+1) * sizeof(char *) ) ;
 		allocs[nAllocs] = new char[reallocByteLen] ;
 		for ( int i=0 ; i<reallocAmount ; i++ )

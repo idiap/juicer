@@ -106,8 +106,8 @@ namespace Juicer
         )
         {
             assert(iFileName);
-            TimeType b = mSink->TimeStamp(iBeginFrame);
-            TimeType e = mSink->TimeStamp(iEndFrame);
+            TimeType b = iBeginFrame >= 0 ? mSink->TimeStamp(iBeginFrame) : -1;
+            TimeType e = iEndFrame   >= 0 ? mSink->TimeStamp(iEndFrame)   : -1;
             //printf("Begin frame %ld -> time %lld\n", iBeginFrame, b);
             //printf("End   frame %ld -> time %lld\n", iEndFrame, e);
             mSource->Open(iFileName, b, e);

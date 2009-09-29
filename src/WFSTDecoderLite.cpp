@@ -741,6 +741,7 @@ NetInst* WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
     
     int hmmIndex = trans->inLabel - 1;
     int n = hmmModels->getNumStates(hmmIndex);
+    assert(n > 0); // stateNPools starts at 1
     NetInst* inst = (NetInst*)stateNPools[n]->malloc();
     inst->hmmIndex = hmmIndex;
     inst->nStates = n;
