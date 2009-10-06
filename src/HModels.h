@@ -41,6 +41,9 @@
 
 namespace Juicer
 {
+    /* A singleton for HModels */
+    class HModels;
+    extern HModels* sHModels;
 
 	/**
 	 * Includes from HTK

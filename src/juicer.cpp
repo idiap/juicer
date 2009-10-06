@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <HTKLib.h>
 #ifdef HAVE_HTKLIB
   namespace Juicer 
   {
@@ -104,7 +105,6 @@ char              *sentEndWord=NULL ;
 char           *htkModelsFName=NULL ;
 bool           doModelsIOTest=false ;
 #ifdef HAVE_HTKLIB
-HModels        *HTKLIBModels=NULL ;
 char           *htkConfigFName=NULL ;
 bool           useHModels=false ;
 char           *speakerNamePattern=NULL ;
@@ -569,15 +569,10 @@ int main( int argc , char *argv[] )
     }
     FrontEnd *frontend = new FrontEnd(models->getInputVecSize(), source);
 #ifdef HAVE_HTKLIB
-    if ( frontend->isHTKLibSource )
+    if (sHTKLib.mHTKLibSource)
     {
         if ( (htkConfigFName == NULL) || (htkConfigFName[0] == '\0') )
             HError( 9999 , "Juicer: HTKLibSource selected but no HTK config provided" );
-        if ( useHModels ) 
-        {
-            frontend->useHModels=true;
-            frontend->HTKLIBModels = HTKLIBModels;
-        }
     }
 #endif
 
@@ -709,11 +704,11 @@ void setupModels( Models **models )
         if ( useHModels )
         {
             LogFile::printf( "Using HModels.\n");
-            HTKLIBModels = new HModels(tiedListFName);
+            sHModels = new HModels(tiedListFName);
             xfInfo.usePaXForm = FALSE;
             xfInfo.useInXForm = FALSE;
-            HTKLIBModels->xfInfo = &xfInfo;
-            *models = HTKLIBModels;
+            sHModels->xfInfo = &xfInfo;
+            *models = sHModels;
             if ( (speakerNamePattern!=NULL) && (speakerNamePattern[0]!='\0') )
             {
                 // We have a colon separated list.
@@ -767,7 +762,7 @@ void setupModels( Models **models )
             {
                 if ( xfInfo.inSpkrPat == NULL )
                     error("Input transform specified without a corresponding mask");
-                HTKLIBModels->inputXformDir=inputXformDir;
+                sHModels->inputXformDir=inputXformDir;
                 if ( (inputXformExt!=NULL) && (inputXformExt[0]!='\0') )
                     xfInfo.inXFormExt = inputXformExt; 
             }
