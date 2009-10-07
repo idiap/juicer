@@ -66,7 +66,8 @@ WFSTDecoderLiteThreading::WFSTDecoderLiteThreading(WFSTNetwork* network_ ,
     LogFile::printf("WFSTDecoderLiteThreading (nGMMs = %d) initialised successfully\n", nGMMs);
 }
 
-WFSTDecoderLiteThreading::~WFSTDecoderLiteThreading() {
+    WFSTDecoderLiteThreading::~WFSTDecoderLiteThreading() throw ()
+{
     delete[] waitGMMs;
 }
 

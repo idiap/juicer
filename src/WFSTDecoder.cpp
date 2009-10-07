@@ -36,6 +36,7 @@ namespace Juicer {
 
 WFSTDecoder::WFSTDecoder()
 {
+    mObjectName = "WFSTDecoder";
    network = NULL ;
 
    // Hypothesis Management
@@ -110,6 +111,8 @@ WFSTDecoder::WFSTDecoder(
     bool doLatticeGeneration_ , bool isStaticComposition_
 )
 {
+    mObjectName = "WFSTDecoder";
+
    int i ;
     LogFile::printf("WFSTDecoder initialised with:\n");
     LogFile::printf("\tmaxEmitHyps = %d\n",maxEmitHyps);
@@ -237,7 +240,7 @@ WFSTDecoder::WFSTDecoder(
 }
 
 
-WFSTDecoder::~WFSTDecoder()
+WFSTDecoder::~WFSTDecoder() throw ()
 {
     reset() ;
 

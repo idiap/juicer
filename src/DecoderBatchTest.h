@@ -14,7 +14,7 @@
 #include "DecLexInfo.h"
 #include "DecVocabulary.h"
 #include "DecoderSingleTest.h"
-#include "WFSTDecoder.h"
+#include "Decoder.h"
 #include "MonophoneLookup.h"
 
 
@@ -59,7 +59,7 @@ public:
 	// Constructors / destructor
 	DecoderBatchTest(
         DecVocabulary *vocab_, PhoneLookup *phoneLookup_,
-        FrontEnd *frontend_ , WFSTDecoder *wfstDecoder_ ,
+        FrontEnd *frontend_ , IDecoder *wfstDecoder_ ,
         const char *inputFName_ , DSTDataFileFormat inputFormat_ , int inputVecSize_ ,
         const char *outputFName_ , DBTOutputFormat outputFormat_ ,
         const char *expResultsFName_ , bool removeSil_ , int framesPerSec_ ) ;
@@ -75,7 +75,7 @@ public:
 private:
 	// Private member variables
 	DBTMode						mode ;
-    WFSTDecoder             *wfstDecoder ;
+    IDecoder             *wfstDecoder ;
     FrontEnd    *frontend;
     PhoneLookup             *phoneLookup ;
 	

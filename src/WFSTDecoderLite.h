@@ -15,15 +15,15 @@
 #ifndef _WFSTDECODERLITE_H
 #define _WFSTDECODERLITE_H
 
-#include "general.h"
-
 #include <vector>
+#include <TracterObject.h>
 
 #include "WFSTNetwork.h"
 #include "Models.h"
 #include "BlockMemPool.h"
 #include "DecHypHistPool.h"
-#include "WFSTDecoder.h"
+#include "Decoder.h"
+#include "Histogram.h"
 
 using namespace std;
 
@@ -73,7 +73,9 @@ namespace Juicer {
                                 // NetInst + states[n] are allocated by stateNPools
     } NetInst;
     
-    class WFSTDecoderLite : public WFSTDecoder {
+    class WFSTDecoderLite : public IDecoder,
+                            public Tracter::Object
+    {
         public:
             WFSTDecoderLite(WFSTNetwork*network_ , 
                 Models *models_ ,
@@ -83,7 +85,7 @@ namespace Juicer {
                 real wordPruneWin_,
                 int maxEmitHyps_ );
 
-            virtual ~WFSTDecoderLite();
+        virtual ~WFSTDecoderLite() throw ();
 
             // compatipable with WFSTDecoder interface
             void init() {recognitionStart();}
@@ -97,6 +99,10 @@ namespace Juicer {
             // although most variables are the same as in WFSTDecoder,
             // they are re-declared here instead of inheriting from WFSTDecoder,
             // just in case this may replace WFSTDecoder completely
+
+        bool modelLevelOutput() { return false ; } ;
+        WFSTLattice *getLattice() { return 0 ; } ;
+
         protected:
             // essential variables for decoding
             // need to be reset for each utterance

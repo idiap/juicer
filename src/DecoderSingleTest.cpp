@@ -196,7 +196,7 @@ void DecoderSingleTest::configure(
  * array to the decoder and gets a hypothesis back.
  */
 void DecoderSingleTest::run(
-    WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
+    IDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
 )
 {
     openSource(frontend);
@@ -243,7 +243,7 @@ void DecoderSingleTest::openSource(FrontEnd *frontend)
  * Runs the actual decoding.
  */
 void DecoderSingleTest::decodeUtterance(
-    WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
+    IDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
 )
 {
     clock_t startTime , endTime ;

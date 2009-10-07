@@ -28,7 +28,8 @@ namespace Juicer {
     } WaitState;
 
     
-    class WFSTDecoderLiteThreading : public WFSTDecoderLite {
+    class WFSTDecoderLiteThreading : public WFSTDecoderLite
+    {
         public:
             WFSTDecoderLiteThreading(WFSTNetwork*network_ , 
                 Models *models_ ,
@@ -38,7 +39,7 @@ namespace Juicer {
                 real wordPruneWin_,
                 int maxEmitHyps_ );
 
-            virtual ~WFSTDecoderLiteThreading();
+        virtual ~WFSTDecoderLiteThreading() throw ();
 
         protected:
             HTKFlatModelsThreading* threadHMMModels;

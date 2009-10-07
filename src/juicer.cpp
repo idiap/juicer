@@ -9,11 +9,10 @@
  * See the file COPYING for the licence associated with this software.
  */
 
-#include "general.h"
 #include "CmdLine.h"
 #include "DecVocabulary.h"
 #include "WFSTNetwork.h"
-#include "WFSTDecoder.h"
+#include "Decoder.h"
 #include "DecoderBatchTest.h"
 #include "MonophoneLookup.h"
 #include "LogFile.h"
@@ -47,6 +46,7 @@
 # include "HTKModels.h"
 #endif
 
+#include "WFSTDecoder.h"
 #include "WFSTDecoderLite.h"
 #include "WFSTDecoderLiteThreading.h"
 
@@ -139,7 +139,6 @@ float          phoneEndBeam=0.0 ;
 float          phoneStartBeam=0.0 ;
 float          wordEmitBeam=0.0 ;
 int            maxHyps=0 ;
-int            maxAllocModels=0 ;
 int            blockSize = 5;
 char           *inputFormat_s=NULL ;
 DSTDataFileFormat inputFormat ;
@@ -156,9 +155,6 @@ bool           latticeGeneration=false ;
 char           *latticeDir=NULL ;
 
 bool           use2Threads = false;
-#ifdef PARTIAL_DECODING
-int            partialDecoding = 0;
-#endif
 
 // Consistency checking parameters
 char           *monoListFName=NULL ;
@@ -258,16 +254,10 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
                         "the (+ve log) window used for pruning word-emitting-state hypotheses" ) ;
     cmd->addICmdOption( "-maxHyps" , &maxHyps , 0 ,
                         "Upper limit on the number of active emitting state hypotheses" ) ;
-    cmd->addICmdOption( "-maxAllocModels" , &maxAllocModels , 10 ,
-                        "Maximum of allocated models in the decoder, can be specified in 3 ways: 1 - 100: percentage of all possible models in a network; 100 - 8000: memory reserved for decoding models in MB; > 8000: upper limit of the number of allocated models");
     cmd->addICmdOption( "-blockSize" , &blockSize , 5 ,
                         "speed up GMM output calculation by computing a sequence of frames (1-20) a time.");
     cmd->addBCmdOption( "-threading" , &use2Threads , false,
                         "speed up decoding via threading, where GMM calculation is handled in a separate thread." ) ;
-#ifdef PARTIAL_DECODING
-    cmd->addICmdOption( "-partialDecoding" , &partialDecoding, 0 ,
-                        "Perform continuous decoding every this number of frames.");
-#endif
     cmd->addSCmdOption( "-inputFName" , &inputFName , "" ,
                         "the file containing the list of files to be decoded" ) ;
     cmd->addSCmdOption( "-inputFormat" , &inputFormat_s , "" ,
@@ -578,7 +568,7 @@ int main( int argc , char *argv[] )
 
     // create decoder
     LogFile::puts( "creating Decoder .... " ) ;
-    WFSTDecoder *decoder = NULL ;
+    IDecoder *decoder = NULL ;
     if ( !onTheFlyComposition )  {
         if (!useBasicCore) {
             if (use2Threads)
@@ -589,11 +579,7 @@ int main( int argc , char *argv[] )
                 decoder = new WFSTDecoderLite(
                         network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
                         maxHyps);
-            decoder->setMaxAllocModels(maxAllocModels);
-#ifdef PARTIAL_DECODING
-            decoder->setPartialDecodeOptions(partialDecoding);
-#endif
-        } else 
+        } else
 
         decoder = new WFSTDecoder(
 	    network , models , phoneStartBeam, mainBeam , phoneEndBeam , wordEmitBeam ,
