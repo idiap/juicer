@@ -12,7 +12,7 @@
 #include <LNASource.h>
 #include <FrameSink.h>
 #include <ALSASource.h>
-
+#include <SpeakerIDSocketSource.h>
 
 #include "config.h"
 
@@ -31,11 +31,14 @@ namespace Juicer
         FRONTEND_FACTORY ///< Tracter::ASRFactory
     };
 
-    class FrontEnd
+    class FrontEnd : public Tracter::Object
     {
     public:
         FrontEnd(int iInputVecSize, FrontEndFormat iFormat)
         {
+            mObjectName = "FrontEnd";
+
+            /* The feature acquisition chain */
             Component<float>* source;
             switch (iFormat)
             {
@@ -63,12 +66,23 @@ namespace Juicer
                 assert(0);
             }
             mSink = new FrameSink<float>(source);
-            mSpeakerIDSink = 0;
             printf("iInputVecSize %d FrameSize %d\n", iInputVecSize, mSink->Frame().size);
             assert(iInputVecSize == mSink->Frame().size);
+
+            /* The speaker ID chain */
+            mSpeakerIDSource = 0;
+            mSpeakerIDSink = 0;
+            const char* sidHost = GetEnv("SpeakerIDHost", (char*)0);
+            if (sidHost)
+            {
+                mSpeakerIDSource = new SpeakerIDSocketSource();
+                mSpeakerIDSink = new FrameSink<float>(mSpeakerIDSource);
+                mSpeakerIDSource->Open(sidHost);
+                mSpeakerIDSink->Reset();
+            }
         }
 
-        ~FrontEnd()
+        virtual ~FrontEnd() throw ()
         {
             delete mSink;
             if (mSpeakerIDSink)
@@ -107,16 +121,7 @@ namespace Juicer
         {
             //printf("GetSpeakerID for index %d\n", iIndex);
             if (!mSpeakerIDSink)
-            {
-                Component<float>* p = mFactory.GetSpeakerIDSource();
-                if (p)
-                {
-                    mSpeakerIDSink = new FrameSink<float>(p);
-                    mSpeakerIDSink->Reset();
-                }
-                else
-                    return "xxx";
-            }
+                return "xxx";
             assert(mSpeakerIDSink);
             const float* data = mSpeakerIDSink->Read(iIndex);
             if (data)
@@ -125,10 +130,11 @@ namespace Juicer
         }
 
     private:
-        Tracter::ISource* mSource;
-        FrameSink<float>* mSink;
-        FrameSink<float>* mSpeakerIDSink;
         ASRFactory mFactory;
+        ISource* mSource;
+        FrameSink<float>* mSink;
+        SpeakerIDSocketSource* mSpeakerIDSource;
+        FrameSink<float>* mSpeakerIDSink;
     };
 }
 
