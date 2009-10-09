@@ -30,18 +30,20 @@
 using namespace std;
 using namespace Torch;
 
-namespace Juicer {
+namespace Juicer
+{
     const Token nullToken = {LOG_ZERO, LOG_ZERO, LOG_ZERO, NULL};
 
 
-WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ , 
-        Models *models_ ,
-        real phoneStartPruneWin_,
-        real emitPruneWin_, 
-        real phoneEndPruneWin_,
-        real wordPruneWin_,
-        int maxEmitHyps_ 
-    ) 
+WFSTDecoderLite::WFSTDecoderLite(
+    WFSTNetwork* network_ ,
+    IModels *models_ ,
+    real phoneStartPruneWin_,
+    real emitPruneWin_,
+    real phoneEndPruneWin_,
+    real wordPruneWin_,
+    int maxEmitHyps_
+)
 {
     mObjectName = "WFSTDecoderLite";
 

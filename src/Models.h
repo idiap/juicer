@@ -20,16 +20,17 @@ namespace Juicer
      * Models such as HTK MMFs should implement this interface.
      */
 
-    /* SEIndex defines the range of possible incoming states within an HMM [start, end) */
+    /* SEIndex defines the range of possible incoming states within an
+     * HMM [start, end) */
     typedef struct SEIndex_ {
         short start;
         short end;
     } SEIndex;
 
-    class Models
+    class IModels
     {
     public:
-        virtual ~Models() {}
+        virtual ~IModels() {}
         virtual void Load(
             const char *phonesListFName,
             const char *priorsFName,

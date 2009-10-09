@@ -21,38 +21,41 @@
 
 using namespace std;
 
-namespace Juicer {
+namespace Juicer
+{
     typedef struct WaitState_ {
         NetInst* inst;
         int state;
     } WaitState;
 
-    
+
     class WFSTDecoderLiteThreading : public WFSTDecoderLite
     {
-        public:
-            WFSTDecoderLiteThreading(WFSTNetwork*network_ , 
-                Models *models_ ,
-                real phoneStartPruneWin_,
-                real emitPruneWin_, 
-                real phoneEndPruneWin_,
-                real wordPruneWin_,
-                int maxEmitHyps_ );
+    public:
+        WFSTDecoderLiteThreading(
+            WFSTNetwork*network_ ,
+            IModels *models_ ,
+            real phoneStartPruneWin_,
+            real emitPruneWin_,
+            real phoneEndPruneWin_,
+            real wordPruneWin_,
+            int maxEmitHyps_
+        );
 
         virtual ~WFSTDecoderLiteThreading() throw ();
 
-        protected:
-            HTKFlatModelsThreading* threadHMMModels;
-            bool singleToExitTransitionModel;
-            vector<vector<WaitState> > waitStateQueue;
-            int waiting;
-            int* waitGMMs;
-            int gmmRequested;
-            int gmmCalced;
-            int gmmQueued;
+    protected:
+        HTKFlatModelsThreading* threadHMMModels;
+        bool singleToExitTransitionModel;
+        vector<vector<WaitState> > waitStateQueue;
+        int waiting;
+        int* waitGMMs;
+        int gmmRequested;
+        int gmmCalced;
+        int gmmQueued;
 
-            void doHMMInternalPropagation(); // overload WFSTDecoderLite::doHMMInternalPropagation()
-            void HMMInternalPropagationPass1(NetInst* inst);
+        void doHMMInternalPropagation(); // overload WFSTDecoderLite::doHMMInternalPropagation()
+        void HMMInternalPropagationPass1(NetInst* inst);
     };
 };
 #endif /* ifndef _WFSTDECODERLITETHREADING_H */

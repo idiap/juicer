@@ -416,7 +416,7 @@ bool fileExists( const char *fname )
     return true ;
 }
 
-void setupModels( Models **models ) ;
+void setupModels( IModels **models ) ;
 void setupNetworks(WFSTNetwork** network_, WFSTNetwork** clNetwork_, WFSTSortedInLabelNetwork** gNetwork_);
 
 #ifdef HAVE_HTKLIB
@@ -499,7 +499,7 @@ int main( int argc , char *argv[] )
 
     // load models
     LogFile::puts( "loading acoustic models .... " ) ;
-    Models *models=NULL ;
+    IModels *models=NULL ;
     setupModels( &models ) ;
     LogFile::puts( "done\n" ) ;
 
@@ -656,7 +656,7 @@ int main( int argc , char *argv[] )
 }
 
 
-void setupModels( Models **models )
+void setupModels( IModels **models )
 {
     if ( (htkModelsFName != NULL) && (htkModelsFName[0] != '\0') )
     {

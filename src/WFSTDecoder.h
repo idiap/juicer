@@ -83,7 +83,7 @@ namespace Juicer
         // Constructors / destructor
         WFSTDecoder() ;
         WFSTDecoder(
-            WFSTNetwork *network_ , Models *models_ ,
+            WFSTNetwork *network_ , IModels *models_ ,
             real phoneStartPruneWin_, real emitPruneWin_, real phoneEndPruneWin_,
             real wordPruneWin_,
             int maxEmitHyps_ , bool doModelLevelOutput_ ,
@@ -114,7 +114,7 @@ namespace Juicer
 
     protected:
         // Private Member Variables
-        Models            *models ;
+        IModels           *models ;
         DecHyp            *bestFinalHyp ;
         bool              doModelLevelOutput ;
 

@@ -36,7 +36,7 @@ WFSTModelPool::WFSTModelPool()
 }
 
 WFSTModelPool::WFSTModelPool(
-    Models *models_ , DecHypHistPool *decHypHistPool_
+    IModels *models_ , DecHypHistPool *decHypHistPool_
 )
 {
     if ( (models = models_) == NULL )
