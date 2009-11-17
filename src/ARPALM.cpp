@@ -681,9 +681,11 @@ void ARPALM::readARPA( const char *arpa_fname )
 				strtoupper( line ) ;
 				if ( strstr( line , "-GRAMS:" ) != NULL )
 				{
-					if ( (line[1]-0x30) != (curr_n+1) )
-						error("ARPALM::readARPA - ARPA_EXPECT_NGRAM_HDR: unexpected x\n") ;
-					curr_n = line[1]-0x30 ;
+                    int new_n = 0;
+                    if ( (sscanf(line, "\\%d-GRAMS:", &new_n) != 1) ||
+                         (new_n != curr_n+1) )
+                        error("ARPALM::readARPA - ARPA_EXPECT_NGRAM_HDR: unexpected x\n") ;
+                    curr_n = new_n;
 
 					// Maybe we are expecting 0 entries ??
 					if ( n_ngrams[curr_n-1] > 0 )
