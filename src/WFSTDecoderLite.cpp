@@ -30,19 +30,23 @@
 using namespace std;
 using namespace Torch;
 
-namespace Juicer {
+namespace Juicer
+{
     const Token nullToken = {LOG_ZERO, LOG_ZERO, LOG_ZERO, NULL};
 
 
-WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ , 
-        Models *models_ ,
-        real phoneStartPruneWin_,
-        real emitPruneWin_, 
-        real phoneEndPruneWin_,
-        real wordPruneWin_,
-        int maxEmitHyps_ 
-    ) 
+WFSTDecoderLite::WFSTDecoderLite(
+    WFSTNetwork* network_ ,
+    IModels *models_ ,
+    real phoneStartPruneWin_,
+    real emitPruneWin_,
+    real phoneEndPruneWin_,
+    real wordPruneWin_,
+    int maxEmitHyps_
+)
 {
+    mObjectName = "WFSTDecoderLite";
+
     network = network_;
     hmmModels = models_;
 
@@ -61,7 +65,13 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
     wordPruneWin_ == LOG_ZERO ? LogFile::printf("\twordPruneWin = LOG_ZERO\n"):LogFile::printf("\twordPruneWin = %f\n", wordPruneWin_);
     
 
-    setMaxAllocModels(10); // default is to keep 10% NetInsts out of all possible NetInsts
+    // Maximum of allocated models in the decoder, can be specified in
+    // 3 ways: 1 - 100: percentage of all possible models in a
+    // network; 100 - 8000: memory reserved for decoding models in MB;
+    // > 8000: upper limit of the number of allocated models.  Default
+    // is to keep 10% NetInsts out of all possible NetInsts
+    int mam = GetEnv("MaxAllocModels", 10);
+    setMaxAllocModels(mam);
 
     if (maxEmitHyps > 0) {
         if (emitPruneWin > 0.0)
@@ -104,11 +114,13 @@ WFSTDecoderLite::WFSTDecoderLite(WFSTNetwork* network_ ,
     newActiveNetInstListLastElem = NULL;
 
 #ifdef PARTIAL_DECODING
-    partialTraceInterval = 0;
+    int pti = GetEnv("PartialTraceInterval", 0);
+    setPartialDecodeOptions(pti);
 #endif
 }
 
-WFSTDecoderLite::~WFSTDecoderLite() {
+    WFSTDecoderLite::~WFSTDecoderLite() throw ()
+{
     delete[] tokenBuf;
     for (int i = 1; i <= nStatePools; ++i)
         delete stateNPools[i];
@@ -741,6 +753,7 @@ NetInst* WFSTDecoderLite::attachNetInst(WFSTTransition* trans) {
     
     int hmmIndex = trans->inLabel - 1;
     int n = hmmModels->getNumStates(hmmIndex);
+    assert(n > 0); // stateNPools starts at 1
     NetInst* inst = (NetInst*)stateNPools[n]->malloc();
     inst->hmmIndex = hmmIndex;
     inst->nStates = n;

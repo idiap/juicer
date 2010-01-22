@@ -27,7 +27,7 @@ using namespace Torch;
 
 Juicer::DecoderBatchTest::DecoderBatchTest(
     DecVocabulary *vocab_ , PhoneLookup *phoneLookup_ , FrontEnd *frontend_ ,
-    WFSTDecoder *wfstDecoder_ , const char *inputFName_ ,
+    IDecoder *wfstDecoder_ , const char *inputFName_ ,
     DSTDataFileFormat inputFormat_ ,
     int inputVecSize_ , const char *outputFName_ ,
     DBTOutputFormat outputFormat_ ,

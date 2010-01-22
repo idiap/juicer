@@ -18,51 +18,52 @@
 
 #include "HTKModels.h"
 
-namespace Juicer {
-
-    // to avoid name confusion with those in HTKModels, all declarations here have a prefix F or f
+namespace Juicer
+{
+    // to avoid name confusion with those in HTKModels, all
+    // declarations here have a prefix F or f
     typedef struct {
         int  compNum;   // Gaussian component numbers for this GMM
         int  compInd;    // compInd of the first component
     } FMixture;
 
     class HTKFlatModels : public HTKModels {
-        public:
-            HTKFlatModels();
-            virtual ~HTKFlatModels();
-            virtual void init(); // initialise private data from loaded HTKModels
-            void readBinary( const char *fName );
-            void Load( const char *htkModelsFName ,
-                    bool removeInitialToFinalTransitions_=false ) ;
-            real calcOutput( int gmmInd ) ; // new version of GMM obversion calculation
-            real calcOutput( int hmmInd , int stateInd ); // new version of GMM obversion calculation
-            void newFrame( int frame , real **input, int nFrame);
-            void setBlockSize(int bs);
+    public:
+        HTKFlatModels();
+        virtual ~HTKFlatModels();
+        virtual void init(); // initialise private data from loaded HTKModels
+        void readBinary( const char *fName );
+        void Load( const char *htkModelsFName ,
+                   bool removeInitialToFinalTransitions_=false ) ;
+        real calcOutput( int gmmInd ) ; // new version of GMM obversion calculation
+        real calcOutput( int hmmInd , int stateInd ); // new version of GMM obversion calculation
+        void newFrame( int frame , real **input, int nFrame);
+        void setBlockSize(int bs);
 
-        protected:
-            int fvecSize4;
-            int fnMixtures4;
-            int fnGaussians; 
-            int fnGaussians4;
-            FMixture *fMixtures;         // mixture structures with the same order as in HTKModels::mixtures
-            // real *fWeights;          // Gaussian weights, no longer needed, // added to dets
-            real *fDets;             // Gaussian determinants (gconst + log weight)
-            real *fMeans;            // Gaussian means
-            real *fVars;             // Gaussian variances
-            void* fBuffer;            // data buffer
+    protected:
+        int fvecSize4;
+        int fnMixtures4;
+        int fnGaussians;
+        int fnGaussians4;
+        FMixture *fMixtures;         // mixture structures with the same order as in HTKModels::mixtures
+        // real *fWeights;          // Gaussian weights, no longer needed, // added to dets
+        real *fDets;             // Gaussian determinants (gconst + log weight)
+        real *fMeans;            // Gaussian means
+        real *fVars;             // Gaussian variances
+        void* fBuffer;            // data buffer
 
-            int fnBlock;
-            real* fCache;            // block cache
-            int* fCacheT;            // time of last calculation
-            real** currInputData;
-            int currInputLen;
+        int fnBlock;
+        real* fCache;            // block cache
+        int* fCacheT;            // time of last calculation
+        real** currInputData;
+        int currInputLen;
 
-            real *fMean(int gmmId)   {return fMeans+fvecSize4*fMixtures[gmmId].compInd;}
-            real *fVar(int gmmId)    {return fVars+fvecSize4*fMixtures[gmmId].compInd;}
-            real *fDet(int gmmId)    {return fDets+fMixtures[gmmId].compInd;}
-            // real *fWeight(int gmmId) {return fWeights+fMixtures[gmmId].compInd;}
-            real calcGMMOutput( int gmmInd );
-            real logAdd(real x, real y);
+        real *fMean(int gmmId)   {return fMeans+fvecSize4*fMixtures[gmmId].compInd;}
+        real *fVar(int gmmId)    {return fVars+fvecSize4*fMixtures[gmmId].compInd;}
+        real *fDet(int gmmId)    {return fDets+fMixtures[gmmId].compInd;}
+        // real *fWeight(int gmmId) {return fWeights+fMixtures[gmmId].compInd;}
+        real calcGMMOutput( int gmmInd );
+        real logAdd(real x, real y);
     };
 
 }; // namespace juicer

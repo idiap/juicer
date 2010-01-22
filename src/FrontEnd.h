@@ -12,13 +12,9 @@
 #include <LNASource.h>
 #include <FrameSink.h>
 #include <ALSASource.h>
-
+#include <SpeakerIDSocketSource.h>
 
 #include "config.h"
-
-#ifdef HAVE_HTKLIB
-# include "HModels.h"
-#endif
 
 using namespace Tracter;
 
@@ -35,11 +31,14 @@ namespace Juicer
         FRONTEND_FACTORY ///< Tracter::ASRFactory
     };
 
-    class FrontEnd
+    class FrontEnd : public Tracter::Object
     {
     public:
         FrontEnd(int iInputVecSize, FrontEndFormat iFormat)
         {
+            mObjectName = "FrontEnd";
+
+            /* The feature acquisition chain */
             Component<float>* source;
             switch (iFormat)
             {
@@ -67,24 +66,23 @@ namespace Juicer
                 assert(0);
             }
             mSink = new FrameSink<float>(source);
-            mSpeakerIDSink = 0;
             printf("iInputVecSize %d FrameSize %d\n", iInputVecSize, mSink->Frame().size);
             assert(iInputVecSize == mSink->Frame().size);
 
-#ifdef HAVE_HTKLIB
-            // Set flag in frontend to true if the environment variable ASRFactory_Source=HTKLib  
-            isHTKLibSource = false;
-            if ( iFormat == FRONTEND_FACTORY )
+            /* The speaker ID chain */
+            mSpeakerIDSource = 0;
+            mSpeakerIDSink = 0;
+            const char* sidHost = GetEnv("SpeakerIDHost", (char*)0);
+            if (sidHost)
             {
-                const char* ret = getenv("ASRFactory_Source");
-                printf("ASRFactory_Source = %s\n" , ret);
-                isHTKLibSource = ( strcmp(ret,"HTKLib") == 0 );
+                mSpeakerIDSource = new SpeakerIDSocketSource();
+                mSpeakerIDSink = new FrameSink<float>(mSpeakerIDSource);
+                mSpeakerIDSource->Open(sidHost);
+                mSpeakerIDSink->Reset();
             }
-            useHModels=false;
-#endif
         }
 
-        ~FrontEnd()
+        virtual ~FrontEnd() throw ()
         {
             delete mSink;
             if (mSpeakerIDSink)
@@ -106,8 +104,8 @@ namespace Juicer
         )
         {
             assert(iFileName);
-            TimeType b = mSink->TimeStamp(iBeginFrame);
-            TimeType e = mSink->TimeStamp(iEndFrame);
+            TimeType b = iBeginFrame >= 0 ? mSink->TimeStamp(iBeginFrame) : -1;
+            TimeType e = iEndFrame   >= 0 ? mSink->TimeStamp(iEndFrame)   : -1;
             //printf("Begin frame %ld -> time %lld\n", iBeginFrame, b);
             //printf("End   frame %ld -> time %lld\n", iEndFrame, e);
             mSource->Open(iFileName, b, e);
@@ -123,16 +121,7 @@ namespace Juicer
         {
             //printf("GetSpeakerID for index %d\n", iIndex);
             if (!mSpeakerIDSink)
-            {
-                Component<float>* p = mFactory.GetSpeakerIDSource();
-                if (p)
-                {
-                    mSpeakerIDSink = new FrameSink<float>(p);
-                    mSpeakerIDSink->Reset();
-                }
-                else
-                    return "xxx";
-            }
+                return "xxx";
             assert(mSpeakerIDSink);
             const float* data = mSpeakerIDSink->Read(iIndex);
             if (data)
@@ -140,17 +129,12 @@ namespace Juicer
             return "yyy";
         }
 
-#ifdef HAVE_HTKLIB
-        bool      isHTKLibSource;
-        HModels  *HTKLIBModels;
-        bool      useHModels;
-#endif
-
     private:
-        Tracter::ISource* mSource;
-        FrameSink<float>* mSink;
-        FrameSink<float>* mSpeakerIDSink;
         ASRFactory mFactory;
+        ISource* mSource;
+        FrameSink<float>* mSink;
+        SpeakerIDSocketSource* mSpeakerIDSource;
+        FrameSink<float>* mSpeakerIDSink;
     };
 }
 

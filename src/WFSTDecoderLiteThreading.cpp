@@ -30,14 +30,15 @@ namespace Juicer {
     const Token nullToken = {LOG_ZERO, LOG_ZERO, LOG_ZERO, NULL};
 
 
-WFSTDecoderLiteThreading::WFSTDecoderLiteThreading(WFSTNetwork* network_ , 
-        Models *models_ ,
-        real phoneStartPruneWin_,
-        real emitPruneWin_, 
-        real phoneEndPruneWin_,
-        real wordPruneWin_,
-        int maxEmitHyps_ 
-    ) 
+WFSTDecoderLiteThreading::WFSTDecoderLiteThreading(
+    WFSTNetwork* network_ ,
+    IModels *models_ ,
+    real phoneStartPruneWin_,
+    real emitPruneWin_,
+    real phoneEndPruneWin_,
+    real wordPruneWin_,
+    int maxEmitHyps_
+)
     :WFSTDecoderLite(network_,models_, phoneStartPruneWin_, emitPruneWin_,phoneEndPruneWin_,wordPruneWin_,maxEmitHyps_)
 {
     threadHMMModels = (HTKFlatModelsThreading*)hmmModels;
@@ -66,7 +67,8 @@ WFSTDecoderLiteThreading::WFSTDecoderLiteThreading(WFSTNetwork* network_ ,
     LogFile::printf("WFSTDecoderLiteThreading (nGMMs = %d) initialised successfully\n", nGMMs);
 }
 
-WFSTDecoderLiteThreading::~WFSTDecoderLiteThreading() {
+    WFSTDecoderLiteThreading::~WFSTDecoderLiteThreading() throw ()
+{
     delete[] waitGMMs;
 }
 

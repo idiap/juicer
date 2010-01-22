@@ -5,12 +5,17 @@
  * See the file COPYING for the licence associated with this software.
  */
 
-#include "DecoderSingleTest.h"
 #include "time.h"
 #include "sys/types.h"
 #include "sys/stat.h"
 
+#include "DecoderSingleTest.h"
 #include "WFSTDecoderLiteThreading.h"
+#include <HTKLib.h>
+#ifdef HAVE_HTKLIB
+# include "HModels.h"
+#endif
+
 /*
    Author:		Darren Moore (moore@idiap.ch)
                         Modified by John Dines to support LNA16bit
@@ -191,7 +196,7 @@ void DecoderSingleTest::configure(
  * array to the decoder and gets a hypothesis back.
  */
 void DecoderSingleTest::run(
-    WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
+    IDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
 )
 {
     openSource(frontend);
@@ -205,13 +210,13 @@ void DecoderSingleTest::run(
 void DecoderSingleTest::openSource(FrontEnd *frontend)
 {
 #ifdef HAVE_HTKLIB
-    if ( frontend->isHTKLibSource )
+    if (sHTKLib.mHTKLibSource)
     {
         char * datFN = GetStrArg();
-        if ( frontend->useHModels )
-            if ( frontend->HTKLIBModels->useHAdapt )
+        if (sHModels)
+            if (sHModels->useHAdapt)
             {
-                 UpdateSpkrStats( &(frontend->HTKLIBModels->hSet) , frontend->HTKLIBModels->xfInfo , datFN );
+                UpdateSpkrStats( &(sHModels->hSet) , sHModels->xfInfo , datFN );
 //               if ( UpdateSpkrStats( &(frontend->HTKLIBModels->hSet) , frontend->HTKLIBModels->xfInfo , datFN ) 
 //                      && (!(frontend->HTKLIBModels->xfInfo->useInXForm)) 
 //                      && (frontend->HTKLIBModels->hSet.semiTied == NULL) ) 
@@ -238,7 +243,7 @@ void DecoderSingleTest::openSource(FrontEnd *frontend)
  * Runs the actual decoding.
  */
 void DecoderSingleTest::decodeUtterance(
-    WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
+    IDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
 )
 {
     clock_t startTime , endTime ;

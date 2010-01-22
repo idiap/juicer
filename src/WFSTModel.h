@@ -69,12 +69,12 @@ namespace Juicer
     {
     public:
         // Public member variables
-        Models *models ;
+        IModels *models ;
         DecHypHistPool *decHypHistPool ;
 
         // Constructors / destructor
         WFSTModelPool() ;
-        WFSTModelPool( Models *models_ , DecHypHistPool *decHypHistPool_ ) ;
+        WFSTModelPool( IModels *models_ , DecHypHistPool *decHypHistPool_ ) ;
         virtual ~WFSTModelPool() ;
 
         // Public methods

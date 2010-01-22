@@ -82,7 +82,7 @@ namespace Juicer
     /**
      * HTK models
      */
-    class HTKModels : public Models
+    class HTKModels : public IModels
     {
     public:
         HTKModels() ;

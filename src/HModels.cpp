@@ -26,6 +26,9 @@
 
 namespace Juicer{
 
+    /* The singleton */
+    HModels* sHModels = 0;
+
 /**
  * Includes from HTK
  */

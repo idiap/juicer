@@ -12,15 +12,14 @@
 #ifndef WFST_NETWORK_INC
 #define WFST_NETWORK_INC
 
-#include <cassert>
-#include "general.h"
-#include "WFSTGeneral.h"
-
-// Changes Octavian
 // For finding labels
 #include <set>
 #include <list>
 #include <algorithm>
+
+#include <cassert>
+#include "general.h"
+#include "WFSTGeneral.h"
 
 // Changes Octavian 20060325
 using namespace std ;

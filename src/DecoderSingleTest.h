@@ -11,7 +11,7 @@
 #include "general.h"
 #include "FrontEnd.h"
 #include "DecVocabulary.h"
-#include "WFSTDecoder.h"
+#include "Decoder.h"
 
 
 /*
@@ -109,12 +109,12 @@ public:
 		  int *expectedWords_ , DSTDataFileFormat inputFormat_ , 
 		  bool removeSentMarks_ ) ;
 
-  void run( WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab );
+  void run( IDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab );
 
     // Like run(), but split in two
     void openSource(FrontEnd *frontend);
     void decodeUtterance(
-        WFSTDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
+        IDecoder *decoder , FrontEnd *frontend , DecVocabulary *vocab
     );
 
   const char *getTestFName() { return testFName ; } ;
