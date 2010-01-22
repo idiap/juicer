@@ -3968,7 +3968,7 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1newF
   arg2 = (int)jarg2;
   arg3 = *(float ***)&jarg3;
   arg4 = (int)jarg4;
-  (arg1)->newFrame(arg2,(float const **)arg3,arg4);
+  (arg1)->newFrame(arg2,(float /*const*/ **)arg3,arg4);
 }
 
 
@@ -11945,7 +11945,7 @@ SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecode
   printf(".%d.", result); return jresult;
 }
 
-
+#ifndef NO_BEST_END
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecoder_1bestEndScore_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jfloat jarg2) {
   Juicer::WFSTDecoder *arg1 = (Juicer::WFSTDecoder *) 0 ;
   float arg2 ;
@@ -11972,7 +11972,7 @@ SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecode
   jresult = (jfloat)result;
   printf(".%d.", result); return jresult;
 }
-
+#endif
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecoder_1currEndPruneThresh_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jfloat jarg2) {
   Juicer::WFSTDecoder *arg1 = (Juicer::WFSTDecoder *) 0 ;
@@ -12001,7 +12001,7 @@ SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecode
   printf(".%d.", result); return jresult;
 }
 
-
+#ifndef NO_BEST_START
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecoder_1bestStartScore_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jfloat jarg2) {
   Juicer::WFSTDecoder *arg1 = (Juicer::WFSTDecoder *) 0 ;
   float arg2 ;
@@ -12028,7 +12028,7 @@ SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecode
   jresult = (jfloat)result;
   printf(".%d.", result); return jresult;
 }
-
+#endif
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecoder_1currStartPruneThresh_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jfloat jarg2) {
   Juicer::WFSTDecoder *arg1 = (Juicer::WFSTDecoder *) 0 ;
@@ -12270,7 +12270,7 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecoder_
   (arg1)->init();
 }
 
-
+/*
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecoder_1processFrame_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jint jarg3) {
   Juicer::WFSTDecoder *arg1 = (Juicer::WFSTDecoder *) 0 ;
   float *arg2 = (float *) 0 ;
@@ -12284,7 +12284,7 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecoder_
   arg3 = (int)jarg3;
   (arg1)->processFrame(arg2,arg3);
 }
-
+*/
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTDecoder_1processFrame_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jint jarg3, jint jarg4) {
   Juicer::WFSTDecoder *arg1 = (Juicer::WFSTDecoder *) 0 ;
@@ -18499,18 +18499,20 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_HTKModels_1o
 }
 
 
-SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_HTKModels_1newFrame(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jlong jarg3) {
+SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_HTKModels_1newFrame(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jlong jarg3, jlong jarg4) {
   Juicer::HTKModels *arg1 = (Juicer::HTKModels *) 0 ;
   int arg2 ;
-  float *arg3 = (float *) 0 ;
+  float **arg3 = (float **) 0 ;
+  int arg4 ;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   arg1 = *(Juicer::HTKModels **)&jarg1;
   arg2 = (int)jarg2;
-  arg3 = *(float **)&jarg3;
-  (arg1)->newFrame(arg2,(float const *)arg3);
+  arg3 = (float **)&jarg3;
+  arg4 = (int)jarg4;
+  (arg1)->newFrame(arg2,(float /*const*/ **)arg3,arg4);
 }
 
 
@@ -18988,7 +18990,7 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_HTKFlatModel
   arg2 = (int)jarg2;
   arg3 = *(float ***)&jarg3;
   arg4 = (int)jarg4;
-  (arg1)->newFrame(arg2,(float const **)arg3,arg4);
+  (arg1)->newFrame(arg2,(float /*const*/ **)arg3,arg4);
 }
 
 

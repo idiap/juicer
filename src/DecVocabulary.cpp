@@ -88,7 +88,7 @@ DecVocabulary::DecVocabulary( const char *lexFName , char specWordChar_ ,
 			continue ;
 
 		// Is this a new word ?
-		if ( strcmp( line , prevLine ) != 0 )
+		if ( strcasecmp( line , prevLine ) != 0 )
       {
          prevInd = addWord( line ) ;
       }
