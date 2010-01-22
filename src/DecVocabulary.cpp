@@ -30,11 +30,11 @@ DecVocabulary::DecVocabulary()
 
    nNormWords = 0 ;
    normWordInds = NULL ;
-   
+
    specWordChar = '\0' ;
    nSpecWords = 0 ;
    specWordInds = NULL ;
-   
+
 	sentStartIndex = -1 ;
 	sentEndIndex = -1 ;
 	silIndex = -1 ;
@@ -42,7 +42,7 @@ DecVocabulary::DecVocabulary()
 }
 
 
-DecVocabulary::DecVocabulary( const char *lexFName , char specWordChar_ , 
+DecVocabulary::DecVocabulary( const char *lexFName , char specWordChar_ ,
                   const char *sentStartWord , const char *sentEndWord , const char *silWord )
 {
 	FILE *lexFD ;
@@ -59,7 +59,7 @@ DecVocabulary::DecVocabulary( const char *lexFName , char specWordChar_ ,
 
    nNormWords = 0 ;
    normWordInds = NULL ;
-   
+
    specWordChar = specWordChar_ ;
    nSpecWords = 0 ;
    specWordInds = NULL ;
@@ -71,7 +71,7 @@ DecVocabulary::DecVocabulary( const char *lexFName , char specWordChar_ ,
 
 	if ( (lexFD = fopen( lexFName , "rb" )) == NULL )
 		error("DecVocabulary::DecVocabulary - error opening lex file -%s-" , lexFName ) ;
-		
+
 	// Add words to the vocabulary.
 	// Do not add duplicates.
 	// Check that vocab file is in alphabetical order.
@@ -99,7 +99,7 @@ DecVocabulary::DecVocabulary( const char *lexFName , char specWordChar_ ,
 
 		if ( line == line1 )
 		{
-			line = line2 ; 
+			line = line2 ;
 			prevLine = line1 ;
 		}
 		else
@@ -141,7 +141,7 @@ DecVocabulary::DecVocabulary( const char *lexFName , char specWordChar_ ,
    int i , tmpNNorm=0 , tmpNSpec=0 ;
 
    special = new bool[nWords] ;
-   
+
    nNormWords = 0 ;
    nSpecWords = 0 ;
    for ( i=0 ; i<nWords ; i++ )
@@ -157,35 +157,35 @@ DecVocabulary::DecVocabulary( const char *lexFName , char specWordChar_ ,
          special[i] = false ;
       }
    }
-      
+
    if ( (nNormWords + nSpecWords) != nWords )
       error("DecVocabulary::DecVocabulary - nNormWords/nSpecWords unexpected") ;
-      
+
    if ( nNormWords > 0 )
       normWordInds = new int[nNormWords] ;
    if ( nSpecWords > 0 )
       specWordInds = new int[nSpecWords] ;
-   
+
    for ( i=0 ; i<nWords ; i++ )
    {
       if ( (tmpNNorm > nNormWords) || (tmpNSpec > nSpecWords) )
          error("DecVocabulary::DecVocabulary - tmpNNorm/tmpNSpec unexpected") ;
-         
+
       if ( (i == sentStartIndex) || (i == sentEndIndex) || (words[i][0] == specWordChar) )
          specWordInds[tmpNSpec++] = i ;
       else
          normWordInds[tmpNNorm++] = i ;
    }
-   
+
    if ( (tmpNNorm != nNormWords) || (tmpNSpec != nSpecWords) )
       error("DecVocabulary::DecVocabulary - final tmpNNorm/tmpNSpec values incorrect") ;
-  
+
    // Make sure that the sentence-end and sentence-start words (if specified) are special words
    if ( (sentEndIndex >= 0) && (special[sentEndIndex] == false) )
       error("DecVocabulary::DecVocabulary - sentence end word is not a special word") ;
    if ( (sentStartIndex >= 0) && (special[sentStartIndex] == false) )
       error("DecVocabulary::DecVocabulary - sentence start word is not a special word") ;
-   
+
 	fclose( lexFD ) ;
 }
 
@@ -196,7 +196,7 @@ DecVocabulary::~DecVocabulary()
 	{
       for ( int i=0 ; i<nWords ; i++ )
          delete [] words[i] ;
-         
+
 		if ( fromBinFile == true )
       {
          delete [] nPronuns ;
@@ -218,7 +218,7 @@ DecVocabulary::~DecVocabulary()
 int DecVocabulary::addWord( const char *word , bool registerPronun )
 {
 	int cmpResult=0 , ind=-1 ;
-   
+
    // Allocate enough memory in the list of words for the new word
    if ( nWords == nWordsAlloc )
    {
@@ -230,7 +230,7 @@ int DecVocabulary::addWord( const char *word , bool registerPronun )
          words[i] = NULL ;
          nPronuns[i] = 0 ;
       }
-   }         
+   }
 
 	// Words starting with 'specWordChar' are added to the 'specWords' list
    // All other words are added to 'words' list.
@@ -239,7 +239,7 @@ int DecVocabulary::addWord( const char *word , bool registerPronun )
 		return -1 ;
 
 	if ( nWords > 0 )
-		cmpResult = strcmp( words[nWords-1] , word ) ;
+		cmpResult = strcasecmp( words[nWords-1] , word ) ;
 
 	if ( (cmpResult < 0) || (nWords == 0) )
 	{
@@ -255,7 +255,7 @@ int DecVocabulary::addWord( const char *word , bool registerPronun )
 		// Find the place in the list of words where we want to insert the new word
 		for ( int i=0 ; i<nWords ; i++ )
 		{
-			cmpResult = strcmp( words[i] , word ) ;
+			cmpResult = strcasecmp( words[i] , word ) ;
 			if ( cmpResult > 0 )
 			{
             nWords++ ;
@@ -267,11 +267,11 @@ int DecVocabulary::addWord( const char *word , bool registerPronun )
 					words[j] = words[j-1] ;
                nPronuns[j] = nPronuns[j-1] ;
             }
-               
+
 				words[i] = new char[strlen(word)+1] ;
 				strcpy( words[i] , word ) ;
             nPronuns[i] = 0 ;
-            ind = i ; 
+            ind = i ;
             break ;
 			}
 			else if ( cmpResult == 0 )
@@ -310,18 +310,18 @@ void DecVocabulary::writeBinary( FILE *fd )
 {
 	int nChars , i ;
    char id[]="TOVO" ;
-   
+
    // Write the ID bytes
    if ( fwrite( id , sizeof(char) , 4 , fd ) != 4 )
       error("DecVocabulary::writeBinary - error writing ID") ;
-   
+
    // Write the number of words
    fwrite( &nWords , sizeof(int) , 1 , fd ) ;
    if ( nWords > 0 )
    {
       // Write the nPronuns array
       fwrite( nPronuns , sizeof(int) , 1 , fd ) ;
-      
+
       // Write the special array
       fwrite( special , sizeof(bool) , nWords , fd ) ;
    }
@@ -336,21 +336,21 @@ void DecVocabulary::writeBinary( FILE *fd )
 
    // Write the number of normal words
    fwrite( &nNormWords , sizeof(int) , 1 , fd ) ;
-   
+
    // Write the normal word indices
    if ( nNormWords > 0 )
       fwrite( normWordInds , sizeof(int) , nNormWords , fd ) ;
-      
+
    // Write the specWordChar
    fwrite( &specWordChar , sizeof(char) , 1 , fd ) ;
 
    // Write the number of special words
    fwrite( &nSpecWords , sizeof(int) , 1 , fd ) ;
-   
+
    // Write the special word indices
    if ( nSpecWords > 0 )
       fwrite( specWordInds , sizeof(int) , nSpecWords , fd ) ;
-   
+
    // Write the sentStartIndex, sentEndIndex, silIndex
    fwrite( &sentStartIndex , sizeof(int) , 1 , fd ) ;
    fwrite( &sentEndIndex , sizeof(int) , 1 , fd ) ;
@@ -369,7 +369,7 @@ void DecVocabulary::readBinary( FILE *fd )
       error("DecVocabulary::readBinary - error reading ID") ;
    if ( strcmp( id , "TOVO" ) != 0 )
       error("DecVocabulary::readBinary - invalid ID %s",id) ;
-   
+
    // Read the number of words and allocate words array
    if ( fread( &nWords , sizeof(int) , 1 , fd ) != 1 )
       error("DecVocabulary::readBinary - error reading nWords") ;
@@ -399,14 +399,14 @@ void DecVocabulary::readBinary( FILE *fd )
          error("DecVocabulary::readBinary - error reading nChars for word %d",i) ;
       if ( nChars <= 0 )
          error("DecVocabulary::readBinary - nChars <= 0 for word %d",i) ;
-      
+
       // Allocate memory
       words[i] = new char[nChars] ;
 
       // Read word string
       if ( (int)fread( words[i] , sizeof(char) , nChars , fd ) != nChars )
          error("DecVocabulary::readBinary - error reading string for word %d",i) ;
-      
+
       // Check that word string is NULL terminated
       if ( words[i][nChars-1] != '\0' )
          error("DecVocabulary::readBinary - string for word %d not null terminated",i) ;
@@ -425,11 +425,11 @@ void DecVocabulary::readBinary( FILE *fd )
       if ( (int)fread( normWordInds , sizeof(int) , nNormWords , fd ) != nNormWords )
          error("DecVocabulary::readBinary - error reading normWordInds array") ;
    }
-   
+
    // Read the specWordChar
    if ( fread( &specWordChar , sizeof(char) , 1 , fd ) != 1 )
       error("DecVocabulary::readBinary - error reading specWordChar") ;
-      
+
    // Read the number of special words and allocate specWordInds array
    if ( fread( &nSpecWords , sizeof(int) , 1 , fd ) != 1 )
       error("DecVocabulary::readBinary - error reading nSpecWords") ;
@@ -443,7 +443,7 @@ void DecVocabulary::readBinary( FILE *fd )
       if ( (int)fread( specWordInds , sizeof(int) , nSpecWords , fd ) != nSpecWords )
          error("DecVocabulary::readBinary - error reading specWordInds array") ;
    }
-   
+
    // Read the sentStartIndex, sentEndIndex, silIndex
    if ( fread( &sentStartIndex , sizeof(int) , 1 , fd ) != 1 )
       error("DecVocabulary::readBinary - error reading sentStartIndex") ;
@@ -461,7 +461,7 @@ char *DecVocabulary::getWord( int index )
 {
 	if ( (index < 0) || (index >= nWords) )
 		error("DecVocabulary::getWord - index out of range") ;
-      
+
 	return words[index] ;
 }
 
@@ -470,7 +470,7 @@ bool DecVocabulary::isSpecial( int index )
 {
 	if ( (index < 0) || (index >= nWords) )
 		error("DecVocabulary::isSpecial - index out of range") ;
-      
+
 	return special[index] ;
 }
 
@@ -484,7 +484,7 @@ bool DecVocabulary::getIgnoreLM( int index )
 
 int DecVocabulary::getIndex( const char *word , int guess )
 {
-	// We assume that the list of words is in ascending order so 
+	// We assume that the list of words is in ascending order so
 	//   that we can do a binary search.
 	int min=0 , max=(nWords-1) , curr_pos=0 ;
 	int cmp_result=0 ;
@@ -496,16 +496,16 @@ int DecVocabulary::getIndex( const char *word , int guess )
 	//   the caller expects it to be - either at guess or at guess+1
 	if ( (guess >= 0) && (guess<nWords) )
 	{
-		if ( strcmp(word,words[guess]) == 0 ) 
+		if ( strcasecmp(word,words[guess]) == 0 )
 			return guess ;
-		else if ( ((guess+1)<nWords) && (strcmp(word,words[guess+1])==0) )
+		else if ( ((guess+1)<nWords) && (strcasecmp(word,words[guess+1])==0) )
 			return guess+1 ;
 	}
 
 	while (1)
 	{
 		curr_pos = min+(max-min)/2 ;
-		cmp_result = strcmp( word , words[curr_pos] ) ;
+		cmp_result = strcasecmp( word , words[curr_pos] ) ;
 		if ( cmp_result < 0 )
 			max = curr_pos-1 ;
 		else if ( cmp_result > 0 )
@@ -524,10 +524,10 @@ int DecVocabulary::getIndex( const char *word , int guess )
 void DecVocabulary::outputText()
 {
    int i ;
-   
+
 	printf("\n****** START VOCABULARY ******\n") ;
    printf("nWords=%d nNormWords=%d nSpecWords=%d specWordChar=%c sentStartInd=%d "
-          "sentEndInd=%d silInd=%d\n" , nWords , nNormWords , nSpecWords , specWordChar , 
+          "sentEndInd=%d silInd=%d\n" , nWords , nNormWords , nSpecWords , specWordChar ,
           sentStartIndex , sentEndIndex , silIndex ) ;
    printf("\n--- words ---\n") ;
 	for ( i=0 ; i<nWords ; i++ )
