@@ -3843,17 +3843,17 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_delete_1SEIn
 
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_delete_1Models(JNIEnv *jenv, jclass jcls, jlong jarg1) {
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
 
   (void)jenv;
   (void)jcls;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   delete arg1;
 }
 
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1Load_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3, jint jarg4) {
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   char *arg2 = (char *) 0 ;
   char *arg3 = (char *) 0 ;
   int arg4 ;
@@ -3861,7 +3861,7 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1Load
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = 0;
   if (jarg2) {
     arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
@@ -3880,14 +3880,14 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1Load
 
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1Load_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jboolean jarg3) {
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   char *arg2 = (char *) 0 ;
   bool arg3 ;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = 0;
   if (jarg2) {
     arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
@@ -3900,13 +3900,13 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1Load
 
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1Load_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   char *arg2 = (char *) 0 ;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = 0;
   if (jarg2) {
     arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
@@ -3918,13 +3918,13 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1Load
 
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1readBinary(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   char *arg2 = (char *) 0 ;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = 0;
   if (jarg2) {
     arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
@@ -3936,14 +3936,14 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1read
 
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1output(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jboolean jarg3) {
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   char *arg2 = (char *) 0 ;
   bool arg3 ;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = 0;
   if (jarg2) {
     arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
@@ -3956,7 +3956,7 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1outp
 
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1newFrame(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jlong jarg3, jint jarg4) {
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
   float **arg3 = (float **) 0 ;
   int arg4 ;
@@ -3964,7 +3964,7 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1newF
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   arg3 = *(float ***)&jarg3;
   arg4 = (int)jarg4;
@@ -3973,13 +3973,13 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1newF
 
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1setBlockSize(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   (arg1)->setBlockSize(arg2);
 }
@@ -3987,7 +3987,7 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1setB
 
 SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1calcOutput_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3) {
   jfloat jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
   int arg3 ;
   float result;
@@ -3995,7 +3995,7 @@ SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1ca
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   arg3 = (int)jarg3;
   result = (float)(arg1)->calcOutput(arg2,arg3);
@@ -4006,14 +4006,14 @@ SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1ca
 
 SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1calcOutput_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
   jfloat jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
   float result;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   result = (float)(arg1)->calcOutput(arg2);
   jresult = (jfloat)result;
@@ -4023,13 +4023,13 @@ SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1ca
 
 SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getNumHMMs(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jint jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int result;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   result = (int)(arg1)->getNumHMMs();
   jresult = (jint)result;
   printf(".%d.", result); return jresult;
@@ -4038,13 +4038,13 @@ SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getN
 
 SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getCurrFrame(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jint jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int result;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   result = (int)(arg1)->getCurrFrame();
   jresult = (jint)result;
   printf(".%d.", result); return jresult;
@@ -4053,14 +4053,14 @@ SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getC
 
 SWIGEXPORT jstring JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getHMMName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
   jstring jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
   char *result = 0 ;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   result = (char *)(arg1)->getHMMName(arg2);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -4070,13 +4070,13 @@ SWIGEXPORT jstring JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1g
 
 SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getInputVecSize(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jint jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int result;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   result = (int)(arg1)->getInputVecSize();
   jresult = (jint)result;
   printf(".%d.", result); return jresult;
@@ -4085,14 +4085,14 @@ SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getI
 
 SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getNumStates(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
   jint jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
   int result;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   result = (int)(arg1)->getNumStates(arg2);
   jresult = (jint)result;
@@ -4102,7 +4102,7 @@ SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getN
 
 SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getNumSuccessors(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3) {
   jint jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
   int arg3 ;
   int result;
@@ -4110,7 +4110,7 @@ SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getN
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   arg3 = (int)jarg3;
   result = (int)(arg1)->getNumSuccessors(arg2,arg3);
@@ -4121,7 +4121,7 @@ SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getN
 
 SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getSuccessor(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jint jarg4) {
   jint jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
   int arg3 ;
   int arg4 ;
@@ -4130,7 +4130,7 @@ SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getS
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   arg3 = (int)jarg3;
   arg4 = (int)jarg4;
@@ -4142,7 +4142,7 @@ SWIGEXPORT jint JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getS
 
 SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getSuccessorLogProb(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jint jarg4) {
   jfloat jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
   int arg3 ;
   int arg4 ;
@@ -4151,7 +4151,7 @@ SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1ge
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   arg3 = (int)jarg3;
   arg4 = (int)jarg4;
@@ -4163,14 +4163,14 @@ SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1ge
 
 SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getTeeLogProb(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
   jfloat jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
   float result;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   result = (float)(arg1)->getTeeLogProb(arg2);
   jresult = (jfloat)result;
@@ -4180,14 +4180,14 @@ SWIGEXPORT jfloat JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1ge
 
 SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getTransMat(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
   jlong jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
   float **result = 0 ;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   result = (float **)(arg1)->getTransMat(arg2);
   *(float ***)&jresult = result;
@@ -4197,14 +4197,14 @@ SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1get
 
 SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_Models_1getSEIndex(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
   jlong jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   int arg2 ;
   Juicer::SEIndex *result = 0 ;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = (int)jarg2;
   result = (Juicer::SEIndex *)(arg1)->getSEIndex(arg2);
   *(Juicer::SEIndex **)&jresult = result;
@@ -13291,7 +13291,7 @@ SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_new_1WFSTOn
   jlong jresult = 0 ;
   Juicer::WFSTNetwork *arg1 = (Juicer::WFSTNetwork *) 0 ;
   Juicer::WFSTSortedInLabelNetwork *arg2 = (Juicer::WFSTSortedInLabelNetwork *) 0 ;
-  Juicer::Models *arg3 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg3 = (Juicer::IModels *) 0 ;
   float arg4 ;
   float arg5 ;
   int arg6 ;
@@ -13308,7 +13308,7 @@ SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_new_1WFSTOn
   (void)jarg3_;
   arg1 = *(Juicer::WFSTNetwork **)&jarg1;
   arg2 = *(Juicer::WFSTSortedInLabelNetwork **)&jarg2;
-  arg3 = *(Juicer::Models **)&jarg3;
+  arg3 = *(Juicer::IModels **)&jarg3;
   arg4 = (float)jarg4;
   arg5 = (float)jarg5;
   arg6 = (int)jarg6;
@@ -14976,14 +14976,14 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_delete_1WFST
 
 SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTModelPool_1models_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   Juicer::WFSTModelPool *arg1 = (Juicer::WFSTModelPool *) 0 ;
-  Juicer::Models *arg2 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg2 = (Juicer::IModels *) 0 ;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   (void)jarg2_;
   arg1 = *(Juicer::WFSTModelPool **)&jarg1;
-  arg2 = *(Juicer::Models **)&jarg2;
+  arg2 = *(Juicer::IModels **)&jarg2;
   if (arg1) (arg1)->models = arg2;
 }
 
@@ -14991,14 +14991,14 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTModelPoo
 SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_WFSTModelPool_1models_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jlong jresult = 0 ;
   Juicer::WFSTModelPool *arg1 = (Juicer::WFSTModelPool *) 0 ;
-  Juicer::Models *result = 0 ;
+  Juicer::IModels *result = 0 ;
 
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   arg1 = *(Juicer::WFSTModelPool **)&jarg1;
-  result = (Juicer::Models *) ((arg1)->models);
-  *(Juicer::Models **)&jresult = result;
+  result = (Juicer::IModels *) ((arg1)->models);
+  *(Juicer::IModels **)&jresult = result;
   printf(".%d.", result); return jresult;
 }
 
@@ -15046,7 +15046,7 @@ SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_new_1WFSTMo
 
 SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_new_1WFSTModelPool_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   jlong jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   Juicer::DecHypHistPool *arg2 = (Juicer::DecHypHistPool *) 0 ;
   Juicer::WFSTModelPool *result = 0 ;
 
@@ -15054,7 +15054,7 @@ SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_new_1WFSTMo
   (void)jcls;
   (void)jarg1_;
   (void)jarg2_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = *(Juicer::DecHypHistPool **)&jarg2;
   result = (Juicer::WFSTModelPool *)new Juicer::WFSTModelPool(arg1,arg2);
   *(Juicer::WFSTModelPool **)&jresult = result;
@@ -16404,7 +16404,7 @@ SWIGEXPORT void JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_delete_1WFST
 
 SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_new_1WFSTModelOnTheFlyPool(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   jlong jresult = 0 ;
-  Juicer::Models *arg1 = (Juicer::Models *) 0 ;
+  Juicer::IModels *arg1 = (Juicer::IModels *) 0 ;
   Juicer::DecHypHistPool *arg2 = (Juicer::DecHypHistPool *) 0 ;
   Juicer::WFSTModelOnTheFlyPool *result = 0 ;
 
@@ -16412,7 +16412,7 @@ SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_new_1WFSTMo
   (void)jcls;
   (void)jarg1_;
   (void)jarg2_;
-  arg1 = *(Juicer::Models **)&jarg1;
+  arg1 = *(Juicer::IModels **)&jarg1;
   arg2 = *(Juicer::DecHypHistPool **)&jarg2;
   result = (Juicer::WFSTModelOnTheFlyPool *)new Juicer::WFSTModelOnTheFlyPool(arg1,arg2);
   *(Juicer::WFSTModelOnTheFlyPool **)&jresult = result;
@@ -21034,7 +21034,7 @@ SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_SWIGWFSTDec
     jlong baseptr = 0;
     (void)jenv;
     (void)jcls;
-    *(Juicer::WFSTDecoder **)&baseptr = *(Juicer::WFSTDecoderLite **)&jarg1;
+    *(Juicer::WFSTDecoderLite **)&baseptr = *(Juicer::WFSTDecoderLite **)&jarg1;
     return baseptr;
 }
 
@@ -21064,7 +21064,7 @@ SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_SWIGHModels
     jlong baseptr = 0;
     (void)jenv;
     (void)jcls;
-    *(Juicer::Models **)&baseptr = *(Juicer::HModels **)&jarg1;
+    *(Juicer::IModels **)&baseptr = *(Juicer::HModels **)&jarg1;
     return baseptr;
 }
 
@@ -21074,7 +21074,7 @@ SWIGEXPORT jlong JNICALL Java_ch_idiap_producers_Projuicer_juicerJNI_SWIGHTKMode
     jlong baseptr = 0;
     (void)jenv;
     (void)jcls;
-    *(Juicer::Models **)&baseptr = *(Juicer::HTKModels **)&jarg1;
+    *(Juicer::IModels **)&baseptr = *(Juicer::HTKModels **)&jarg1;
     return baseptr;
 }
 
