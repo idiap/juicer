@@ -11,7 +11,6 @@
 #include <HTKSource.h>
 #include <LNASource.h>
 #include <FrameSink.h>
-#include <ALSASource.h>
 #include <SpeakerIDSocketSource.h>
 
 #include "config.h"

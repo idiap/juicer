@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# This is an example based on what I use to configure juicer under
+# linux.  I'd like to use -Werror like tracter, but too many people
+# hack juicer :-(
+#
+# Phil Garner
+# February 2010
+#
+
+torchDir=$HOME/build/Torch3
+
+../configure \
+    CXXFLAGS="-Os -g" \
+    --prefix=$HOME/local \
+    --with-torch3=$torchDir \
+    $*
+
+#
+# Other possibilities
+#
+#    --disable-shared \
+#    --enable-swig \
+#    --with-htk-includes="-I/com/softs/HTK/HTK_V3.4/include" \
+#    --with-htk-libs="-L/com/softs/HTK/HTK_V3.4/lib -lhtk" \
+#    --with-ipproot=$HOME/intel/ipp/6.0.1.071/ia32 \
