@@ -15,11 +15,6 @@
 
 namespace Juicer
 {
-    /**
-     * Models interface.
-     * Models such as HTK MMFs should implement this interface.
-     */
-
     /* SEIndex defines the range of possible incoming states within an
      * HMM [start, end) */
     typedef struct SEIndex_ {
@@ -27,6 +22,10 @@ namespace Juicer
         short end;
     } SEIndex;
 
+    /**
+     * Models interface.
+     * Models such as HTK MMFs should implement this interface.
+     */
     class IModels
     {
     public:

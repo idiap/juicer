@@ -490,6 +490,7 @@ int main( int argc , char *argv[] )
         InitialiseHTK();
     }
 #endif
+    //sHTKLib.Initialise(inputFName);
 
     // load vocabulary
     LogFile::puts( "loading vocab .... " ) ;
