@@ -821,9 +821,13 @@ void Juicer::DecoderBatchTest::configureTests()
     nTests=0 ;
     while ( fgets( line , 100000 , inputFD ) != NULL )
     {
-        if ( (sscanf(line,"%s",fname)==0) || (line[0] == '#') || (line[0] == '\n') ||
+	
+        if ( (strlen(line) == 0) || (line[0] == '#') || (line[0] == '\n') ||
              (line[0] == '\r') || (line[0] == ' ') || (line[0] == '\t') )
             continue ;
+
+	strncpy(fname, line, 10000);
+	fname[strlen(fname)-1]='\0';	
 
         if ( nTests >= nTestsAlloc )
         {
