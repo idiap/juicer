@@ -1,3 +1,30 @@
+# Optimisations
+
+add_definitions(-DOPT_FLATMODEL)
+add_definitions(-DOPT_SINGLE_BEST)
+add_definitions(-DPARTIAL_DECODING)
+
+#add_definitions(-DUSE_BINARY_WFST)
+#add_definitions(-DUSE_BINARY_MODELS)
+
+
+#add_definitions(-DOPT_FAST_LOG)
+#add_definitions(-DOPT_FAST_EXP)
+
+# use double instead of real for Token.score in WFSTDecoderLite
+#add_definitions(DUSE_DOUBLE_SCORE)
+
+# OPT_ALIGN4 seems to work well with INTEL's IPP lib, but maybe slower
+# otherwise so it will be turned on automatically when HAVE_INTEL_IPP
+# is defined
+#add_definitions(-DOPT_ALIGN4)
+
+# note: NO_BEST_END and NO_BEST_START only apply to WFSTDecoder.cpp,
+# it won't affect WFSTDecoderLite
+#add_definitions(-DNO_BEST_END)
+#add_definitions(-DNO_BEST_START)
+
+
 # Just shortcuts to prevent some long lines
 set(CBD ${CMAKE_CURRENT_BINARY_DIR})
 set(CSD ${CMAKE_CURRENT_SOURCE_DIR})
@@ -26,17 +53,8 @@ add_custom_command(
   DEPENDS ${CSD}/htkparse.l.lpp ${CBD}/htkparse.y.h
   )
 
-# HLKLib has a non-std name
-add_custom_command(
-  OUTPUT ${CBD}/libhtk.a
-  COMMAND ${RUN} -E create_symlink ${HTK_LIBRARIES} ${CBD}/libhtk.a
-  DEPENDS ${HTK_LIBRARIES}
-  )
-
 # Basic all-the-time sources
 set(SOURCES
-  htkparse.y.cpp
-  htkparse.l.cpp
   ARPALM.cpp
   BlockMemPool.cpp
   DecHypHistPool.cpp
@@ -47,12 +65,14 @@ set(SOURCES
   DecVocabulary.cpp
   Histogram.cpp
   HTKFlatModels.cpp
+  HTKFlatModelsThreading.cpp
   HTKModels.cpp 
   LogFile.cpp
   MonophoneLookup.cpp
   WFSTCDGen.cpp
   WFSTDecoder.cpp
   WFSTDecoderLite.cpp
+  WFSTDecoderLiteThreading.cpp
   WFSTGramGen.cpp
   WFSTHMMGen.cpp
   WFSTLattice.cpp
@@ -63,9 +83,23 @@ set(SOURCES
   string_stuff.cpp
   )
 
+# Prime the header list with the cpp sources, then add the lone ones
+string(REGEX REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
+list(APPEND HEADERS
+  FrontEnd.h
+  htkparse.h
+  )
+
+# Some sources without headers to install
+list(APPEND SOURCES
+  htkparse.y.cpp
+  htkparse.l.cpp
+  )
+
 # Optional things
 if(HTK_FOUND)
   list(APPEND SOURCES HModels.cpp)
+  list(APPEND HEADERS HModels.h  )
   add_definitions(-DHAVE_HTKLIB)
   include_directories(${HTK_INCLUDE_DIRS})
 endif(HTK_FOUND)
@@ -74,6 +108,7 @@ endif(HTK_FOUND)
 add_library(shared-lib SHARED ${SOURCES})
 set_target_properties(shared-lib
   PROPERTIES OUTPUT_NAME "juicer"
+             PUBLIC_HEADER "${HEADERS}"
   )
 
 target_link_libraries(shared-lib
@@ -93,3 +128,11 @@ target_link_libraries(gramgen shared-lib)
 target_link_libraries(lexgen shared-lib)
 target_link_libraries(cdgen shared-lib)
 target_link_libraries(genwfstseqs shared-lib)
+
+install(
+  TARGETS juicer gramgen lexgen cdgen genwfstseqs shared-lib
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  PUBLIC_HEADER DESTINATION include/juicer
+  )

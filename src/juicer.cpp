@@ -17,8 +17,6 @@
 #include "MonophoneLookup.h"
 #include "LogFile.h"
 
-#include "config.h"
-
 #include <HTKLib.h>
 #ifdef HAVE_HTKLIB
   namespace Juicer 

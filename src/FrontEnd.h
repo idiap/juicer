@@ -13,8 +13,6 @@
 #include <FrameSink.h>
 #include <SpeakerIDSocketSource.h>
 
-#include "config.h"
-
 using namespace Tracter;
 
 namespace Juicer

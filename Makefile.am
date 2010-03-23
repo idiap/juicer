@@ -15,5 +15,3 @@ EXTRA_DIST = Doxyfile.in juicer.pc.in
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = juicer.pc
-
-nodist_pkginclude_HEADERS = config.h
