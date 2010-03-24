@@ -25,7 +25,6 @@ find_package(HTK)
 
 # Configure other files
 configure_file(Doxyfile.in Doxyfile)
-configure_file(juicer.pc.in juicer.pc)
 
 add_subdirectory(src)
 

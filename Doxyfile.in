@@ -81,8 +81,8 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = @srcdir@/src \
-                         @srcdir@/doc
+INPUT                  = @juicer_SOURCE_DIR@/src \
+                         @juicer_SOURCE_DIR@/doc
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.h \
                          *.cpp \

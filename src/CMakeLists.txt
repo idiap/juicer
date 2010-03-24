@@ -35,6 +35,7 @@ include_directories(${TORCH3_INCLUDE_DIRS})
 include_directories(${TRACTER_INCLUDE_DIRS})
 link_directories(${TORCH3_LIBRARY_DIRS})
 link_directories(${TRACTER_LIBRARY_DIRS})
+add_definitions(-DPACKAGE_VERSION="${VERSION}")
 
 # Bison
 add_custom_command(
@@ -135,4 +136,16 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   PUBLIC_HEADER DESTINATION include/juicer
+  )
+
+# pkgconfig install lines
+set(prefix ${CMAKE_INSTALL_PREFIX})
+set(exec_prefix "\${prefix}")
+set(libdir "\${exec_prefix}/lib")
+set(includedir "\${prefix}/include/juicer")
+configure_file(juicer.pc.in ${CMAKE_CURRENT_BINARY_DIR}/juicer.pc)
+
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/juicer.pc
+  DESTINATION lib/pkgconfig
   )
