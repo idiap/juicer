@@ -27,6 +27,7 @@ find_package(HTK)
 configure_file(Doxyfile.in Doxyfile)
 
 add_subdirectory(src)
+add_subdirectory(bin)
 
 # This one is for binary distributions
 include(CPack)
