@@ -42,7 +42,7 @@ particular, it is as fast as third party LVSR engines.
 \section download Obtaining the source code
 
 Juicer is available <a
-href="http://www.idiap.ch/software/juicer/sources">here</a>.  It is
+href="http://juicer.amiproject.org/juicer/sources">here</a>.  It is
 released under a BSD license, which is quite permissive.  Further
 information is in the README in the distribution.
 
@@ -51,8 +51,11 @@ In order to build juicer, you need these two dependencies:
  - <a href="http://www.torch.ch/">Torch3</a>.  The distribution that
 comes with <a href="http://torch3vision.idiap.ch/">Torch3vision</a>
 probably works too.
- - <a href="http://www.idiap.ch/software/tracter">Tracter</a>
+ - <a href="http://juicer.amiproject.org/tracter">Tracter</a>
  .
+
+Juicer will also build with IPP - the Intel Performance Primitives.
+This will utilise a fast GMM calculation for observation likelihoods.
 
 \section authors Authors
 
@@ -70,5 +73,12 @@ the HTK compatibility work is by <a
 href="http://www.dcs.shef.ac.uk/~vinny">Vinny Wan</a>.  Le Zhang
 recently wrote the "Lite" (and fast) decoder core.
 
+\section list Mailing list
+
+There is a mailing list for Juicer.  To join send a message to
+juicer-list-request@idiap.ch with the word "subscribe" in the body.
+It is <a
+href="http://www.gnu.org/software/mailman/index.html">mailman</a>
+managed and understands all the usual commands.
 
 */

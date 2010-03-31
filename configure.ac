@@ -2,7 +2,7 @@
 # ...and manually buggered up by Phil Garner
 
 AC_PREREQ(2.59)
-AC_INIT([Juicer], [0.11.0])
+AC_INIT([Juicer], [0.12.0])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_SRCDIR([src/juicer.cpp])
 AC_CONFIG_MACRO_DIR([m4])
@@ -16,7 +16,7 @@ AC_PROG_LIBTOOL
 
 # Check for Tracter
 PKG_CHECK_MODULES(
-    TRACTER, tracter >= 0.2.0, ac_cv_tracter=1, ac_cv_tracter=0
+    TRACTER, tracter >= 0.5.0, ac_cv_tracter=1, ac_cv_tracter=0
 )
 AC_SUBST(TRACTER_CFLAGS)
 AC_SUBST(TRACTER_LIBS)

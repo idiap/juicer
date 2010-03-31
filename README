@@ -1,8 +1,25 @@
 Building the Juicer LVCSR Decoder
 =================================
 
-http://www.idiap.ch/software/juicer/
+http://juicer.amiproject.org/juicer/
 
+Build with CMake
+----------------
+
+As of March 2010, the build system is based on CMake.  To build, you
+should only need to do the following:
+
+ cd build
+ cp Configure.sh.example Configure.sh
+ (edit Configure.sh to suit your environment)
+ ./Configure.sh
+ make
+ make install
+
+Below are instructions for the old Gnu build system.  This should be
+removed in a future version.  Currently the Gnu system is the only way
+to build using IPP.  There is no fundamental limitation; simply I
+don't have access to IPP right now to test it.
 
 Creating configure 
 ------------------
@@ -20,7 +37,7 @@ Required Libs
 -------------
 The following libs need to be built and installed prior to building juicer:
 1. Tracter
-    http://www.idiap.ch/software/tracter/
+    http://juicer.amiproject.org/tracter/
 2. Torch3
     http://www.torch.ch/
    If Torch3 is not detected automatically, you can use --with-torch3 option:

@@ -8,19 +8,14 @@
 # February 2010
 #
 
-torchDir=$HOME/build/Torch3
+# These paths are Idiap specific; set your own
+software=/idiap/resource/software
+export HTK_DIR=$software/HTK/HTK_V3.4/src/htk
+export TORCH3_DIR=$HOME/build/Torch3
 
-../configure \
-    CXXFLAGS="-Os -g" \
-    --prefix=$HOME/local \
-    --with-torch3=$torchDir \
-    $*
-
-#
-# Other possibilities
-#
-#    --disable-shared \
-#    --enable-swig \
-#    --with-htk-includes="-I/com/softs/HTK/HTK_V3.4/include" \
-#    --with-htk-libs="-L/com/softs/HTK/HTK_V3.4/lib -lhtk" \
-#    --with-ipproot=$HOME/intel/ipp/6.0.1.071/ia32 \
+# Finally the configure is actually done using CMake
+cmake \
+    -D CMAKE_INSTALL_PREFIX=$HOME/local \
+    -D CMAKE_CXX_FLAGS_DEBUG="-g -Wall" \
+    -D CMAKE_BUILD_TYPE=debug \
+    ..
