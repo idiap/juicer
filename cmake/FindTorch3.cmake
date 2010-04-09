@@ -29,7 +29,7 @@ if (NOT TORCH3_FOUND)
       ${TORCH3_DIR}/gradients
       )
     set(TORCH3_LIBRARY_DIRS
-      ${TORCH3_DIR}/libs/Linux_opt_float
+      ${TORCH3_DIR}/libs/${CMAKE_SYSTEM_NAME}_opt_float
       )
     set(TORCH3_LIBRARIES
       torch
