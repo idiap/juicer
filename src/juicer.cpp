@@ -518,9 +518,9 @@ int main( int argc , char *argv[] )
     }
 
     if (use2Threads) {
-        #ifndef OPT_FLATMODEL
-            #error GMM threading code requires HTKFlatModels
-        #endif
+#ifndef OPT_FLATMODEL
+        error("GMM threading code requires HTKFlatModels");
+#endif
         // let GMM thread run before loading network to ensure it will be in running state when
         // decoding starts
         pthread_t gmm_thread;
