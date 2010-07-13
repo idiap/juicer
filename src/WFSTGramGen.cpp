@@ -675,17 +675,25 @@ void Juicer::WFSTGramGen::writeFSMARPA(
             if ( (arpaLM->entries[n][i].log_bo > LOG_ZERO) &&
                  (arpaLM->entries[n][i].words[n] != vocab->sentEndIndex) )
             {
+                bool isNew;
                 fromSt = stateMan->getWFSTState( n+1 , arpaLM->entries[n][i].words , true ) ;
-                toSt = stateMan->getWFSTState( n , (arpaLM->entries[n][i].words)+1 , false ) ;
-                prob = arpaLM->entries[n][i].log_bo * lmScale ;
+                toSt = stateMan->getWFSTState( n , (arpaLM->entries[n][i].words)+1 , false, &isNew ) ;
+                if (isNew)
+                    // The BO context may not exist if it has context
+                    // > 1 (which happens for >=4-gram models)
+                    addDefaultBackoffPath(
+                        fsmFD, stateMan, toSt ,
+                        n-1 , (arpaLM->entries[n][i].words)+2
+                    ) ;
 
                 // phi backoff transitions apply only to the input labels
-                if ( phiBOTrans )
+                if ( phiLabel >= 0 )
                     label = phiLabel ;
                 else
                     label = WFST_EPSILON ;
 
                 // Write arc to WFST file
+                prob = arpaLM->entries[n][i].log_bo * lmScale ;
                 writeFSMTransition( fsmFD , fromSt , toSt , label , WFST_EPSILON , -prob ) ;
 
                 if ( firstFromState < 0 )
@@ -729,22 +737,34 @@ void Juicer::WFSTGramGen::writeFSMARPA(
             else
             {
                 // Retrieve from and to states from our state manager
-                fromSt = stateMan->getWFSTState( n , arpaLM->entries[n][i].words , true , &isNew ) ;
+                fromSt = stateMan->getWFSTState(
+                    n , arpaLM->entries[n][i].words , true , &isNew
+                ) ;
                 if ( isNew )
                 {
-                    // The 'from' state is new - therefore there is no pre-existing back-off path.
-                    // We need to add a default back-off path.
-                    addDefaultBackoffPath( fsmFD, stateMan, fromSt , n-1 ,
-                                           (arpaLM->entries[n][i].words)+1 ) ;
+                    // PNG: I believe this case is impossible
+                    assert(0);
+                    // The 'from' state is new - therefore there is no
+                    // pre-existing back-off path.  We need to add a
+                    // default back-off path.
+                    addDefaultBackoffPath(
+                        fsmFD, stateMan, fromSt ,
+                        n-1 , (arpaLM->entries[n][i].words)+1
+                    ) ;
                 }
 
-                toSt = stateMan->getWFSTState( n , (arpaLM->entries[n][i].words)+1 , false , &isNew ) ;
+                toSt = stateMan->getWFSTState(
+                    n , (arpaLM->entries[n][i].words)+1 , false , &isNew
+                ) ;
                 if ( isNew )
                 {
-                    // The 'to' state is new - therefore there is no pre-existing back-off path.
-                    // We need to add a default back-off path.
-                    addDefaultBackoffPath( fsmFD , stateMan , toSt ,
-                                           n-1 , (arpaLM->entries[n][i].words)+2 ) ;
+                    // The 'to' state is new - therefore there is no
+                    // pre-existing back-off path.  We need to add a
+                    // default back-off path.
+                    addDefaultBackoffPath(
+                        fsmFD , stateMan , toSt ,
+                        n-1 , (arpaLM->entries[n][i].words)+2
+                    ) ;
                 }
 
                 // Adjust LM prob using lmScale and wordInsPen
@@ -862,8 +882,15 @@ void Juicer::WFSTGramGen::addDefaultBackoffPath(
     bool isNew ;
     int toSt = stateMan->getWFSTState( toNWords , toWords , false , &isNew ) ;
 
-    writeFSMTransition( fsmFD , fromSt , toSt , WFST_EPSILON , WFST_EPSILON , 0.0 ) ;
+    int label;
+    if ( phiLabel >= 0 )
+        label = phiLabel ;
+    else
+        label = WFST_EPSILON ;
 
+    writeFSMTransition( fsmFD , fromSt , toSt , label , WFST_EPSILON , 0.0 ) ;
+
+    assert(!((toNWords == 1) && isNew));
     if ( isNew && (toNWords > 1) )
     {
         addDefaultBackoffPath( fsmFD , stateMan , toSt , toNWords-1 , toWords+1 ) ;
