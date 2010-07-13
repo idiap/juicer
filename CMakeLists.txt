@@ -15,7 +15,7 @@ cmake_minimum_required(VERSION 2.6)
 
 # Top level project information
 project(juicer)
-set(VERSION 0.12.0)
+set(VERSION 0.12.1)
 
 # Find packages
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
