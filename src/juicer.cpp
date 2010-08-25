@@ -389,7 +389,9 @@ void processCmdLine( CmdLine *cmd , int argc , char *argv[] )
         // make sure the output lattice directory exists
         char str[10000] ;
         sprintf( str , "mkdir -p %s" , latticeDir ) ;
-        system( str ) ;
+        int ret = system( str ) ;
+        if (ret)
+            error("system call failed");
         if (useBasicCore == false) {
             fprintf(stderr, "Warning: -latticeDir only available in basicCore, switched to basicCore from now on.\n");
             useBasicCore = true;
