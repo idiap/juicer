@@ -65,12 +65,12 @@ whilst he was at Idiap, although a significant part of his work was
 done under the AMI training program at Sheffield.  Dynamic composition
 (on-the-fly) was added by Octavian Cheng (although this is not
 currently maintained).  <a href="http://www.idiap.ch/~dines">John
-Dines</a> also contributed.
+Dines</a> also contributed to many modules.
 
 More recently, the package has been overhauled by, and is maintained
 by, <a href="http://www.idiap.ch/~pgarner">Phil Garner</a>.  Most of
 the HTK compatibility work is by <a
-href="http://www.dcs.shef.ac.uk/~vinny">Vinny Wan</a>.  Le Zhang
+href="http://uk.linkedin.com/pub/vincent-wan/a/aa4/60">Vinny Wan</a>.  Le Zhang
 recently wrote the "Lite" (and fast) decoder core.
 
 \section list Mailing list
