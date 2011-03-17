@@ -8,7 +8,7 @@
  * vi:ts=4:tw=78:shiftwidth=4:expandtab
  * vim600:fdm=marker
  *
- * HTKFlatModelsThreading.h  -  based on HTKFlatModels, with added functions for used in a separate thread
+ * HTKFlatModelsThreading.h  -  based on HTKFlatModels, with added functions for 2-thread decoding
  *
  */
 
@@ -29,16 +29,17 @@ namespace Juicer {
             virtual ~HTKFlatModelsThreading();
             void init();
 
-            bool cachedOutput(int hmmInd, int stateInd, real* outp);
             bool cachedOutput(int gmmInd, real* outp);
-            int addQueue(int hmmInd, int stateInd);
-            int nReadyStates() { return fCounter; }
+            real readOutput(int gmmInd);
+            void addQueue(int gmmInd);
+            int nReadyStates() { assert(fCounter >= -1); return fCounter; }
             void sync() { fCounter = -1; }
             int gmmInd(int hmmInd, int stateInd) { return hMMs[hmmInd].gmmInds[stateInd]; }
             void calcStates();
             void stop() { fRunning = false; }
 
         private:
+            real calcSingleFrameGMMOutput(int gmmInd );
             FProbQueue* fQueue;
             int  fStart;
             int  fEnd;

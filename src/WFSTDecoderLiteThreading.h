@@ -50,9 +50,9 @@ namespace Juicer
         vector<vector<WaitState> > waitStateQueue;
         int waiting;
         int* waitGMMs;
-        int gmmRequested;
-        int gmmCalced;
-        int gmmQueued;
+        unsigned long gmmRequested;
+        unsigned long gmmCalced;
+        unsigned long gmmQueued;
 
         void doHMMInternalPropagation(); // overload WFSTDecoderLite::doHMMInternalPropagation()
         void HMMInternalPropagationPass1(NetInst* inst);

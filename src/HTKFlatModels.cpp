@@ -70,6 +70,7 @@ HTKFlatModels::HTKFlatModels() {
     fBuffer = NULL;
     fCacheT = NULL;
     fCache = NULL;
+    fnBlock = -1;
 }
 
 HTKFlatModels::~HTKFlatModels() {
@@ -305,6 +306,8 @@ void HTKFlatModels::newFrame( int frame , real **input, int nData) {
 }
 
 void HTKFlatModels::setBlockSize(int bs) {
+    assert(fnBlock == -1); // make sure block size is set before init()
+
     if (bs < 1 || bs > 20)
         error("HTKFlatModels::setBlockSize fnBlock should be fQueue [1, 20]");
     fnBlock = bs;

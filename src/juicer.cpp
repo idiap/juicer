@@ -760,7 +760,6 @@ void setupModels( IModels **models )
             *models = new HTKFlatModelsThreading() ;
         else
             *models = new HTKFlatModels() ;
-        (*models)->setBlockSize(blockSize);
 # else
         *models = new HTKModels() ;
 # endif

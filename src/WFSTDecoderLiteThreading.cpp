@@ -41,6 +41,7 @@ WFSTDecoderLiteThreading::WFSTDecoderLiteThreading(
 )
     :WFSTDecoderLite(network_,models_, phoneStartPruneWin_, emitPruneWin_,phoneEndPruneWin_,wordPruneWin_,maxEmitHyps_)
 {
+    mObjectName = "WFSTDecoderLiteThreading";
     threadHMMModels = (HTKFlatModelsThreading*)hmmModels;
 
     // check if all HMM's has only one transition to exit state (not including tee transitions)
@@ -64,11 +65,14 @@ WFSTDecoderLiteThreading::WFSTDecoderLiteThreading(
     waitStateQueue.resize(nGMMs);
     waitGMMs = new int[nGMMs];
 
+    gmmRequested = gmmQueued = gmmCalced = 0;
+
     LogFile::printf("WFSTDecoderLiteThreading (nGMMs = %d) initialised successfully\n", nGMMs);
 }
 
     WFSTDecoderLiteThreading::~WFSTDecoderLiteThreading() throw ()
 {
+    LogFile::printf("WFSTDecoderLiteThreading summary:\ngmmRequested = %d, gmmQueued = %d, gmmCalced = %d\n", gmmRequested, gmmQueued, gmmCalced);
     delete[] waitGMMs;
 }
 
@@ -85,10 +89,11 @@ void WFSTDecoderLiteThreading::doHMMInternalPropagation() {
 #endif
 
         waiting = -1;
-        for (int i = 0; i < waitStateQueue.size(); ++i)
+        for (int i = 0; i < waitStateQueue.size(); ++i) {
             waitStateQueue[i].clear();
-        gmmRequested = gmmQueued = gmmCalced = 0;
+        }
 
+        unsigned long oldGMMQueued = gmmQueued;
         NetInst* prevInst = NULL;
         NetInst* inst = activeNetInstList;
         while (inst) {
@@ -99,7 +104,6 @@ void WFSTDecoderLiteThreading::doHMMInternalPropagation() {
                 --inst->nActiveHyps;
             }
 
-            //TODO: assert(inst->nActiveHyps > 0);
             if (inst->nActiveHyps > 0) 
                 HMMInternalPropagationPass1(inst);
 
@@ -122,10 +126,9 @@ void WFSTDecoderLiteThreading::doHMMInternalPropagation() {
             j = threadHMMModels->nReadyStates();
             if ((j >= waiting) || (j > (i+5))) {
                 for(;i<=j;i++){
-                    real outp;
                     int gmmInd = waitGMMs[i];
-                    bool rc = threadHMMModels->cachedOutput(gmmInd, &outp);
-                    assert (rc == true);
+                    real outp = threadHMMModels->readOutput(gmmInd);
+
                     for (int k = 0; k < waitStateQueue[gmmInd].size(); ++k) {
                         WaitState ws = waitStateQueue[gmmInd][k];
                         Token* res = ws.inst->states + ws.state;
@@ -213,8 +216,8 @@ void WFSTDecoderLiteThreading::HMMInternalPropagationPass1(NetInst* inst) {
                 ++gmmRequested;
 
                 real outp;
-                if (threadHMMModels->cachedOutput(inst->hmmIndex, j, &outp)) {
-                    // real outp = threadHMMModels->calcOutput(inst->hmmIndex, j);
+                int gmmInd = threadHMMModels->gmmInd(inst->hmmIndex, j);
+                if (threadHMMModels->cachedOutput(gmmInd, &outp)) {
                     res->score += outp;
                     res->acousticScore += outp;
                     if (emitHypsHistogram) {
@@ -244,12 +247,11 @@ void WFSTDecoderLiteThreading::HMMInternalPropagationPass1(NetInst* inst) {
                     }
                 } else {
                     // this state has not been calculated, added to queue
-                    int gmmInd = threadHMMModels->gmmInd(inst->hmmIndex, j);
                     // wait_stat[waiting]=(inst,j);
                     if (waitStateQueue[gmmInd].empty()) {
                         waiting++;
                         waitGMMs[waiting] = gmmInd;
-                        threadHMMModels->addQueue(inst->hmmIndex, j); 
+                        threadHMMModels->addQueue(gmmInd); 
                     }
                     WaitState ws;
                     ws.inst = inst;
