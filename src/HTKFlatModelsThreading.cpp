@@ -17,6 +17,12 @@
 #include "HTKFlatModelsThreading.h"
 #include "LogFile.h"
 
+#ifdef HAVE_INTEL_IPP
+#include <ippcore.h>
+#include <ipps.h>
+#include <ippsr.h>
+#endif
+
 using namespace Torch;
 
 namespace Juicer {
