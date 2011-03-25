@@ -67,7 +67,6 @@ real HTKFlatModelsThreading::readOutput(int gmmInd) {
         // the output of gmmInd is supposed to be calculated in thread2, but not due to
         // a very rare sync problem (get skipped in fQueue for whatever
         // reason), and a simple fix is to re-calculate it
-         assert (this->calcOutput(gmmInd) == this->calcSingleFrameGMMOutput(gmmInd));
          return this->calcSingleFrameGMMOutput(gmmInd);
     }
 }
