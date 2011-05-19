@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# This is an example based on what I use to configure juicer under
+# linux.  I'd like to use -Werror like tracter, but too many people
+# hack juicer :-(
+#
+# Phil Garner
+# February 2010
+#
+
+# These paths are Idiap specific; set your own
+software=/idiap/resource/software
+export HTK_DIR=$software/HTK/HTK_V3.4/src/htk
+export TORCH3_DIR=$HOME/build/Torch3
+
+# Finally the configure is actually done using CMake
+cmake \
+    -D CMAKE_INSTALL_PREFIX=$HOME/local \
+    -D CMAKE_CXX_FLAGS_DEBUG="-g -Wall" \
+    -D CMAKE_BUILD_TYPE=debug \
+    ..
