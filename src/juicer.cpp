@@ -474,7 +474,11 @@ void InitialiseHTK()
 
 int main( int argc , char *argv[] )
 {
+    // Command line parser.  The option prevents writing the cmd.log
+    // file, which in turn means that multiple instances can run in
+    // the same directory.
     CmdLine cmd ;
+    cmd.setBOption("write log", false);
 
     // process command line
     processCmdLine( &cmd , argc , argv ) ;
@@ -764,7 +768,7 @@ void setupModels( IModels **models )
         *models = new HTKModels() ;
 # endif
 
-        (*models)->setBlockSize(blockSize);
+        //(*models)->setBlockSize(blockSize);
 
 #ifdef HAVE_HTKLIB
         }

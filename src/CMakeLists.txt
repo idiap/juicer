@@ -12,7 +12,7 @@ add_definitions(-DPARTIAL_DECODING)
 #add_definitions(-DOPT_FAST_EXP)
 
 # use double instead of real for Token.score in WFSTDecoderLite
-#add_definitions(DUSE_DOUBLE_SCORE)
+#add_definitions(-DUSE_DOUBLE_SCORE)
 
 # OPT_ALIGN4 seems to work well with INTEL's IPP lib, but maybe slower
 # otherwise so it will be turned on automatically when HAVE_INTEL_IPP
@@ -105,6 +105,11 @@ if(HTK_FOUND)
   include_directories(${HTK_INCLUDE_DIRS})
 endif(HTK_FOUND)
 
+# For projuicer
+if(${USE_JNI} MATCHES "true")
+  list(APPEND SOURCES juicer_wrap.cxx)
+  include_directories(${JNI_INCLUDE_DIRS})
+endif(${USE_JNI} MATCHES "true")
 
 add_library(shared-lib SHARED ${SOURCES})
 set_target_properties(shared-lib

@@ -15,13 +15,14 @@ cmake_minimum_required(VERSION 2.6)
 
 # Top level project information
 project(juicer)
-set(VERSION 0.12.1)
+set(VERSION 1.0.0)
 
 # Find packages
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 find_package(Tracter REQUIRED)
 find_package(Torch3 REQUIRED)
 find_package(HTK)
+find_package(JNI)
 
 # Configure other files
 configure_file(Doxyfile.in Doxyfile)
