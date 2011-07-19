@@ -498,9 +498,11 @@ WFSTNetwork::WFSTNetwork(
       // new transition.
       if ( maxState >= nStatesAlloc )
       {
-          // Was running out of memory for large transducers...
+          // Was running out of memory for large transducers.  In
+          // fact, this would be better either with a two pass
+          // strategy or a binary format.
           //int nAlloc = maxState + 1000;
-          int nAlloc = maxState * 2;
+          int nAlloc = maxState ? maxState * 2 : 1024;
           states = (WFSTState *)realloc(
               states, nAlloc * sizeof(WFSTState)
           );
