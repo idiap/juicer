@@ -6,6 +6,5 @@
 #
 # Tracter uses (and has always used) pkgconfig...
 #
-include(FindPkgConfig)
-
+find_package(PkgConfig)
 pkg_check_modules(TRACTER REQUIRED tracter)

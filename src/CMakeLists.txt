@@ -106,22 +106,53 @@ if(HTK_FOUND)
 endif(HTK_FOUND)
 
 # For projuicer
-if(${USE_JNI} MATCHES "true")
+set(USE_JNI $ENV{USE_JNI}
+  CACHE BOOLEAN "Whether to build the JNI interface"
+  )
+if (USE_JNI)
   list(APPEND SOURCES juicer_wrap.cxx)
   include_directories(${JNI_INCLUDE_DIRS})
-endif(${USE_JNI} MATCHES "true")
+endif (USE_JNI)
 
-add_library(shared-lib SHARED ${SOURCES})
-set_target_properties(shared-lib
-  PROPERTIES OUTPUT_NAME "juicer"
-             PUBLIC_HEADER "${HEADERS}"
-  )
-
-target_link_libraries(shared-lib
+set(TARGET_LIBS
   ${TRACTER_LIBRARIES}
   ${TORCH3_LIBRARIES}
   ${HTK_LIBRARIES}
+  ${SPTK_LIBRARIES}
+  ${RTAUDIO_LIBRARIES}
+  ${LIBRESAMPLE_LIBRARIES}
   )
+
+set(INSTALL_TARGETS
+  juicer
+  gramgen
+  lexgen
+  cdgen
+  genwfstseqs
+  static-lib
+)
+
+# Static library
+add_library(static-lib STATIC ${SOURCES})
+set_target_properties(static-lib
+  PROPERTIES OUTPUT_NAME "juicer"
+             PUBLIC_HEADER "${HEADERS}"
+  )
+target_link_libraries(static-lib ${TARGET_LIBS};pthread)
+
+# Shared library
+set(USE_SHARED $ENV{USE_SHARED}
+  CACHE BOOLEAN "Whether to build shared library"
+  )
+if (USE_SHARED)
+  add_library(shared-lib SHARED ${SOURCES})
+  set_target_properties(shared-lib
+    PROPERTIES OUTPUT_NAME "juicer"
+    PUBLIC_HEADER "${HEADERS}"
+    )
+  target_link_libraries(shared-lib ${TARGET_LIBS})
+  list(APPEND INSTALL_TARGETS shared-lib)
+endif (USE_SHARED)
 
 add_executable(juicer juicer.cpp)
 add_executable(gramgen gramgen.cpp)
@@ -129,14 +160,15 @@ add_executable(lexgen lexgen.cpp)
 add_executable(cdgen cdgen.cpp)
 add_executable(genwfstseqs genwfstseqs.cpp)
 
-target_link_libraries(juicer shared-lib)
-target_link_libraries(gramgen shared-lib)
-target_link_libraries(lexgen shared-lib)
-target_link_libraries(cdgen shared-lib)
-target_link_libraries(genwfstseqs shared-lib)
+# These depend on the static lib for now
+target_link_libraries(juicer static-lib)
+target_link_libraries(gramgen static-lib)
+target_link_libraries(lexgen static-lib)
+target_link_libraries(cdgen static-lib)
+target_link_libraries(genwfstseqs static-lib)
 
 install(
-  TARGETS juicer gramgen lexgen cdgen genwfstseqs shared-lib
+  TARGETS ${INSTALL_TARGETS}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
