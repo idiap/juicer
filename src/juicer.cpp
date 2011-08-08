@@ -768,7 +768,7 @@ void setupModels( IModels **models )
         *models = new HTKModels() ;
 # endif
 
-        //(*models)->setBlockSize(blockSize);
+        (*models)->setBlockSize(blockSize);
 
 #ifdef HAVE_HTKLIB
         }
