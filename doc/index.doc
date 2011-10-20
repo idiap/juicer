@@ -57,6 +57,8 @@ probably works too.
 Juicer will also build with IPP - the Intel Performance Primitives.
 This will utilise a fast GMM calculation for observation likelihoods.
 
+See also the \ref build
+
 \section authors Authors
 
 Juicer was originally written by <a

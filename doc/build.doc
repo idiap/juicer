@@ -1,0 +1,72 @@
+/** \page build Build instructions
+
+\section build-torch Build Torch3
+
+Torch3 is available from the <a href="http://www.torch.ch">torch
+website</a>. The build process is a little odd, and there is no
+installation step. The first thing is to copy a makefile:
+\verbatim
+cd Torch3
+cp config/Linux.cfg .
+\endverbatim
+then add the following options to Linux.cfg:
+\verbatim
+# Packages you want to use
+packages = core speech datasets distributions gradients
+\endverbatim
+and type
+\verbatim
+xmake
+\endverbatim
+
+\section build-tracter Build and install Tracter
+
+Tracter is available from the <a
+href="http://juicer.amiproject.org/tracter">tracter website</a>. Build
+instructions are there too, but essentially you just need these
+commands:
+\verbatim
+cd build
+export KISSFFT_DIR=/path/to/kiss_fft_v1_2_8
+cmake -D CMAKE_INSTALL_PREFIX=$HOME/local ..
+make install
+\endverbatim
+Of course, change the install prefix to wherever you like.
+
+For a more involved build, see the example configure script:
+\verbatim
+cd build
+cp Configure.sh.example Configure.sh
+\endverbatim
+edit the configure script to reflect your environment.
+Then
+\verbatim
+./Configure.sh
+make install
+\endverbatim
+will install the software locally.
+
+The install will install a pkgconfig file. To allow other programs to
+find the pkgconfig, add the path to the environment variable:
+\verbatim
+export PKG_CONFIG_PATH=$HOME/local/lib/pkgconfig  # sh
+setenv PKG_CONFIG_PATH $HOME/local/lib/pkgconfig  # csh
+\endverbatim
+
+\section build-juicer Build and install Juicer
+
+With tracter and torch3 installed, juicer should install very much
+like tracter.  Note that juicer will use pkgconfig to find tracter.
+You will need to point to the build at the Torch3 build using the
+environment variable:
+\verbatim
+cd build
+export TORCH3_DIR=/path/to/Torch3
+export PKG_CONFIG_PATH=$HOME/local/lib/pkgconfig
+cmake -D CMAKE_INSTALL_PREFIX=$HOME/local ..
+make install
+\endverbatim
+You may find that it is easier to compile tracter with Torch3,
+especially if using shared libraries.
+
+*/
