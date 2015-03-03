@@ -33,10 +33,11 @@ HTKDef htk_def ;
 /* external functions */
 extern int htklex(void *lvalp,void *fd) ;
 
-/* Bison defines to allow a (FILE *) to be passed to yyparse and yylex */
-#define YYPARSE_PARAM fileptr
-#define YYLEX_PARAM fileptr
+void yyerror(void* fileptr, const char* s){yyerror(s);}
 %}
+
+/* Bison defines to allow a (FILE *) to be passed to yyparse and yylex */
+%param{void* fileptr};
 
 %pure_parser
 
