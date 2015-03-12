@@ -14,8 +14,18 @@ if (EXISTS "${LIBRESAMPLE_DIR}")
     )
   set(LIBRESAMPLE_LIBRARIES
     ${LIBRESAMPLE_DIR}/libresample.a
-    )  
-else (EXISTS "${LIBRESAMPLE_DIR}")
+    )
+endif (EXISTS "${LIBRESAMPLE_DIR}")
+
+if (EXISTS "/usr/lib/libresample.a")
+  set(LIBRESAMPLE_FOUND 1)
+  set(LIBRESAMPLE_INCLUDE_DIRS /usr/include)
+  set(LIBRESAMPLE_LIBRARIES /usr/lib/libresample.a)
+  message(STATUS "Using libresample from system")
+endif (EXISTS "/usr/lib/libresample.a")
+  
+
+if (NOT LIBRESAMPLE_FOUND)
   message(STATUS "libresample not found")
   set(LIBRESAMPLE_FOUND 0)
-endif (EXISTS "${LIBRESAMPLE_DIR}")
+endif (NOT LIBRESAMPLE_FOUND)
