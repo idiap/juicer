@@ -1,29 +1,46 @@
 #
-# Find Rtaudio
+# Copyright 2015 by Idiap Research Institute
 #
-set(RTAUDIO_DIR $ENV{RTAUDIO_DIR}
-  CACHE FILEPATH "Path to RtAudio directory"
-  )
+# See the file COPYING for the licence associated with this software.
+#
+# Author(s):
+#   Phil Garner, November 2015
+#
+# ...but basically copied from FindSndFile in libube, in turn from the examples
+# on the web.
+#
 
-# Use the static library so it gets incorporated in the built library
-# If RtAudio is "package" this is less of an issue
-if (EXISTS "${RTAUDIO_DIR}")
-  message(STATUS "Using RtAudio dir: ${RTAUDIO_DIR}")
-  set(RTAUDIO_FOUND 1)
-  set(RTAUDIO_INCLUDE_DIRS
-    ${RTAUDIO_DIR}
-    )
-  if(APPLE)
-    FIND_LIBRARY(COREAUDIO_LIBRARY CoreAudio)
-    FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation)
-    MARK_AS_ADVANCED(COREAUDIO_LIBRARY COREFOUNDATION_LIBRARY)
-    set(RTAUDIO_LIBS_EXTRA ${COREAUDIO_LIBRARY} ${COREFOUNDATION_LIBRARY})
-  endif(APPLE)
-  set(RTAUDIO_LIBRARIES
-    ${RTAUDIO_DIR}/librtaudio.a
-    ${RTAUDIO_LIBS_EXTRA}
-    )  
-else (EXISTS "${RTAUDIO_DIR}")
-  message(STATUS "RtAudio not found")
-  set(RTAUDIO_FOUND 0)
-endif (EXISTS "${RTAUDIO_DIR}")
+#
+# Try to find RtAudio
+# Once done this will define
+#  RTAUDIO_FOUND          - System has RtAudio
+#  RTAUDIO_INCLUDE_DIR    - The RtAudio include directories
+#  RTAUDIO_LIBRARIES      - The libraries needed to use RtAudio
+#  RTAUDIO_DEFINITIONS    - Compiler switches required for using RtAudio
+#  RTAUDIO_VERSION_STRING - the version of RtAudio found
+#
+
+find_package(PkgConfig)
+pkg_check_modules(PC_RTAUDIO QUIET librtaudio)
+
+set(RTAUDIO_DEFINITIONS ${PC_RTAUDIO_CFLAGS_OTHER})
+set(RTAUDIO_VERSION_STRING ${PC_RTAUDIO_VERSION})
+
+find_path(
+  RTAUDIO_INCLUDE_DIR RtAudio.h
+  HINTS ${PC_RTAUDIO_INCLUDEDIR} ${PC_RTAUDIO_INCLUDE_DIRS}
+)
+
+find_library(
+  RTAUDIO_LIBRARIES NAMES rtaudio
+  HINTS ${PC_RTAUDIO_LIBDIR} ${PC_RTAUDIO_LIBRARY_DIRS}
+)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+  RtAudio
+  REQUIRED_VARS RTAUDIO_LIBRARIES RTAUDIO_INCLUDE_DIR
+  VERSION_VAR RTAUDIO_VERSION_STRING
+)
+
+mark_as_advanced(RTAUDIO_INCLUDE_DIR RTAUDIO_LIBRARIES)

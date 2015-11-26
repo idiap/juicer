@@ -42,7 +42,7 @@ particular, it is as fast as third party LVSR engines.
 \section download Obtaining the source code
 
 Juicer is available <a
-href="http://juicer.amiproject.org/juicer/sources">here</a>.  It is
+href="http://juicer.amiproject.org/sources/juicer">here</a>.  It is
 released under a BSD license, which is quite permissive.  Further
 information is in the README in the distribution.
 
